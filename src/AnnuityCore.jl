@@ -65,6 +65,13 @@ include("Options/monte_carlo.jl")
 # Validation gates
 include("Validation/gates.jl")
 
+# GLWB (Guaranteed Lifetime Withdrawal Benefit)
+include("GLWB/types.jl")
+include("GLWB/rollup.jl")
+include("GLWB/tracker.jl")
+include("GLWB/mortality.jl")
+include("GLWB/path_sim.jl")
+
 # Public API - Black-Scholes
 export black_scholes_call, black_scholes_put
 export black_scholes_greeks, BSGreeks
@@ -139,5 +146,17 @@ export atm_vol, skew, butterfly
 export term_structure
 export validate_no_calendar_arbitrage
 export smile_from_heston, smile_from_sabr
+
+# Public API - GLWB
+export RollupType, SIMPLE, COMPOUND, NONE
+export GWBConfig, GWBState, StepResult, GLWBPricingResult
+export simple_rollup, compound_rollup, calculate_rollup, apply_ratchet, is_anniversary, rollup_comparison
+export step!, max_withdrawal, simulate_path!
+export is_ruined, benefit_moneyness, gwb_to_av_ratio
+export GLWBSimulator, glwb_price
+export calculate_fair_fee, sensitivity_analysis
+export default_mortality, soa_2012_iam_qx
+export constant_mortality, zero_mortality
+export convert_annual_to_step, life_expectancy, survival_probability
 
 end # module AnnuityCore

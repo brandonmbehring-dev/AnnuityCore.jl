@@ -16,4 +16,7 @@ using Statistics
     include("test_sabr.jl")
     include("test_heston_cos.jl")
     include("test_vol_surface.jl")
+
+    # GLWB pricing (Phase 3.2)
+    include("test_glwb.jl")
 end
