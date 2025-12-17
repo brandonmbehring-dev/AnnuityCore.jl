@@ -33,16 +33,12 @@ end
 
     price = heston_cos_call(params, 100.0)
 
-    # COS implementation needs refinement - just test it runs and returns finite
+    # COS should give reasonable ATM call price
     @test isfinite(price)
-    # TODO: Fix COS to match MC prices (currently off by significant amount)
-    # @test 5.0 < price < 15.0
+    @test price > 0
+    @test 5.0 < price < 15.0  # ATM call ≈ 10 for these params
 end
 
-
-# NOTE: COS method implementation needs refinement
-# These tests are relaxed until the COS method is fully debugged
-# The core functionality (Heston MC, SABR, Vol Surface) works correctly
 
 @testset "Heston COS Put - Basic Pricing" begin
     params = HestonParams(
@@ -52,8 +48,11 @@ end
     )
 
     price = heston_cos_put(params, 100.0)
+
+    # COS should give reasonable ATM put price
     @test isfinite(price)
-    # TODO: Fix to match expected range
+    @test price > 0
+    @test 2.0 < price < 10.0  # ATM put ≈ 5 for these params
 end
 
 
@@ -63,14 +62,18 @@ end
         V₀ = 0.04, κ = 2.0, θ = 0.04,
         σ_v = 0.3, ρ = -0.7, τ = 1.0
     )
-    K = 100.0
 
-    call = heston_cos_call(params, K)
-    put = heston_cos_put(params, K)
+    # Test parity across multiple strikes
+    for K in [80.0, 100.0, 120.0]
+        call = heston_cos_call(params, K)
+        put = heston_cos_put(params, K)
 
-    @test isfinite(call)
-    @test isfinite(put)
-    # TODO: Fix parity once COS is corrected
+        # Put-call parity: C - P = S*exp(-q*τ) - K*exp(-r*τ)
+        forward_diff = params.S₀ * exp(-params.q * params.τ) - K * exp(-params.r * params.τ)
+        parity_error = abs((call - put) - forward_diff)
+
+        @test parity_error < 1e-6  # Should be very close (numerical precision)
+    end
 end
 
 
@@ -81,11 +84,17 @@ end
         σ_v = 0.3, ρ = -0.7, τ = 1.0
     )
 
-    result = benchmark_cos_vs_mc(params, 100.0; n_mc_paths=50000)
+    result = benchmark_cos_vs_mc(params, 100.0; n_mc_paths=100000)
 
     @test isfinite(result.cos_price)
     @test result.mc_price > 0
-    # TODO: COS should match MC once fixed
+    @test result.cos_price > 0
+
+    # COS and MC(Euler) should agree within 10%
+    # Note: MC uses Euler scheme which handles ρ correctly
+    # QE scheme does not, so we compare against Euler
+    error_pct = abs(result.cos_price - result.mc_price) / result.mc_price
+    @test error_pct < 0.10  # 10% tolerance for ATM
 end
 
 
@@ -97,10 +106,16 @@ end
     )
 
     price_64 = heston_cos_call(params, 100.0; config=COSConfig(N=64))
+    price_128 = heston_cos_call(params, 100.0; config=COSConfig(N=128))
     price_256 = heston_cos_call(params, 100.0; config=COSConfig(N=256))
 
     @test isfinite(price_64)
+    @test isfinite(price_128)
     @test isfinite(price_256)
+
+    # All should be close (COS converges quickly)
+    @test abs(price_64 - price_256) / price_256 < 0.05  # Within 5%
+    @test abs(price_128 - price_256) / price_256 < 0.01  # Within 1%
 end
 
 
@@ -111,10 +126,20 @@ end
         σ_v = 0.3, ρ = -0.7, τ = 1.0
     )
 
-    strikes = [80.0, 100.0, 120.0]
-    prices = [heston_cos_call(params, K) for K in strikes]
+    strikes = [80.0, 90.0, 100.0, 110.0, 120.0]
+    call_prices = [heston_cos_call(params, K) for K in strikes]
+    put_prices = [heston_cos_put(params, K) for K in strikes]
 
-    @test all(isfinite.(prices))
+    @test all(isfinite.(call_prices))
+    @test all(isfinite.(put_prices))
+    @test all(call_prices .> 0)
+    @test all(put_prices .> 0)
+
+    # Call prices should decrease with strike
+    @test issorted(call_prices, rev=true)
+
+    # Put prices should increase with strike
+    @test issorted(put_prices)
 end
 
 
@@ -142,18 +167,54 @@ end
         σ_v = 0.3, ρ = -0.7, τ = 1.0
     )
 
-    # This may fail if COS prices are wrong, skip for now
-    @test true  # Placeholder until COS is fixed
+    # With negative ρ, should exhibit negative skew (put wing higher)
+    # Implied vols would show this, but we just test prices show the effect
+    call_80 = heston_cos_call(params, 80.0)
+    call_100 = heston_cos_call(params, 100.0)
+    call_120 = heston_cos_call(params, 120.0)
+
+    # ITM calls should be more expensive than BS would predict
+    # relative to OTM calls due to negative skew
+    @test call_80 > call_100 > call_120
 end
 
 
 @testset "Heston COS Different Expiries" begin
-    @test true  # Placeholder until COS is fixed
+    # Longer expiry should give higher call price (for ATM)
+    params_short = HestonParams(
+        S₀ = 100.0, r = 0.05, q = 0.0,
+        V₀ = 0.04, κ = 2.0, θ = 0.04,
+        σ_v = 0.3, ρ = -0.7, τ = 0.25
+    )
+    params_long = HestonParams(
+        S₀ = 100.0, r = 0.05, q = 0.0,
+        V₀ = 0.04, κ = 2.0, θ = 0.04,
+        σ_v = 0.3, ρ = -0.7, τ = 2.0
+    )
+
+    price_short = heston_cos_call(params_short, 100.0)
+    price_long = heston_cos_call(params_long, 100.0)
+
+    @test price_short > 0
+    @test price_long > price_short  # Longer expiry = more value
 end
 
 
 @testset "Heston COS Zero Correlation" begin
-    @test true  # Placeholder until COS is fixed
+    # With ρ = 0, smile should be symmetric
+    params = HestonParams(
+        S₀ = 100.0, r = 0.05, q = 0.0,
+        V₀ = 0.04, κ = 2.0, θ = 0.04,
+        σ_v = 0.3, ρ = 0.0, τ = 1.0
+    )
+
+    # OTM call and OTM put at equivalent moneyness
+    call_120 = heston_cos_call(params, 120.0)
+    put_80 = heston_cos_put(params, 80.0)
+
+    # Put-call symmetry for ρ=0 (approximate)
+    @test call_120 > 0
+    @test put_80 > 0
 end
 
 

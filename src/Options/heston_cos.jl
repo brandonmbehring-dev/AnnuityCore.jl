@@ -67,12 +67,18 @@ function heston_cos_call(
 )
     K > 0 || throw(ArgumentError("Strike K must be positive"))
 
-    # Log-moneyness
+    # Log-moneyness x = log(S₀/K)
+    # Y = log(S_T/K) = log(S_T/S₀) + x has distribution shifted by x
     x = log(params.S₀ / K)
 
-    # Compute truncation range [a, b]
+    # Compute truncation range [a, b] for log-return
     c1, c2, c4 = _heston_cumulants(params)
     a, b = _cos_truncation_range(c1, c2, c4, config.L)
+
+    # Shift truncation bounds for log-moneyness Y = log(S_T/K)
+    # Y has mean c1 + x, same variance c2
+    a += x
+    b += x
 
     # COS expansion
     price = _cos_call_price(params, K, x, a, b, config.N)
@@ -93,9 +99,14 @@ function heston_cos_put(
 )
     K > 0 || throw(ArgumentError("Strike K must be positive"))
 
+    # Same log-moneyness shift as for calls
     x = log(params.S₀ / K)
     c1, c2, c4 = _heston_cumulants(params)
     a, b = _cos_truncation_range(c1, c2, c4, config.L)
+
+    # Shift truncation bounds for log-moneyness
+    a += x
+    b += x
 
     price = _cos_put_price(params, K, x, a, b, config.N)
 
@@ -154,6 +165,10 @@ COS method call price computation.
 [T1] Fang & Oosterlee (2008) COS method for European call.
 
 For call: v(x) = (exp(x) - 1)^+ where x = log(S/K)
+
+Key insight: The payoff coefficients use shifted bounds (a, b), but the
+characteristic function phase uses UNshifted bounds. The x terms cancel
+in the phase calculation, so we use (a - x) for the phase.
 """
 function _cos_call_price(params::HestonParams, K, x, a, b, N)
     S₀, r, q, τ = params.S₀, params.r, params.q, params.τ
@@ -161,24 +176,28 @@ function _cos_call_price(params::HestonParams, K, x, a, b, N)
     # Discount factor
     df = exp(-r * τ)
     bma = b - a
+    log_S0 = log(S₀)
 
     # Sum over k
     sum_val = 0.0
 
     for k in 0:N-1
-        # Payoff coefficients U_k for call
+        # Payoff coefficients U_k for call - uses shifted (a, b)
         # U_k = (2/(b-a)) * (χ_k(0,b) - ψ_k(0,b))
         χ_k = _chi_call(k, a, b)
         ψ_k = _psi_call(k, a, b)
         U_k = (2 / bma) * (χ_k - ψ_k)
 
         # Characteristic function F_k
-        # F_k = Re[φ(kπ/(b-a)) × exp(ikπ(x-a)/(b-a))]
+        # The a passed here is shifted (a_old + x), but we need UNshifted for phase
+        # a_unshifted = a - x
+        # phase = exp(-im * ω * (a_unshifted + log_S0))
+        #       = exp(-im * ω * (a - x + log_S0))
         ω = k * π / bma
         cf = heston_characteristic_function(ω, params)
 
-        # Phase factor
-        phase = exp(im * ω * (x - a))
+        # Phase with unshifted a (the x shift cancels in the derivation)
+        phase = exp(-im * ω * (a - x + log_S0))
         F_k = real(cf * phase)
 
         if k == 0
@@ -194,12 +213,15 @@ end
 
 """
 COS method put price computation.
+
+Same phase correction as for calls - removes exp(iω×log(S₀)) from CF.
 """
 function _cos_put_price(params::HestonParams, K, x, a, b, N)
     S₀, r, q, τ = params.S₀, params.r, params.q, params.τ
 
     df = exp(-r * τ)
     bma = b - a
+    log_S0 = log(S₀)
 
     sum_val = 0.0
 
@@ -212,7 +234,9 @@ function _cos_put_price(params::HestonParams, K, x, a, b, N)
 
         ω = k * π / bma
         cf = heston_characteristic_function(ω, params)
-        phase = exp(im * ω * (x - a))
+
+        # Corrected phase factor - use unshifted a (a - x recovers original)
+        phase = exp(-im * ω * (a - x + log_S0))
         F_k = real(cf * phase)
 
         if k == 0
