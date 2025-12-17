@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.11'
+        os:
+          - ubuntu-latest
+          - macos-latest
+        include:
+          - version: 'nightly'
+            os: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+
+      - uses: julia-actions/cache@v2
+
+      - uses: julia-actions/julia-buildpkg@v1
+
+      - uses: julia-actions/julia-runtest@v1
+
+      - uses: julia-actions/julia-processcoverage@v1
+        if: matrix.version == '1.11' && matrix.os == 'ubuntu-latest'
+
+      - uses: codecov/codecov-action@v4
+        if: matrix.version == '1.11' && matrix.os == 'ubuntu-latest'
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Code quality checks
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.11'
+
+      - uses: julia-actions/cache@v2
+
+      - name: Install dependencies
+        run: |
+          julia --project=. -e '
+            using Pkg
+            Pkg.instantiate()
+            Pkg.add(["Aqua", "JuliaFormatter"])
+          '
+
+      - name: Aqua.jl quality checks
+        run: |
+          julia --project=. -e '
+            using Pkg
+            Pkg.instantiate()
+            using Aqua
+            using AnnuityCore
+            Aqua.test_all(AnnuityCore; ambiguities=false)
+          '
+
+      - name: Check formatting
+        run: |
+          julia --project=. -e '
+            using JuliaFormatter
+            # Check if files are formatted (BlueStyle)
+            result = format("src/", BlueStyle(), check_format=true)
+            result || error("Files not formatted according to BlueStyle")
+          '
+
+  # Benchmark tracking (optional, runs on main only)
+  benchmark:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.11'
+
+      - uses: julia-actions/cache@v2
+
+      - name: Install dependencies
+        run: |
+          julia --project=. -e '
+            using Pkg
+            Pkg.instantiate()
+            Pkg.add("BenchmarkTools")
+          '
+
+      - name: Run benchmarks
+        run: |
+          julia --project=. benchmark/benchmarks.jl

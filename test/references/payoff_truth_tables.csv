@@ -1,0 +1,136 @@
+test_id,category,method,index_return,cap_rate,participation_rate,spread_rate,trigger_rate,trigger_threshold,buffer_rate,floor_rate,expected_payoff,cap_applied,floor_applied,edge_case,formula,reference
+FIA_CAP_001,FIA,cap,0.0,0.1,,,,,,0.0,0.0,False,False,normal,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_002,FIA,cap,0.03,0.1,,,,,,0.0,0.03,False,False,normal,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_003,FIA,cap,0.05,0.1,,,,,,0.0,0.05,False,False,normal,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_004,FIA,cap,0.08,0.1,,,,,,0.0,0.08,False,False,normal,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_005,FIA,cap,0.1,0.1,,,,,,0.0,0.1,False,False,capped,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_006,FIA,cap,0.15,0.1,,,,,,0.0,0.1,True,False,capped,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_007,FIA,cap,0.2,0.1,,,,,,0.0,0.1,True,False,capped,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_008,FIA,cap,0.25,0.1,,,,,,0.0,0.1,True,False,capped,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_009,FIA,cap,-0.01,0.1,,,,,,0.0,0.0,False,True,negative_just_below_zero,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_010,FIA,cap,-0.05,0.1,,,,,,0.0,0.0,False,True,negative_moderate,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_011,FIA,cap,-0.2,0.1,,,,,,0.0,0.0,False,True,negative_large,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_012,FIA,cap,-0.5,0.1,,,,,,0.0,0.0,False,True,negative_extreme,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_013,FIA,cap,0.001,0.1,,,,,,0.0,0.001,False,False,positive_tiny,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_014,FIA,cap,0.1,0.1,,,,,,0.0,0.1,False,False,exactly_at_cap,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_CAP_015,FIA,cap,0.0999,0.1,,,,,,0.0,0.0999,False,False,just_below_cap,"max(0, min(index_return, cap))",[T1] fia.py:33
+FIA_PARTICIPATION_016,FIA,participation,0.0,,0.8,,,,,0.0,0.0,False,True,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_017,FIA,participation,0.05,,0.8,,,,,0.0,0.04000000000000001,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_018,FIA,participation,0.1,,0.8,,,,,0.0,0.08000000000000002,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_019,FIA,participation,0.15,,0.8,,,,,0.0,0.12,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_020,FIA,participation,0.2,,0.8,,,,,0.0,0.16000000000000003,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_021,FIA,participation,0.25,,0.8,,,,,0.0,0.2,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_022,FIA,participation,0.3,,0.8,,,,,0.0,0.24,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_023,FIA,participation,0.5,,0.8,,,,,0.0,0.4,False,False,normal,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_024,FIA,participation,-0.1,,0.8,,,,,0.0,0.0,False,True,negative_with_80%_participation,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_025,FIA,participation,-0.2,,1.2,,,,,0.0,0.0,False,True,negative_with_120%_participation,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_026,FIA,participation,0.1,,1.5,,,,,0.0,0.15000000000000002,False,False,positive_with_150%_participation,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_027,FIA,participation,0.1,,0.5,,,,,0.0,0.05,False,False,positive_with_50%_participation,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_028,FIA,participation,0.001,,0.8,,,,,0.0,0.0008,False,False,tiny_positive,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_029,FIA,participation,-0.001,,0.8,,,,,0.0,0.0,False,True,tiny_negative,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_PARTICIPATION_030,FIA,participation,0.0,,0.8,,,,,0.0,0.0,False,True,exactly_zero,"max(0, participation × max(0, index_return))",[T1] fia.py:130
+FIA_SPREAD_031,FIA,spread,0.0,,,0.02,,,,0.0,0.0,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_032,FIA,spread,0.01,,,0.02,,,,0.0,0.0,False,True,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_033,FIA,spread,0.02,,,0.02,,,,0.0,0.0,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_034,FIA,spread,0.03,,,0.02,,,,0.0,0.009999999999999998,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_035,FIA,spread,0.05,,,0.02,,,,0.0,0.030000000000000002,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_036,FIA,spread,0.1,,,0.02,,,,0.0,0.08,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_037,FIA,spread,0.15,,,0.02,,,,0.0,0.13,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_038,FIA,spread,0.2,,,0.02,,,,0.0,0.18000000000000002,False,False,normal,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_039,FIA,spread,-0.05,,,0.02,,,,0.0,0.0,False,False,negative_return,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_040,FIA,spread,0.02,,,0.02,,,,0.0,0.0,False,False,return_equals_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_041,FIA,spread,0.019,,,0.02,,,,0.0,0.0,False,True,return_just_below_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_042,FIA,spread,0.021,,,0.02,,,,0.0,0.0010000000000000009,False,False,return_just_above_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_043,FIA,spread,0.001,,,0.02,,,,0.0,0.0,False,True,tiny_positive_below_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_044,FIA,spread,0.05,,,0.05,,,,0.0,0.0,False,False,return_equals_larger_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_SPREAD_045,FIA,spread,0.1,,,0.0,,,,0.0,0.1,False,False,zero_spread,"max(0, index_return - spread) for positive returns",[T1] fia.py:255
+FIA_TRIGGER_046,FIA,trigger,-0.1,,,,0.05,0.0,,0.0,0.0,False,True,not_triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_047,FIA,trigger,-0.05,,,,0.05,0.0,,0.0,0.0,False,True,not_triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_048,FIA,trigger,-0.01,,,,0.05,0.0,,0.0,0.0,False,True,not_triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_049,FIA,trigger,0.0,,,,0.05,0.0,,0.0,0.05,False,False,triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_050,FIA,trigger,0.01,,,,0.05,0.0,,0.0,0.05,False,False,triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_051,FIA,trigger,0.05,,,,0.05,0.0,,0.0,0.05,False,False,triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_052,FIA,trigger,0.1,,,,0.05,0.0,,0.0,0.05,False,False,triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_053,FIA,trigger,0.2,,,,0.05,0.0,,0.0,0.05,False,False,triggered,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_054,FIA,trigger,0.0,,,,0.05,0.0,,0.0,0.05,False,False,exactly_at_zero_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_055,FIA,trigger,-0.0001,,,,0.05,0.0,,0.0,0.0,False,True,just_below_zero_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_056,FIA,trigger,0.0001,,,,0.05,0.0,,0.0,0.05,False,False,just_above_zero_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_057,FIA,trigger,0.05,,,,0.08,0.05,,0.0,0.08,False,False,exactly_at_5%_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_058,FIA,trigger,0.049,,,,0.08,0.05,,0.0,0.0,False,True,just_below_5%_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_059,FIA,trigger,0.051,,,,0.08,0.05,,0.0,0.08,False,False,just_above_5%_threshold,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+FIA_TRIGGER_060,FIA,trigger,-0.5,,,,0.05,0.0,,0.0,0.0,False,True,large_negative,trigger_rate if return >= threshold else floor,[T1] fia.py:375
+RILA_BUFFER_061,RILA,buffer,0.05,0.2,,,,,0.1,,0.05,False,False,positive_within_cap,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_062,RILA,buffer,0.15,0.2,,,,,0.1,,0.15,False,False,positive_above_cap,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_063,RILA,buffer,-0.05,0.2,,,,,0.1,,0.0,False,False,negative_within_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_064,RILA,buffer,-0.1,0.2,,,,,0.1,,0.0,False,False,negative_at_exact_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_065,RILA,buffer,-0.15,0.2,,,,,0.1,,-0.04999999999999999,False,False,negative_beyond_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_066,RILA,buffer,-0.25,0.2,,,,,0.1,,-0.15,False,False,negative_large_loss,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_067,RILA,buffer,-0.1,0.2,,,,,0.15,,0.0,False,False,15%_buffer_within,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_068,RILA,buffer,-0.2,0.2,,,,,0.15,,-0.05000000000000002,False,False,15%_buffer_beyond,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_069,RILA,buffer,-0.15,0.2,,,,,0.2,,0.0,False,False,20%_buffer_within,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_070,RILA,buffer,-0.3,0.2,,,,,0.2,,-0.09999999999999998,False,False,20%_buffer_beyond,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_071,RILA,buffer,-0.0999,0.25,,,,,0.1,,0.0,False,False,just_inside_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_072,RILA,buffer,-0.1001,0.25,,,,,0.1,,-9.999999999998899e-05,False,False,just_outside_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_073,RILA,buffer,0.0,0.25,,,,,0.1,,0.0,False,False,exactly_zero,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_074,RILA,buffer,-0.5,0.25,,,,,0.1,,-0.4,False,False,extreme_loss,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_075,RILA,buffer,-0.75,0.25,,,,,0.1,,-0.65,False,False,catastrophic_loss,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_076,RILA,buffer,-0.5,0.25,,,,,1.0,,0.0,False,False,100%_buffer_large_loss,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_077,RILA,buffer,-0.99,0.25,,,,,1.0,,0.0,False,False,100%_buffer_near_total_loss,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_078,RILA,buffer,-0.5,0.25,,,,,0.99,,0.0,False,False,99%_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_079,RILA,buffer,-0.08,0.25,,,,,0.05,,-0.03,False,False,small_5%_buffer,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_BUFFER_080,RILA,buffer,-0.2,0.25,,,,,0.25,,0.0,False,False,25%_buffer_within,"max(index_return + buffer, 0) for losses; min(return, cap) for gains",[T1] rila.py:33
+RILA_FLOOR_081,RILA,floor,0.05,0.2,,,,,,-0.1,0.05,False,False,positive_within_cap,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_082,RILA,floor,0.15,0.2,,,,,,-0.1,0.15,False,False,positive_above_cap,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_083,RILA,floor,-0.05,0.2,,,,,,-0.1,-0.05,False,False,negative_above_floor,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_084,RILA,floor,-0.1,0.2,,,,,,-0.1,-0.1,False,False,negative_at_exact_floor,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_085,RILA,floor,-0.15,0.2,,,,,,-0.1,-0.1,False,True,negative_below_floor,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_086,RILA,floor,-0.25,0.2,,,,,,-0.1,-0.1,False,True,negative_large_loss,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_087,RILA,floor,-0.2,0.2,,,,,,-0.15,-0.15,False,True,-15%_floor_hit,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_088,RILA,floor,-0.3,0.2,,,,,,-0.2,-0.2,False,True,-20%_floor_hit,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_089,RILA,floor,-0.0999,0.25,,,,,,-0.1,-0.0999,False,False,just_above_floor,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_090,RILA,floor,-0.1001,0.25,,,,,,-0.1,-0.1,False,True,just_below_floor,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_091,RILA,floor,0.0,0.25,,,,,,-0.1,0.0,False,False,exactly_zero,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_092,RILA,floor,-0.5,0.25,,,,,,-0.1,-0.1,False,True,extreme_loss,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_093,RILA,floor,-0.08,0.25,,,,,,-0.05,-0.05,False,True,small_floor_hit,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_094,RILA,floor,-0.1,0.25,,,,,,0.0,0.0,False,True,zero_floor_full_protection,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_FLOOR_095,RILA,floor,-0.3,0.25,,,,,,-0.25,-0.25,False,True,deep_floor_hit,"max(index_return, floor); min(result, cap)",[T1] rila.py:186
+RILA_BUFFER_FLOOR_096,RILA,buffer_floor,-0.05,0.2,,,,,0.1,-0.2,0.0,False,False,buffer_absorbs_within_floor,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_097,RILA,buffer_floor,-0.08,0.2,,,,,0.1,-0.2,0.0,False,False,buffer_absorbs_above_floor,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_098,RILA,buffer_floor,0.05,0.2,,,,,0.1,-0.2,0.05,False,False,positive_return,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_099,RILA,buffer_floor,0.15,0.2,,,,,0.1,-0.2,0.15,False,False,positive_capped,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_100,RILA,buffer_floor,-0.12,0.2,,,,,0.15,-0.25,0.0,False,False,larger_buffer,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_101,RILA,buffer_floor,-0.15,0.2,,,,,0.1,-0.2,-0.04999999999999999,False,False,buffer_partial_floor_not_hit,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_102,RILA,buffer_floor,-0.1,0.2,,,,,0.1,-0.2,0.0,False,False,at_buffer_boundary,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_103,RILA,buffer_floor,0.0,0.2,,,,,0.1,-0.2,0.0,False,False,exactly_zero,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_104,RILA,buffer_floor,-0.35,0.2,,,,,0.1,-0.2,-0.2,False,True,floor_kicks_in_large_loss,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_105,RILA,buffer_floor,-0.4,0.2,,,,,0.1,-0.2,-0.2,False,True,floor_kicks_in_very_large,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_106,RILA,buffer_floor,-0.5,0.2,,,,,0.1,-0.2,-0.2,False,True,floor_kicks_in_extreme,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_107,RILA,buffer_floor,-0.3,0.2,,,,,0.1,-0.15,-0.15,False,True,tighter_floor_kicks_in,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_108,RILA,buffer_floor,-0.2,0.2,,,,,0.05,-0.1,-0.1,False,True,small_buffer_floor_kicks_in,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_109,RILA,buffer_floor,-0.29,0.2,,,,,0.1,-0.2,-0.18999999999999997,False,False,just_at_floor_boundary,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_BUFFER_FLOOR_110,RILA,buffer_floor,-0.31,0.2,,,,,0.1,-0.2,-0.2,False,True,just_beyond_floor_boundary,"buffer first, then floor as backstop",[T1] rila.py:314
+RILA_STEP_RATE_111,RILA,step_rate,0.1,0.25,,,,,0.1,,0.1,False,False,positive_return,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_112,RILA,step_rate,0.0,0.25,,,,,0.1,,0.0,False,False,exactly_zero,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_113,RILA,step_rate,-0.05,0.25,,,,,0.1,,-0.0,False,False,within_tier1,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_114,RILA,step_rate,-0.1,0.25,,,,,0.1,,-0.0,False,False,at_tier1_boundary,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_115,RILA,step_rate,-0.12,0.25,,,,,0.1,,-0.009999999999999995,False,False,in_tier2,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_116,RILA,step_rate,-0.15,0.25,,,,,0.1,,-0.024999999999999994,False,False,in_tier2_deeper,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_117,RILA,step_rate,-0.2,0.25,,,,,0.1,,-0.05,False,False,at_tier2_boundary,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_118,RILA,step_rate,-0.25,0.25,,,,,0.1,,-0.09999999999999999,False,False,beyond_tier2,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_119,RILA,step_rate,-0.3,0.25,,,,,0.1,,-0.14999999999999997,False,False,well_beyond_tier2,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+RILA_STEP_RATE_120,RILA,step_rate,-0.5,0.25,,,,,0.1,,-0.35000000000000003,False,False,extreme_loss,tier1=10% full + tier2=10% at 50% protection,[T1] rila.py:422
+COMPARISON_BUFFER_VS_FLOOR_121,COMPARISON,buffer_vs_floor,0.15,0.2,,,,,0.1,-0.1,0.15,False,False,positive_capped_winner=tie,"buffer=0.1500, floor=0.1500",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_122,COMPARISON,buffer_vs_floor,0.05,0.2,,,,,0.1,-0.1,0.05,False,False,positive_small_winner=tie,"buffer=0.0500, floor=0.0500",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_123,COMPARISON,buffer_vs_floor,0.0,0.2,,,,,0.1,-0.1,0.0,False,False,exactly_zero_winner=tie,"buffer=0.0000, floor=0.0000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_124,COMPARISON,buffer_vs_floor,-0.03,0.2,,,,,0.1,-0.1,0.0,False,False,small_loss_buffer_wins_winner=buffer,"buffer=0.0000, floor=-0.0300",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_125,COMPARISON,buffer_vs_floor,-0.05,0.2,,,,,0.1,-0.1,0.0,False,False,moderate_loss_buffer_wins_winner=buffer,"buffer=0.0000, floor=-0.0500",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_126,COMPARISON,buffer_vs_floor,-0.08,0.2,,,,,0.1,-0.1,0.0,False,False,larger_loss_buffer_wins_winner=buffer,"buffer=0.0000, floor=-0.0800",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_127,COMPARISON,buffer_vs_floor,-0.1,0.2,,,,,0.1,-0.1,0.0,False,False,at_boundary_buffer_wins_winner=buffer,"buffer=0.0000, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_128,COMPARISON,buffer_vs_floor,-0.12,0.2,,,,,0.1,-0.1,-0.01999999999999999,False,True,beyond_boundary_same_winner=buffer,"buffer=-0.0200, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_129,COMPARISON,buffer_vs_floor,-0.15,0.2,,,,,0.1,-0.1,-0.04999999999999999,False,True,floor_catches_up_winner=buffer,"buffer=-0.0500, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_130,COMPARISON,buffer_vs_floor,-0.2,0.2,,,,,0.1,-0.1,-0.1,False,True,floor_better_winner=tie,"buffer=-0.1000, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_131,COMPARISON,buffer_vs_floor,-0.25,0.2,,,,,0.1,-0.1,-0.15,False,True,floor_much_better_winner=floor,"buffer=-0.1500, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_132,COMPARISON,buffer_vs_floor,-0.3,0.2,,,,,0.1,-0.1,-0.19999999999999998,False,True,floor_significantly_better_winner=floor,"buffer=-0.2000, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_133,COMPARISON,buffer_vs_floor,-0.4,0.2,,,,,0.1,-0.1,-0.30000000000000004,False,True,extreme_floor_dominates_winner=floor,"buffer=-0.3000, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_134,COMPARISON,buffer_vs_floor,-0.5,0.2,,,,,0.1,-0.1,-0.4,False,True,catastrophic_floor_dominates_winner=floor,"buffer=-0.4000, floor=-0.1000",[T1] Buffer vs Floor comparison
+COMPARISON_BUFFER_VS_FLOOR_135,COMPARISON,buffer_vs_floor,-0.75,0.2,,,,,0.1,-0.1,-0.65,False,True,near_total_loss_winner=floor,"buffer=-0.6500, floor=-0.1000",[T1] Buffer vs Floor comparison
