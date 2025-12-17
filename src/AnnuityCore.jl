@@ -72,6 +72,12 @@ include("GLWB/tracker.jl")
 include("GLWB/mortality.jl")
 include("GLWB/path_sim.jl")
 
+# Product Pricers (MYGA, FIA, RILA)
+include("Products/types.jl")
+include("Products/myga.jl")
+include("Products/fia.jl")
+include("Products/rila.jl")
+
 # Public API - Black-Scholes
 export black_scholes_call, black_scholes_put
 export black_scholes_greeks, BSGreeks
@@ -158,5 +164,15 @@ export calculate_fair_fee, sensitivity_analysis
 export default_mortality, soa_2012_iam_qx
 export constant_mortality, zero_mortality
 export convert_annual_to_step, life_expectancy, survival_probability
+
+# Public API - Product Types
+export PricingResult, FIAPricingResult, RILAPricingResult
+export MarketParams
+export MYGAProduct, FIAProduct, RILAProduct
+
+# Public API - Product Pricers
+export price_myga, myga_sensitivity, myga_breakeven_rate, myga_total_return
+export price_fia
+export price_rila, rila_greeks, compare_buffer_vs_floor
 
 end # module AnnuityCore

@@ -19,4 +19,7 @@ using Statistics
 
     # GLWB pricing (Phase 3.2)
     include("test_glwb.jl")
+
+    # Product Pricers (Phase 3.3)
+    include("test_products.jl")
 end
