@@ -28,4 +28,7 @@ using Statistics
 
     # Stress Testing (Phase 3.5)
     include("test_stress_testing.jl")
+
+    # Data Loaders (Phase 3.6)
+    include("test_loaders.jl")
 end

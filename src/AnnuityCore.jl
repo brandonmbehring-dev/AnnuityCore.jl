@@ -84,6 +84,9 @@ include("Products/rila.jl")
 # Stress Testing
 include("StressTesting/StressTesting.jl")
 
+# Data Loaders (Mortality tables, Yield curves)
+include("Loaders/Loaders.jl")
+
 # Public API - Black-Scholes
 export black_scholes_call, black_scholes_put
 export black_scholes_greeks, BSGreeks
@@ -283,5 +286,43 @@ export StressTestRunner, orsa_runner, historical_runner, standard_runner
 export run_scenario, run_all_scenarios, run_stress_test
 export print_stress_summary, export_results
 export quick_stress_test, compare_scenarios, stress_test_grid
+
+# Public API - Data Loaders (Mortality)
+export Gender, MALE, FEMALE, UNISEX
+export MortalityTable
+export get_qx, get_px, npx, nqx
+export life_expectancy, complete_life_expectancy
+export lx, dx
+export annuity_factor, annuity_immediate_factor
+export calculate_annuity_pv
+export soa_2012_iam, soa_table
+export gompertz_table, from_dict
+export with_improvement, blend_tables
+export compare_life_expectancy, validate_mortality_table
+export get_soa_2012_iam_qx_vector, get_soa_2012_iam_age_range
+export SOA_2012_IAM_MALE_QX, SOA_2012_IAM_FEMALE_QX
+export SOA_2012_IAM_MALE_KEY_POINTS, SOA_2012_IAM_FEMALE_KEY_POINTS
+export SOA_TABLE_IDS
+
+# Public API - Data Loaders (Yield Curves)
+export InterpolationMethod, LINEAR, LOG_LINEAR, CUBIC
+export YieldCurve, NelsonSiegelParams
+export get_rate, discount_factor, discount_factors
+export forward_rate, instantaneous_forward, par_rate
+export nelson_siegel_rate
+export from_nelson_siegel, from_points, flat_curve
+export upward_sloping_curve, inverted_curve
+export shift_curve, steepen_curve, scale_curve
+export macaulay_duration, modified_duration, dv01, convexity
+export present_value, annuity_pv
+export validate_yield_curve, curve_summary
+
+# Public API - Data Loaders (Treasury)
+export TREASURY_MATURITIES, FRED_TREASURY_SERIES
+
+# Public API - Interpolation Utilities
+export linear_interp, log_linear_interp, cubic_interp
+export interpolate, interpolate_vector
+export extrapolate_flat, extrapolate_linear
 
 end # module AnnuityCore
