@@ -22,4 +22,7 @@ using Statistics
 
     # Product Pricers (Phase 3.3)
     include("test_products.jl")
+
+    # Behavioral Models (Phase 3.4)
+    include("test_behavioral.jl")
 end

@@ -65,6 +65,9 @@ include("Options/monte_carlo.jl")
 # Validation gates
 include("Validation/gates.jl")
 
+# Behavioral Models (must be before GLWB since path_sim.jl uses behavioral types)
+include("Behavioral/Behavioral.jl")
+
 # GLWB (Guaranteed Lifetime Withdrawal Benefit)
 include("GLWB/types.jl")
 include("GLWB/rollup.jl")
@@ -174,5 +177,49 @@ export MYGAProduct, FIAProduct, RILAProduct
 export price_myga, myga_sensitivity, myga_breakeven_rate, myga_total_return
 export price_fia
 export price_rila, rila_greeks, compare_buffer_vs_floor
+
+# Public API - Behavioral Models
+# Configuration types
+export LapseConfig, SOALapseConfig, LapseResult
+export WithdrawalConfig, SOAWithdrawalConfig, WithdrawalResult
+export ExpenseConfig, ExpenseResult
+export BehavioralConfig, has_lapse, has_withdrawal, has_expenses, has_any_behavior
+
+# Lapse functions
+export calculate_lapse, calculate_path_lapses
+export survival_from_lapses, lapse_probability
+export moneyness_from_state, is_itm
+
+# Withdrawal functions
+export calculate_withdrawal, calculate_path_withdrawals
+export total_withdrawals, average_utilization, withdrawal_amounts, utilization_rates
+export withdrawal_efficiency, path_withdrawal_efficiency
+export get_utilization_surface, utilization_by_itm
+
+# Expense functions
+export calculate_expense, calculate_acquisition_expense, calculate_path_expenses
+export total_expenses, expense_amounts, pv_expenses
+export expense_ratio, average_expense_ratio
+export fixed_vs_variable_split, breakeven_av
+export project_expenses, expense_sensitivity
+
+# Interpolation functions
+export linear_interpolate
+export interpolate_surrender_by_duration, get_sc_cliff_multiplier, get_post_sc_decay_factor
+export interpolate_surrender_by_age
+export interpolate_utilization_by_duration, interpolate_utilization_by_age
+export get_itm_sensitivity_factor, combined_utilization
+export get_surrender_curve, get_utilization_curve
+
+# SOA data constants
+export SOA_2006_SURRENDER_BY_DURATION_7YR_SC, SOA_2006_SC_POSITION
+export SOA_2006_SC_CLIFF_MULTIPLIER, SOA_2006_POST_SC_DECAY
+export SOA_2006_FULL_SURRENDER_BY_AGE, SOA_2006_PARTIAL_WITHDRAWAL_BY_AGE
+export SOA_2018_GLWB_UTILIZATION_BY_DURATION, SOA_2018_GLWB_UTILIZATION_BY_AGE
+export SOA_2018_ITM_SENSITIVITY, SOA_2018_ITM_BREAKPOINTS
+export SOA_2018_ITM_VS_NOT_ITM_BY_AGE, SOA_KEY_INSIGHTS
+
+# GLWB behavioral integration helpers
+export has_lapse_model, has_withdrawal_model, has_expense_model, has_behavioral_models
 
 end # module AnnuityCore

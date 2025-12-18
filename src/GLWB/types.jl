@@ -174,6 +174,11 @@ Result of GLWB Monte Carlo pricing.
 - `prob_lapse::Float64`: Probability of lapse
 - `mean_lapse_year::Float64`: Mean year of lapse (if occurs)
 - `n_paths::Int`: Number of simulation paths
+
+## Behavioral Fields (optional, populated when behavioral models enabled)
+- `avg_utilization::Union{Float64, Nothing}`: Average withdrawal utilization rate
+- `total_expenses_pv::Union{Float64, Nothing}`: Present value of total expenses
+- `lapse_year_histogram::Union{Vector{Int}, Nothing}`: Count of lapses by year
 """
 struct GLWBPricingResult
     price::Float64
@@ -186,4 +191,28 @@ struct GLWBPricingResult
     prob_lapse::Float64
     mean_lapse_year::Float64
     n_paths::Int
+    # Behavioral fields (optional)
+    avg_utilization::Union{Float64, Nothing}
+    total_expenses_pv::Union{Float64, Nothing}
+    lapse_year_histogram::Union{Vector{Int}, Nothing}
+end
+
+# Convenience constructor for backward compatibility (no behavioral fields)
+function GLWBPricingResult(
+    price::Float64,
+    guarantee_cost::Float64,
+    mean_payoff::Float64,
+    std_payoff::Float64,
+    standard_error::Float64,
+    prob_ruin::Float64,
+    mean_ruin_year::Float64,
+    prob_lapse::Float64,
+    mean_lapse_year::Float64,
+    n_paths::Int
+)
+    GLWBPricingResult(
+        price, guarantee_cost, mean_payoff, std_payoff, standard_error,
+        prob_ruin, mean_ruin_year, prob_lapse, mean_lapse_year, n_paths,
+        nothing, nothing, nothing  # No behavioral data
+    )
 end
