@@ -25,4 +25,7 @@ using Statistics
 
     # Behavioral Models (Phase 3.4)
     include("test_behavioral.jl")
+
+    # Stress Testing (Phase 3.5)
+    include("test_stress_testing.jl")
 end

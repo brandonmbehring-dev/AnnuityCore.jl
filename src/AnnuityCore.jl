@@ -81,6 +81,9 @@ include("Products/myga.jl")
 include("Products/fia.jl")
 include("Products/rila.jl")
 
+# Stress Testing
+include("StressTesting/StressTesting.jl")
+
 # Public API - Black-Scholes
 export black_scholes_call, black_scholes_put
 export black_scholes_greeks, BSGreeks
@@ -221,5 +224,64 @@ export SOA_2018_ITM_VS_NOT_ITM_BY_AGE, SOA_KEY_INSIGHTS
 
 # GLWB behavioral integration helpers
 export has_lapse_model, has_withdrawal_model, has_expense_model, has_behavioral_models
+
+# Public API - Stress Testing
+# Core types
+export ScenarioType, HISTORICAL, ORSA, REGULATORY, CUSTOM
+export RecoveryType, V_SHAPED, U_SHAPED, L_SHAPED, W_SHAPED
+export StressScenario, CrisisProfile, HistoricalCrisis
+export SensitivityParameter, SensitivityResult, TornadoData
+export ReverseStressTarget, ReverseStressResult, ReverseStressReport
+export StressTestResult, StressTestConfig, StressTestSummary
+
+# ORSA scenarios
+export ORSA_MODERATE_ADVERSE, ORSA_SEVERELY_ADVERSE, ORSA_EXTREMELY_ADVERSE
+export ORSA_SCENARIOS
+
+# Historical crises
+export CRISIS_2008_GFC, CRISIS_2020_COVID, CRISIS_2000_DOTCOM
+export CRISIS_2011_EURO_DEBT, CRISIS_2015_CHINA, CRISIS_2018_Q4, CRISIS_2022_RATES
+export ALL_HISTORICAL_CRISES, FALLING_RATE_CRISES, RISING_RATE_CRISES
+
+# Scenario functions
+export crisis_to_scenario, get_crisis
+export crises_by_severity, crises_by_duration, crises_by_recovery
+export historical_scenarios
+export interpolate_crisis_profile, crisis_scenario_at_month, generate_crisis_path
+export print_crisis_summary, crisis_statistics
+
+# Scenario builders
+export create_equity_shock, create_rate_shock, create_vol_shock
+export create_behavioral_shock, create_combined_scenario
+export combine_scenarios, scale_scenario
+export generate_equity_grid, generate_rate_grid, generate_2d_grid
+export scenario_summary, is_adverse, severity_score, sort_by_severity
+
+# Sensitivity analysis
+export DEFAULT_EQUITY_PARAM, DEFAULT_RATE_PARAM, DEFAULT_VOL_PARAM
+export DEFAULT_LAPSE_PARAM, DEFAULT_WITHDRAWAL_PARAM, DEFAULT_SENSITIVITY_PARAMS
+export run_sensitivity_sweep, run_multi_sensitivity
+export build_tornado_data, sort_tornado, top_n_tornado
+export sensitivity_elasticity, monotonicity, max_impact, impact_at_extreme
+export SensitivityConfig, SensitivityAnalyzer, run_analysis
+export run_interaction_analysis, interaction_effect
+export print_sensitivity_summary, print_tornado, impact_range
+
+# Reverse stress testing
+export RESERVE_EXHAUSTION, RBC_BREACH_200, RBC_BREACH_300, RESERVE_RATIO_50
+export PREDEFINED_TARGETS
+export triggers_target, find_breaking_point
+export ReverseStressTester, run_reverse_test
+export run_multi_target_reverse
+export breaking_point_distance, breaking_point_severity, format_breaking_point
+export print_reverse_report, vulnerability_summary
+export binary_search_scenario, find_minimum_crisis
+
+# Stress test runner
+export calculate_reserve_impact, calculate_rbc_ratio
+export StressTestRunner, orsa_runner, historical_runner, standard_runner
+export run_scenario, run_all_scenarios, run_stress_test
+export print_stress_summary, export_results
+export quick_stress_test, compare_scenarios, stress_test_grid
 
 end # module AnnuityCore
