@@ -62,9 +62,6 @@ include("Payoffs/rila.jl")
 # Monte Carlo engine (depends on payoffs)
 include("Options/monte_carlo.jl")
 
-# Validation gates
-include("Validation/gates.jl")
-
 # Behavioral Models (must be before GLWB since path_sim.jl uses behavioral types)
 include("Behavioral/Behavioral.jl")
 
@@ -81,11 +78,26 @@ include("Products/myga.jl")
 include("Products/fia.jl")
 include("Products/rila.jl")
 
+# Validation gates (depends on Products for FIAPricingResult, RILAPricingResult)
+include("Validation/gates.jl")
+
 # Stress Testing
 include("StressTesting/StressTesting.jl")
 
 # Data Loaders (Mortality tables, Yield curves)
 include("Loaders/Loaders.jl")
+
+# Competitive Analysis (Market positioning, Rankings, Spreads)
+include("Competitive/Competitive.jl")
+
+# Credit Risk (AM Best ratings, Guaranty funds, CVA)
+include("Credit/Credit.jl")
+
+# Rate Setting (MYGA rate recommendations)
+include("RateSetting/RateSetting.jl")
+
+# Regulatory (VM-21, VM-22, Scenario Generation)
+include("Regulatory/Regulatory.jl")
 
 # Public API - Black-Scholes
 export black_scholes_call, black_scholes_put
@@ -126,8 +138,26 @@ export BufferPayoff, FloorPayoff, BufferWithFloorPayoff, StepRateBufferPayoff
 # Calculation
 export calculate
 
-# Validation
+# Validation - Core Types
 export ValidationResult, HALT, PASS, WARN
+export GateResult, ValidationReport
+export passed, overall_status, halted_gates, warned_gates
+
+# Validation - Gate Types
+export AbstractValidationGate, gate_name, check
+export PresentValueBoundsGate, DurationBoundsGate
+export FIAOptionBudgetGate, FIAExpectedCreditGate
+export RILAMaxLossGate, RILAProtectionValueGate
+export ArbitrageBoundsGate, ProductParameterSanityGate
+export MAX_CAP_RATE, MAX_PARTICIPATION_RATE, MAX_BUFFER_RATE, MAX_SPREAD_RATE
+
+# Validation - Engine and Convenience
+export ValidationEngine, default_gates
+export validate, validate_and_raise
+export validate_pricing_result, ensure_valid
+export print_validation_report
+
+# Validation - Standalone Functions
 export validate_no_arbitrage, validate_put_call_parity
 
 # Public API - Heston Model
@@ -324,5 +354,148 @@ export TREASURY_MATURITIES, FRED_TREASURY_SERIES
 export linear_interp, log_linear_interp, cubic_interp
 export interpolate, interpolate_vector
 export extrapolate_flat, extrapolate_linear
+
+# Public API - Competitive Analysis
+# Types
+export WINKProduct, ProductData
+export PositionResult, DistributionStats
+export CompanyRanking, ProductRanking
+export SpreadResult, SpreadDistribution
+export TreasuryCurve
+
+# Positioning functions
+export analyze_position, get_distribution_stats
+export get_percentile_thresholds, compare_to_peers
+export filter_products
+export calculate_percentile, calculate_rank
+export calculate_quartile, get_position_label
+export position_summary
+
+# Ranking functions
+export RankBy, BEST_RATE, AVG_RATE, PRODUCT_COUNT
+export rank_companies, rank_products, get_company_rank
+export MarketSummary, market_summary
+export rate_leaders_by_duration
+export CompetitiveLandscape, competitive_landscape
+export group_by_company, group_by_duration
+export calculate_tier
+export print_company_rankings, print_product_rankings
+
+# Spread functions
+export calculate_spread, calculate_product_spread
+export calculate_market_spreads, get_spread_distribution
+export analyze_spread_position
+export DurationSpreadSummary, spread_by_duration
+export interpolate_treasury, build_treasury_curve
+export ProductSpread, SpreadComparison
+export compare_spread_to_market
+export print_spread_distribution, print_spread_by_duration
+
+# Competitive constants
+export TREASURY_SERIES
+
+# Utility functions
+export rates, durations, companies
+
+# Public API - Credit Risk
+# AM Best Rating types and functions
+export AMBestRating
+export A_PLUS_PLUS, A_PLUS, A, A_MINUS
+export B_PLUS_PLUS, B_PLUS, B, B_MINUS
+export C_PLUS_PLUS, C_PLUS, C, C_MINUS
+export D, E, F, S
+export RatingPD
+export rating_from_string, rating_to_string
+export is_secure, is_vulnerable
+export get_annual_pd, get_cumulative_pd, get_hazard_rate
+export get_pd_term_structure, get_survival_probability
+export compare_ratings, pd_summary, print_pd_table
+export RATING_STRINGS, STRING_TO_RATING
+export AM_BEST_IMPAIRMENT_RATES
+
+# Guaranty fund types and functions
+export CoverageType
+export LIFE_DEATH_BENEFIT, LIFE_CASH_VALUE
+export ANNUITY_DEFERRED, ANNUITY_PAYOUT, ANNUITY_SSA
+export GROUP_ANNUITY, HEALTH
+export GuarantyFundCoverage
+export get_state_coverage, get_coverage_limit
+export calculate_covered_amount, calculate_uncovered_amount
+export get_coverage_ratio
+export compare_state_coverage, states_with_higher_limits
+export print_state_coverage, print_coverage_comparison
+export STANDARD_LIMITS, STATE_GUARANTY_LIMITS, US_STATE_CODES
+
+# CVA types and functions
+export CVAResult
+export DEFAULT_INSURANCE_LGD
+export calculate_exposure_profile
+export calculate_cva, calculate_cva_term_structure
+export calculate_credit_adjusted_price
+export calculate_credit_spread
+export cva_sensitivity_to_rating, cva_sensitivity_to_term
+export print_cva_result, print_credit_spreads
+
+# Public API - Rate Setting
+# Types
+export RateRecommendation, MarginAnalysis, SensitivityPoint
+export ConfidenceLevel, HIGH, MEDIUM, LOW
+export confidence_string
+
+# Configuration
+export RateRecommenderConfig, DEFAULT_RECOMMENDER_CONFIG
+
+# Main recommendation functions
+export recommend_rate, recommend_for_spread
+export analyze_margin, sensitivity_analysis
+
+# Helper functions
+export get_comparables, calculate_rate_percentile
+export assess_confidence, build_rationale
+
+# Convenience functions
+export quick_rate_recommendation, rate_grid
+export compare_recommendations, print_sensitivity_analysis
+
+# Display functions
+export print_recommendation, print_margin_analysis
+
+# Public API - Regulatory (VM-21, VM-22)
+# [PROTOTYPE] EDUCATIONAL USE ONLY - NOT FOR REGULATORY FILING
+
+# Scenario types
+export EconomicScenario, AG43Scenarios
+export VasicekParams, EquityParams, RiskNeutralEquityParams
+export get_rate_matrix, get_equity_matrix
+export risk_neutral_drift, to_equity_params
+
+# Scenario generation
+export ScenarioGenerator
+export generate_ag43_scenarios, generate_risk_neutral_scenarios
+export generate_rate_scenarios, generate_equity_scenarios
+export generate_deterministic_scenarios
+export calculate_scenario_statistics
+
+# VM-21 types
+export PolicyData, VM21Result
+
+# VM-21 calculator
+export VM21Calculator
+export calculate_cte, calculate_cte70
+export calculate_ssa, calculate_reserve
+export calculate_cte_levels
+export vm21_sensitivity_analysis
+
+# VM-22 types
+export ReserveType, DETERMINISTIC, STOCHASTIC
+export FixedAnnuityPolicy, StochasticExclusionResult, VM22Result
+export get_av
+
+# VM-22 calculator
+export VM22Calculator
+export calculate_net_premium_reserve
+export calculate_deterministic_reserve, calculate_stochastic_reserve
+export stochastic_exclusion_test, single_scenario_test
+export compare_reserve_methods, vm22_sensitivity
 
 end # module AnnuityCore

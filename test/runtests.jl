@@ -31,4 +31,19 @@ using Statistics
 
     # Data Loaders (Phase 3.6)
     include("test_loaders.jl")
+
+    # Competitive Analysis (Phase 3.7)
+    include("test_competitive.jl")
+
+    # Credit Risk (Phase 3.8)
+    include("test_credit.jl")
+
+    # Validation Gates (Phase 3.9)
+    include("test_validation_gates.jl")
+
+    # Rate Setting (Phase 3.10)
+    include("test_rate_setting.jl")
+
+    # Regulatory (Phase 3.11)
+    include("test_regulatory.jl")
 end
