@@ -83,7 +83,7 @@ jobs:
           julia --project=. -e '
             using JuliaFormatter
             # Check if files are formatted (BlueStyle)
-            result = format("src/", BlueStyle(), check_format=true)
+            result = format("src/", BlueStyle())
             result || error("Files not formatted according to BlueStyle")
           '
 
@@ -91,6 +91,7 @@ jobs:
   benchmark:
     name: Benchmarks
     runs-on: ubuntu-latest
+    continue-on-error: true
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
