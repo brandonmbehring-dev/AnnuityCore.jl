@@ -450,9 +450,9 @@ function export_results(summary::StressTestSummary; format::Symbol=:dict)
                 nothing
             else
                 Dict(
-                "name" => summary.worst_case.scenario.name,
-                "impact_pct" => summary.worst_case.reserve_impact_pct,
-            )
+                    "name" => summary.worst_case.scenario.name,
+                    "impact_pct" => summary.worst_case.reserve_impact_pct,
+                )
             end,
         )
     elseif format == :array
