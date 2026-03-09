@@ -30,17 +30,17 @@ Each crisis includes:
 - Duration: 17 months to trough
 - Recovery: 54 months to previous high (Mar 2013)
 """
-const CRISIS_2008_GFC = HistoricalCrisis(
-    name = "2008_gfc",
-    display_name = "2008 Global Financial Crisis",
-    start_date = "2007-10",
-    equity_shock = -0.568,
-    rate_shock = -0.0254,
-    vix_peak = 80.9,
-    duration_months = 17,
-    recovery_months = 54,
-    recovery_type = U_SHAPED,
-    profile = [
+const CRISIS_2008_GFC = HistoricalCrisis(;
+    name="2008_gfc",
+    display_name="2008 Global Financial Crisis",
+    start_date="2007-10",
+    equity_shock=-0.568,
+    rate_shock=-0.0254,
+    vix_peak=80.9,
+    duration_months=17,
+    recovery_months=54,
+    recovery_type=U_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0475, 18.0),
         CrisisProfile(3, -0.10, 0.0425, 22.0),
         CrisisProfile(6, -0.15, 0.0380, 24.0),
@@ -50,7 +50,7 @@ const CRISIS_2008_GFC = HistoricalCrisis(
         CrisisProfile(17, -0.568, 0.0221, 80.9),  # Trough
         CrisisProfile(20, -0.45, 0.0280, 40.0),
         CrisisProfile(24, -0.35, 0.0340, 28.0),
-    ]
+    ],
 )
 
 # ============================================================================
@@ -67,24 +67,24 @@ const CRISIS_2008_GFC = HistoricalCrisis(
 - Duration: 1 month to trough
 - Recovery: 5 months (V-shaped, Aug 2020)
 """
-const CRISIS_2020_COVID = HistoricalCrisis(
-    name = "2020_covid",
-    display_name = "2020 COVID-19 Crisis",
-    start_date = "2020-02",
-    equity_shock = -0.313,
-    rate_shock = -0.0138,
-    vix_peak = 82.69,
-    duration_months = 1,
-    recovery_months = 5,
-    recovery_type = V_SHAPED,
-    profile = [
+const CRISIS_2020_COVID = HistoricalCrisis(;
+    name="2020_covid",
+    display_name="2020 COVID-19 Crisis",
+    start_date="2020-02",
+    equity_shock=-0.313,
+    rate_shock=-0.0138,
+    vix_peak=82.69,
+    duration_months=1,
+    recovery_months=5,
+    recovery_type=V_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0188, 15.0),
         CrisisProfile(0.5, -0.12, 0.0140, 40.0),
         CrisisProfile(1, -0.313, 0.0050, 82.69),  # Trough
         CrisisProfile(2, -0.20, 0.0065, 45.0),
         CrisisProfile(3, -0.10, 0.0070, 30.0),
         CrisisProfile(5, 0.0, 0.0075, 22.0),      # Recovery
-    ]
+    ],
 )
 
 # ============================================================================
@@ -101,24 +101,24 @@ const CRISIS_2020_COVID = HistoricalCrisis(
 - Duration: 31 months to trough
 - Recovery: 56 months (Oct 2006, adjusted for 9/11)
 """
-const CRISIS_2000_DOTCOM = HistoricalCrisis(
-    name = "2000_dotcom",
-    display_name = "2000-2002 Dot-Com Crash",
-    start_date = "2000-03",
-    equity_shock = -0.492,
-    rate_shock = -0.0221,
-    vix_peak = 45.0,
-    duration_months = 31,
-    recovery_months = 56,
-    recovery_type = L_SHAPED,
-    profile = [
+const CRISIS_2000_DOTCOM = HistoricalCrisis(;
+    name="2000_dotcom",
+    display_name="2000-2002 Dot-Com Crash",
+    start_date="2000-03",
+    equity_shock=-0.492,
+    rate_shock=-0.0221,
+    vix_peak=45.0,
+    duration_months=31,
+    recovery_months=56,
+    recovery_type=L_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0626, 22.0),
         CrisisProfile(6, -0.12, 0.0580, 26.0),
         CrisisProfile(12, -0.25, 0.0520, 30.0),
         CrisisProfile(18, -0.30, 0.0480, 28.0),  # 9/11 spike
         CrisisProfile(24, -0.38, 0.0450, 32.0),
         CrisisProfile(31, -0.492, 0.0405, 45.0), # Trough
-    ]
+    ],
 )
 
 # ============================================================================
@@ -135,17 +135,17 @@ const CRISIS_2000_DOTCOM = HistoricalCrisis(
 - Duration: 5 months
 - Recovery: 6 months (double-dip pattern)
 """
-const CRISIS_2011_EURO_DEBT = HistoricalCrisis(
-    name = "2011_euro_debt",
-    display_name = "2011 European Debt Crisis",
-    start_date = "2011-04",
-    equity_shock = -0.145,
-    rate_shock = -0.0175,
-    vix_peak = 48.0,
-    duration_months = 5,
-    recovery_months = 6,
-    recovery_type = W_SHAPED,
-    profile = [
+const CRISIS_2011_EURO_DEBT = HistoricalCrisis(;
+    name="2011_euro_debt",
+    display_name="2011 European Debt Crisis",
+    start_date="2011-04",
+    equity_shock=-0.145,
+    rate_shock=-0.0175,
+    vix_peak=48.0,
+    duration_months=5,
+    recovery_months=6,
+    recovery_type=W_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0375, 15.0),
         CrisisProfile(2, -0.05, 0.0320, 22.0),
         CrisisProfile(3, -0.10, 0.0260, 35.0),
@@ -153,7 +153,7 @@ const CRISIS_2011_EURO_DEBT = HistoricalCrisis(
         CrisisProfile(7, -0.08, 0.0220, 30.0),
         CrisisProfile(8, -0.12, 0.0210, 38.0),   # Second dip
         CrisisProfile(11, 0.0, 0.0230, 18.0),
-    ]
+    ],
 )
 
 # ============================================================================
@@ -170,17 +170,17 @@ const CRISIS_2011_EURO_DEBT = HistoricalCrisis(
 - Duration: 6 months
 - Recovery: 7 months
 """
-const CRISIS_2015_CHINA = HistoricalCrisis(
-    name = "2015_china",
-    display_name = "2015-16 China/Oil Crisis",
-    start_date = "2015-08",
-    equity_shock = -0.123,
-    rate_shock = -0.0062,
-    vix_peak = 28.0,
-    duration_months = 6,
-    recovery_months = 7,
-    recovery_type = V_SHAPED,
-    profile = [
+const CRISIS_2015_CHINA = HistoricalCrisis(;
+    name="2015_china",
+    display_name="2015-16 China/Oil Crisis",
+    start_date="2015-08",
+    equity_shock=-0.123,
+    rate_shock=-0.0062,
+    vix_peak=28.0,
+    duration_months=6,
+    recovery_months=7,
+    recovery_type=V_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0225, 14.0),
         CrisisProfile(1, -0.08, 0.0210, 28.0),    # Flash crash
         CrisisProfile(3, -0.06, 0.0200, 18.0),
@@ -188,7 +188,7 @@ const CRISIS_2015_CHINA = HistoricalCrisis(
         CrisisProfile(6, -0.123, 0.0163, 26.0),   # Trough
         CrisisProfile(9, -0.05, 0.0180, 16.0),
         CrisisProfile(13, 0.0, 0.0195, 14.0),
-    ]
+    ],
 )
 
 # ============================================================================
@@ -205,24 +205,24 @@ const CRISIS_2015_CHINA = HistoricalCrisis(
 - Duration: 3 months
 - Recovery: 4 months (V-shaped)
 """
-const CRISIS_2018_Q4 = HistoricalCrisis(
-    name = "2018_q4",
-    display_name = "2018 Q4 Selloff",
-    start_date = "2018-10",
-    equity_shock = -0.193,
-    rate_shock = -0.0037,
-    vix_peak = 36.0,
-    duration_months = 3,
-    recovery_months = 4,
-    recovery_type = V_SHAPED,
-    profile = [
+const CRISIS_2018_Q4 = HistoricalCrisis(;
+    name="2018_q4",
+    display_name="2018 Q4 Selloff",
+    start_date="2018-10",
+    equity_shock=-0.193,
+    rate_shock=-0.0037,
+    vix_peak=36.0,
+    duration_months=3,
+    recovery_months=4,
+    recovery_type=V_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0323, 13.0),
         CrisisProfile(1, -0.08, 0.0310, 22.0),
         CrisisProfile(2, -0.14, 0.0295, 28.0),
         CrisisProfile(3, -0.193, 0.0286, 36.0),   # Trough (Christmas Eve)
         CrisisProfile(4, -0.10, 0.0270, 20.0),
         CrisisProfile(7, 0.0, 0.0260, 14.0),
-    ]
+    ],
 )
 
 # ============================================================================
@@ -242,24 +242,24 @@ const CRISIS_2018_Q4 = HistoricalCrisis(
 Note: This is the ONLY crisis with rising rates - important for
 testing scenarios where equity and rates move in opposite directions.
 """
-const CRISIS_2022_RATES = HistoricalCrisis(
-    name = "2022_rates",
-    display_name = "2022 Rate Shock",
-    start_date = "2022-01",
-    equity_shock = -0.249,
-    rate_shock = 0.0282,  # POSITIVE - rates rose!
-    vix_peak = 36.5,
-    duration_months = 10,
-    recovery_months = 24,  # Estimated
-    recovery_type = U_SHAPED,
-    profile = [
+const CRISIS_2022_RATES = HistoricalCrisis(;
+    name="2022_rates",
+    display_name="2022 Rate Shock",
+    start_date="2022-01",
+    equity_shock=-0.249,
+    rate_shock=0.0282,  # POSITIVE - rates rose!
+    vix_peak=36.5,
+    duration_months=10,
+    recovery_months=24,  # Estimated
+    recovery_type=U_SHAPED,
+    profile=[
         CrisisProfile(0, 0.0, 0.0152, 18.0),
         CrisisProfile(2, -0.12, 0.0200, 36.5),    # VIX peak (Russia)
         CrisisProfile(4, -0.15, 0.0295, 25.0),
         CrisisProfile(6, -0.20, 0.0320, 28.0),
         CrisisProfile(8, -0.18, 0.0390, 26.0),
         CrisisProfile(10, -0.249, 0.0434, 32.0),  # Trough
-    ]
+    ],
 )
 
 # ============================================================================
@@ -276,7 +276,7 @@ const ALL_HISTORICAL_CRISES = [
     CRISIS_2011_EURO_DEBT,
     CRISIS_2015_CHINA,
     CRISIS_2018_Q4,
-    CRISIS_2022_RATES
+    CRISIS_2022_RATES,
 ]
 
 """
@@ -288,15 +288,13 @@ const FALLING_RATE_CRISES = [
     CRISIS_2000_DOTCOM,
     CRISIS_2011_EURO_DEBT,
     CRISIS_2015_CHINA,
-    CRISIS_2018_Q4
+    CRISIS_2018_Q4,
 ]
 
 """
 Crises with rising rates (stagflation/inflation pattern).
 """
-const RISING_RATE_CRISES = [
-    CRISIS_2022_RATES
-]
+const RISING_RATE_CRISES = [CRISIS_2022_RATES]
 
 """
 Get historical crisis by name.
@@ -306,7 +304,7 @@ Get historical crisis by name.
 crisis = get_crisis("2008_gfc")
 ```
 """
-function get_crisis(name::String)::Union{HistoricalCrisis, Nothing}
+function get_crisis(name::String)::Union{HistoricalCrisis,Nothing}
     for crisis in ALL_HISTORICAL_CRISES
         crisis.name == name && return crisis
     end
@@ -317,21 +315,21 @@ end
 Get all crises sorted by equity severity.
 """
 function crises_by_severity()::Vector{HistoricalCrisis}
-    sort(collect(ALL_HISTORICAL_CRISES), by=c -> c.equity_shock)
+    sort(collect(ALL_HISTORICAL_CRISES); by=c -> c.equity_shock)
 end
 
 """
 Get all crises sorted by duration.
 """
 function crises_by_duration()::Vector{HistoricalCrisis}
-    sort(collect(ALL_HISTORICAL_CRISES), by=c -> c.duration_months, rev=true)
+    sort(collect(ALL_HISTORICAL_CRISES); by=c -> c.duration_months, rev=true)
 end
 
 """
 Get all crises sorted by recovery time.
 """
 function crises_by_recovery()::Vector{HistoricalCrisis}
-    sort(collect(ALL_HISTORICAL_CRISES), by=c -> c.recovery_months, rev=true)
+    sort(collect(ALL_HISTORICAL_CRISES); by=c -> c.recovery_months, rev=true)
 end
 
 """
@@ -371,8 +369,8 @@ function interpolate_crisis_profile(crisis::HistoricalCrisis, month::Float64)::C
     month >= profile[end].month && return profile[end]
 
     # Find bracketing points
-    for i in 1:(length(profile)-1)
-        p1, p2 = profile[i], profile[i+1]
+    for i in 1:(length(profile) - 1)
+        p1, p2 = profile[i], profile[i + 1]
         if p1.month <= month <= p2.month
             # Linear interpolation
             t = (month - p1.month) / (p2.month - p1.month)
@@ -380,7 +378,7 @@ function interpolate_crisis_profile(crisis::HistoricalCrisis, month::Float64)::C
                 month,
                 p1.equity_cumulative + t * (p2.equity_cumulative - p1.equity_cumulative),
                 p1.rate_level + t * (p2.rate_level - p1.rate_level),
-                p1.vix_level + t * (p2.vix_level - p1.vix_level)
+                p1.vix_level + t * (p2.vix_level - p1.vix_level),
             )
         end
     end
@@ -412,13 +410,13 @@ function crisis_scenario_at_month(crisis::HistoricalCrisis, month::Float64)::Str
     initial_rate = crisis.profile[1].rate_level
     rate_shock = profile.rate_level - initial_rate
 
-    StressScenario(
-        name = "$(crisis.name)_m$(round(Int, month))",
-        display_name = "$(crisis.display_name) Month $(round(Int, month))",
-        equity_shock = profile.equity_cumulative,
-        rate_shock = rate_shock,
-        vol_shock = vol_shock,
-        scenario_type = HISTORICAL
+    StressScenario(;
+        name="$(crisis.name)_m$(round(Int, month))",
+        display_name="$(crisis.display_name) Month $(round(Int, month))",
+        equity_shock=profile.equity_cumulative,
+        rate_shock=rate_shock,
+        vol_shock=vol_shock,
+        scenario_type=HISTORICAL,
     )
 end
 
@@ -440,8 +438,7 @@ path = generate_crisis_path(CRISIS_2020_COVID, step_months=0.5)
 ```
 """
 function generate_crisis_path(
-    crisis::HistoricalCrisis;
-    step_months::Float64 = 1.0
+    crisis::HistoricalCrisis; step_months::Float64=1.0
 )::Vector{StressScenario}
     isempty(crisis.profile) && return [crisis_to_scenario(crisis)]
 
@@ -467,7 +464,9 @@ function print_crisis_summary()
         sign_str = crisis.rate_shock >= 0 ? "+" : ""
         println("  Rates:  $(sign_str)$(round(Int, crisis.rate_shock * 10000)) bps")
         println("  VIX:    $(round(crisis.vix_peak, digits=1))")
-        println("  Duration: $(crisis.duration_months) months → Recovery: $(crisis.recovery_months) months")
+        println(
+            "  Duration: $(crisis.duration_months) months → Recovery: $(crisis.recovery_months) months",
+        )
         println("  Pattern: $(crisis.recovery_type)")
         println()
     end
@@ -476,7 +475,7 @@ end
 """
 Get crisis statistics as a dictionary.
 """
-function crisis_statistics()::Dict{String, Any}
+function crisis_statistics()::Dict{String,Any}
     Dict(
         "count" => length(ALL_HISTORICAL_CRISES),
         "worst_equity" => minimum(c.equity_shock for c in ALL_HISTORICAL_CRISES),
@@ -486,6 +485,6 @@ function crisis_statistics()::Dict{String, Any}
         "longest_duration" => maximum(c.duration_months for c in ALL_HISTORICAL_CRISES),
         "longest_recovery" => maximum(c.recovery_months for c in ALL_HISTORICAL_CRISES),
         "avg_equity" => mean(c.equity_shock for c in ALL_HISTORICAL_CRISES),
-        "avg_duration" => mean(c.duration_months for c in ALL_HISTORICAL_CRISES)
+        "avg_duration" => mean(c.duration_months for c in ALL_HISTORICAL_CRISES),
     )
 end

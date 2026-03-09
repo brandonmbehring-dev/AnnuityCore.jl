@@ -20,13 +20,13 @@ Default equity shock parameter for sensitivity analysis.
 - Low: -60% (near 2008 GFC trough)
 - High: -10% (mild correction)
 """
-const DEFAULT_EQUITY_PARAM = SensitivityParameter(
-    name = "equity_shock",
-    display_name = "Equity Shock",
-    base_value = -0.30,
-    range_low = -0.60,
-    range_high = -0.10,
-    unit = "%"
+const DEFAULT_EQUITY_PARAM = SensitivityParameter(;
+    name="equity_shock",
+    display_name="Equity Shock",
+    base_value=-0.30,
+    range_low=-0.60,
+    range_high=-0.10,
+    unit="%",
 )
 
 """
@@ -36,13 +36,13 @@ Default rate shock parameter for sensitivity analysis.
 - Low: -200 bps (2008 GFC level)
 - High: +100 bps (2022 rising rate scenario)
 """
-const DEFAULT_RATE_PARAM = SensitivityParameter(
-    name = "rate_shock",
-    display_name = "Rate Shock",
-    base_value = -0.0050,  # -50 bps
-    range_low = -0.0200,   # -200 bps
-    range_high = 0.0100,   # +100 bps
-    unit = "bps"
+const DEFAULT_RATE_PARAM = SensitivityParameter(;
+    name="rate_shock",
+    display_name="Rate Shock",
+    base_value=-0.0050,  # -50 bps
+    range_low=-0.0200,   # -200 bps
+    range_high=0.0100,   # +100 bps
+    unit="bps",
 )
 
 """
@@ -52,13 +52,13 @@ Default volatility shock parameter.
 - Low: 1.0x (no change)
 - High: 4.0x (extreme, ~80 VIX equivalent)
 """
-const DEFAULT_VOL_PARAM = SensitivityParameter(
-    name = "vol_shock",
-    display_name = "Vol Multiplier",
-    base_value = 1.5,
-    range_low = 1.0,
-    range_high = 4.0,
-    unit = "x"
+const DEFAULT_VOL_PARAM = SensitivityParameter(;
+    name="vol_shock",
+    display_name="Vol Multiplier",
+    base_value=1.5,
+    range_low=1.0,
+    range_high=4.0,
+    unit="x",
 )
 
 """
@@ -68,13 +68,13 @@ Default lapse multiplier parameter.
 - Low: 0.8x (reduced lapse in ITM scenarios)
 - High: 2.0x (stressed lapse environment)
 """
-const DEFAULT_LAPSE_PARAM = SensitivityParameter(
-    name = "lapse_multiplier",
-    display_name = "Lapse Multiplier",
-    base_value = 1.0,
-    range_low = 0.8,
-    range_high = 2.0,
-    unit = "x"
+const DEFAULT_LAPSE_PARAM = SensitivityParameter(;
+    name="lapse_multiplier",
+    display_name="Lapse Multiplier",
+    base_value=1.0,
+    range_low=0.8,
+    range_high=2.0,
+    unit="x",
 )
 
 """
@@ -84,13 +84,13 @@ Default withdrawal multiplier parameter.
 - Low: 0.8x (conservative utilization)
 - High: 2.0x (maximum withdrawal scenario)
 """
-const DEFAULT_WITHDRAWAL_PARAM = SensitivityParameter(
-    name = "withdrawal_multiplier",
-    display_name = "Withdrawal Multiplier",
-    base_value = 1.0,
-    range_low = 0.8,
-    range_high = 2.0,
-    unit = "x"
+const DEFAULT_WITHDRAWAL_PARAM = SensitivityParameter(;
+    name="withdrawal_multiplier",
+    display_name="Withdrawal Multiplier",
+    base_value=1.0,
+    range_low=0.8,
+    range_high=2.0,
+    unit="x",
 )
 
 """
@@ -101,7 +101,7 @@ const DEFAULT_SENSITIVITY_PARAMS = [
     DEFAULT_RATE_PARAM,
     DEFAULT_VOL_PARAM,
     DEFAULT_LAPSE_PARAM,
-    DEFAULT_WITHDRAWAL_PARAM
+    DEFAULT_WITHDRAWAL_PARAM,
 ]
 
 # ============================================================================
@@ -129,12 +129,10 @@ result = run_sensitivity_sweep(param, impact_fn)
 ```
 """
 function run_sensitivity_sweep(
-    param::SensitivityParameter,
-    impact_fn::Function;
-    n_points::Int = 21
+    param::SensitivityParameter, impact_fn::Function; n_points::Int=21
 )::SensitivityResult
     # Generate parameter values
-    values = range(param.range_low, param.range_high, length=n_points) |> collect
+    values = collect(range(param.range_low, param.range_high; length=n_points))
 
     # Calculate impact at each value
     impacts = [impact_fn(v) for v in values]
@@ -172,13 +170,13 @@ function run_multi_sensitivity(
     params::Vector{SensitivityParameter},
     scenario_builder::Function,
     metric_fn::Function;
-    n_points::Int = 21
+    n_points::Int=21,
 )::Vector{SensitivityResult}
     results = SensitivityResult[]
 
     for param in params
         # Create impact function that varies only this parameter
-        impact_fn = function(value)
+        impact_fn = function (value)
             scenario = scenario_builder(param.name, value)
             metric_fn(scenario)
         end
@@ -224,12 +222,7 @@ function build_tornado_data(results::Vector{SensitivityResult})::TornadoData
     # Use first result's base metric (should be same for all)
     base_value = isempty(results) ? 0.0 : results[1].base_metric
 
-    TornadoData(;
-        parameters,
-        low_impacts,
-        high_impacts,
-        base_value
-    )
+    TornadoData(; parameters, low_impacts, high_impacts, base_value)
 end
 
 """
@@ -244,18 +237,18 @@ Sort tornado data by impact range (in-place).
 # Returns
 - `TornadoData`: New sorted tornado data
 """
-function sort_tornado(tornado::TornadoData; descending::Bool = true)
+function sort_tornado(tornado::TornadoData; descending::Bool=true)
     n = length(tornado.parameters)
     ranges = [impact_range(tornado, i) for i in 1:n]
 
     # Get sort indices
-    indices = sortperm(ranges, rev=descending)
+    indices = sortperm(ranges; rev=descending)
 
     TornadoData(;
-        parameters = tornado.parameters[indices],
-        low_impacts = tornado.low_impacts[indices],
-        high_impacts = tornado.high_impacts[indices],
-        base_value = tornado.base_value
+        parameters=tornado.parameters[indices],
+        low_impacts=tornado.low_impacts[indices],
+        high_impacts=tornado.high_impacts[indices],
+        base_value=tornado.base_value,
     )
 end
 
@@ -276,10 +269,10 @@ function top_n_tornado(tornado::TornadoData, n::Int)
     n_keep = min(n, length(sorted.parameters))
 
     TornadoData(;
-        parameters = sorted.parameters[1:n_keep],
-        low_impacts = sorted.low_impacts[1:n_keep],
-        high_impacts = sorted.high_impacts[1:n_keep],
-        base_value = sorted.base_value
+        parameters=sorted.parameters[1:n_keep],
+        low_impacts=sorted.low_impacts[1:n_keep],
+        high_impacts=sorted.high_impacts[1:n_keep],
+        base_value=sorted.base_value,
     )
 end
 
@@ -382,9 +375,9 @@ struct SensitivityConfig
     include_interactions::Bool
 
     function SensitivityConfig(;
-        parameters::Vector{SensitivityParameter} = DEFAULT_SENSITIVITY_PARAMS,
-        n_points::Int = 21,
-        include_interactions::Bool = false
+        parameters::Vector{SensitivityParameter}=DEFAULT_SENSITIVITY_PARAMS,
+        n_points::Int=21,
+        include_interactions::Bool=false,
     )
         n_points < 3 && error("n_points must be >= 3")
         new(parameters, n_points, include_interactions)
@@ -425,7 +418,7 @@ function run_analysis(analyzer::SensitivityAnalyzer)
         analyzer.config.parameters,
         analyzer.scenario_builder,
         analyzer.metric_fn;
-        n_points = analyzer.config.n_points
+        n_points=analyzer.config.n_points,
     )
 
     # Build tornado data
@@ -436,16 +429,16 @@ function run_analysis(analyzer::SensitivityAnalyzer)
     top_driver = isempty(sorted_tornado.parameters) ? "" : sorted_tornado.parameters[1]
 
     # Calculate elasticities
-    elasticities = Dict{String, Float64}()
+    elasticities = Dict{String,Float64}()
     for result in results
         elasticities[result.parameter.name] = sensitivity_elasticity(result)
     end
 
     (
-        results = results,
-        tornado = sorted_tornado,
-        top_driver = top_driver,
-        elasticities = elasticities
+        results=results,
+        tornado=sorted_tornado,
+        top_driver=top_driver,
+        elasticities=elasticities,
     )
 end
 
@@ -476,10 +469,10 @@ function run_interaction_analysis(
     param2::SensitivityParameter,
     scenario_builder::Function,
     metric_fn::Function;
-    n_points::Int = 11
+    n_points::Int=11,
 )
-    values1 = range(param1.range_low, param1.range_high, length=n_points) |> collect
-    values2 = range(param2.range_low, param2.range_high, length=n_points) |> collect
+    values1 = collect(range(param1.range_low, param1.range_high; length=n_points))
+    values2 = collect(range(param2.range_low, param2.range_high; length=n_points))
 
     impacts = Matrix{Float64}(undef, n_points, n_points)
 
@@ -490,13 +483,7 @@ function run_interaction_analysis(
         end
     end
 
-    (
-        param1 = param1,
-        param2 = param2,
-        values1 = values1,
-        values2 = values2,
-        impacts = impacts
-    )
+    (param1=param1, param2=param2, values1=values1, values2=values2, impacts=impacts)
 end
 
 """
@@ -522,7 +509,8 @@ function interaction_effect(result)::Float64
     for i in 1:n1
         for j in 1:n2
             # Additive prediction
-            additive = result.impacts[i, base_idx2] + result.impacts[base_idx1, j] - base_impact
+            additive =
+                result.impacts[i, base_idx2] + result.impacts[base_idx1, j] - base_impact
             # Actual impact
             actual = result.impacts[i, j]
             # Interaction = actual - additive
@@ -547,7 +535,7 @@ function print_sensitivity_summary(results::Vector{SensitivityResult})
     println("="^60)
     println()
 
-    sorted = sort(results, by=max_impact, rev=true)
+    sorted = sort(results; by=max_impact, rev=true)
 
     for result in sorted
         param = result.parameter

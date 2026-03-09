@@ -50,16 +50,12 @@ struct MortalityTable
     gender::Gender
 
     function MortalityTable(;
-        table_name::String,
-        min_age::Int,
-        max_age::Int,
-        qx::Vector{Float64},
-        gender::Gender
+        table_name::String, min_age::Int, max_age::Int, qx::Vector{Float64}, gender::Gender
     )
         # Validate length
         expected_len = max_age - min_age + 1
         length(qx) == expected_len || error(
-            "qx array length ($(length(qx))) must equal max_age - min_age + 1 ($expected_len)"
+            "qx array length ($(length(qx))) must equal max_age - min_age + 1 ($expected_len)",
         )
 
         # Validate bounds
@@ -117,22 +113,21 @@ struct YieldCurve
     function YieldCurve(;
         maturities::Vector{Float64},
         rates::Vector{Float64},
-        as_of_date::String = "",
-        curve_type::String = "Custom",
-        interpolation::InterpolationMethod = LINEAR
+        as_of_date::String="",
+        curve_type::String="Custom",
+        interpolation::InterpolationMethod=LINEAR,
     )
         # Validate lengths match
         length(maturities) == length(rates) || error(
-            "Maturities ($(length(maturities))) and rates ($(length(rates))) must have same length"
+            "Maturities ($(length(maturities))) and rates ($(length(rates))) must have same length",
         )
 
         # At least one point
         length(maturities) > 0 || error("Curve must have at least one point")
 
         # Strictly increasing maturities
-        issorted(maturities) && allunique(maturities) || error(
-            "Maturities must be strictly increasing"
-        )
+        issorted(maturities) && allunique(maturities) ||
+            error("Maturities must be strictly increasing")
 
         # Positive maturities
         all(m -> m > 0, maturities) || error("Maturities must be positive")
@@ -176,10 +171,7 @@ struct NelsonSiegelParams
     tau::Float64
 
     function NelsonSiegelParams(;
-        beta0::Float64,
-        beta1::Float64,
-        beta2::Float64,
-        tau::Float64
+        beta0::Float64, beta1::Float64, beta2::Float64, tau::Float64
     )
         tau > 0 || error("tau must be positive, got $tau")
         new(beta0, beta1, beta2, tau)
@@ -214,6 +206,6 @@ Result of comparing mortality tables.
 """
 struct MortalityComparison
     ages::Vector{Int}
-    tables::Dict{String, MortalityTable}
-    life_expectancies::Dict{String, Vector{Float64}}
+    tables::Dict{String,MortalityTable}
+    life_expectancies::Dict{String,Vector{Float64}}
 end

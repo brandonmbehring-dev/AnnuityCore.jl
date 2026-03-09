@@ -85,10 +85,10 @@ struct StressScenario
         display_name::String,
         equity_shock::Float64,
         rate_shock::Float64,
-        vol_shock::Float64 = 1.0,
-        lapse_multiplier::Float64 = 1.0,
-        withdrawal_multiplier::Float64 = 1.0,
-        scenario_type::ScenarioType = CUSTOM
+        vol_shock::Float64=1.0,
+        lapse_multiplier::Float64=1.0,
+        withdrawal_multiplier::Float64=1.0,
+        scenario_type::ScenarioType=CUSTOM,
     )
         # Validate bounds
         equity_shock > 1.0 && error("equity_shock $equity_shock > 100% gain is unrealistic")
@@ -97,8 +97,16 @@ struct StressScenario
         lapse_multiplier < 0.0 && error("lapse_multiplier must be non-negative")
         withdrawal_multiplier < 0.0 && error("withdrawal_multiplier must be non-negative")
 
-        new(name, display_name, equity_shock, rate_shock, vol_shock,
-            lapse_multiplier, withdrawal_multiplier, scenario_type)
+        new(
+            name,
+            display_name,
+            equity_shock,
+            rate_shock,
+            vol_shock,
+            lapse_multiplier,
+            withdrawal_multiplier,
+            scenario_type,
+        )
     end
 end
 
@@ -108,14 +116,20 @@ function StressScenario(
     display_name::String,
     equity_shock::Float64,
     rate_shock::Float64;
-    vol_shock::Float64 = 1.0,
-    lapse_multiplier::Float64 = 1.0,
-    withdrawal_multiplier::Float64 = 1.0,
-    scenario_type::ScenarioType = CUSTOM
+    vol_shock::Float64=1.0,
+    lapse_multiplier::Float64=1.0,
+    withdrawal_multiplier::Float64=1.0,
+    scenario_type::ScenarioType=CUSTOM,
 )
     StressScenario(;
-        name, display_name, equity_shock, rate_shock,
-        vol_shock, lapse_multiplier, withdrawal_multiplier, scenario_type
+        name,
+        display_name,
+        equity_shock,
+        rate_shock,
+        vol_shock,
+        lapse_multiplier,
+        withdrawal_multiplier,
+        scenario_type,
     )
 end
 
@@ -198,16 +212,27 @@ struct HistoricalCrisis
         duration_months::Int,
         recovery_months::Int,
         recovery_type::RecoveryType,
-        profile::Vector{CrisisProfile} = CrisisProfile[]
+        profile::Vector{CrisisProfile}=CrisisProfile[],
     )
         # Validate
-        equity_shock > 0.0 && @warn "equity_shock positive ($equity_shock) - crises usually negative"
+        equity_shock > 0.0 &&
+            @warn "equity_shock positive ($equity_shock) - crises usually negative"
         duration_months < 0 && error("duration_months must be non-negative")
         recovery_months < 0 && error("recovery_months must be non-negative")
         vix_peak < 0.0 && error("vix_peak must be non-negative")
 
-        new(name, display_name, start_date, equity_shock, rate_shock, vix_peak,
-            duration_months, recovery_months, recovery_type, profile)
+        new(
+            name,
+            display_name,
+            start_date,
+            equity_shock,
+            rate_shock,
+            vix_peak,
+            duration_months,
+            recovery_months,
+            recovery_type,
+            profile,
+        )
     end
 end
 
@@ -218,13 +243,13 @@ function crisis_to_scenario(crisis::HistoricalCrisis)::StressScenario
     # Estimate vol shock from VIX (baseline ~20)
     vol_shock = crisis.vix_peak / 20.0
 
-    StressScenario(
-        name = crisis.name,
-        display_name = crisis.display_name,
-        equity_shock = crisis.equity_shock,
-        rate_shock = crisis.rate_shock,
-        vol_shock = vol_shock,
-        scenario_type = HISTORICAL
+    StressScenario(;
+        name=crisis.name,
+        display_name=crisis.display_name,
+        equity_shock=crisis.equity_shock,
+        rate_shock=crisis.rate_shock,
+        vol_shock=vol_shock,
+        scenario_type=HISTORICAL,
     )
 end
 
@@ -259,7 +284,7 @@ struct SensitivityParameter
         base_value::Float64,
         range_low::Float64,
         range_high::Float64,
-        unit::String = ""
+        unit::String="",
     )
         range_low > range_high && error("range_low ($range_low) > range_high ($range_high)")
         new(name, display_name, base_value, range_low, range_high, unit)
@@ -305,7 +330,7 @@ struct TornadoData
         parameters::Vector{String},
         low_impacts::Vector{Float64},
         high_impacts::Vector{Float64},
-        base_value::Float64
+        base_value::Float64,
     )
         n = length(parameters)
         length(low_impacts) != n && error("low_impacts length mismatch")
@@ -346,8 +371,8 @@ struct ReverseStressTarget
         name::String,
         display_name::String,
         threshold::Float64,
-        direction::Symbol = :below,
-        metric::Symbol = :reserve_ratio
+        direction::Symbol=:below,
+        metric::Symbol=:reserve_ratio,
     )
         direction in (:below, :above) || error("direction must be :below or :above")
         new(name, display_name, threshold, direction, metric)
@@ -380,7 +405,7 @@ Result of reverse stress test for a single parameter.
 struct ReverseStressResult
     target::ReverseStressTarget
     parameter::String
-    breaking_point::Union{Float64, Nothing}
+    breaking_point::Union{Float64,Nothing}
     iterations::Int
     converged::Bool
 end
@@ -398,7 +423,7 @@ Complete reverse stress test report.
 struct ReverseStressReport
     target::ReverseStressTarget
     results::Vector{ReverseStressResult}
-    most_vulnerable::Union{String, Nothing}
+    most_vulnerable::Union{String,Nothing}
 end
 
 # ============================================================================
@@ -425,7 +450,7 @@ struct StressTestResult
     stressed_reserve::Float64
     reserve_impact::Float64
     reserve_impact_pct::Float64
-    rbc_ratio::Union{Float64, Nothing}
+    rbc_ratio::Union{Float64,Nothing}
     passed::Bool
 end
 
@@ -452,16 +477,22 @@ struct StressTestConfig
 
     function StressTestConfig(;
         base_reserve::Float64,
-        minimum_reserve_ratio::Float64 = 0.0,
-        rbc_threshold::Float64 = 2.0,
-        run_sensitivity::Bool = true,
-        run_reverse::Bool = true,
-        n_sensitivity_points::Int = 21
+        minimum_reserve_ratio::Float64=0.0,
+        rbc_threshold::Float64=2.0,
+        run_sensitivity::Bool=true,
+        run_reverse::Bool=true,
+        n_sensitivity_points::Int=21,
     )
         base_reserve <= 0.0 && error("base_reserve must be positive")
         n_sensitivity_points < 3 && error("n_sensitivity_points must be >= 3")
-        new(base_reserve, minimum_reserve_ratio, rbc_threshold,
-            run_sensitivity, run_reverse, n_sensitivity_points)
+        new(
+            base_reserve,
+            minimum_reserve_ratio,
+            rbc_threshold,
+            run_sensitivity,
+            run_reverse,
+            n_sensitivity_points,
+        )
     end
 end
 
@@ -481,8 +512,8 @@ Summary of complete stress test suite.
 struct StressTestSummary
     config::StressTestConfig
     scenario_results::Vector{StressTestResult}
-    sensitivity::Union{TornadoData, Nothing}
-    reverse_report::Union{ReverseStressReport, Nothing}
-    worst_case::Union{StressTestResult, Nothing}
+    sensitivity::Union{TornadoData,Nothing}
+    reverse_report::Union{ReverseStressReport,Nothing}
+    worst_case::Union{StressTestResult,Nothing}
     all_passed::Bool
 end

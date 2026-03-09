@@ -98,7 +98,8 @@ log_linear_interp(1.5, xs, ys)  # ≈ 0.924
 ```
 """
 function log_linear_interp(x::Float64, xs::Vector{Float64}, ys::Vector{Float64})::Float64
-    all(y -> y > 0, ys) || error("All y values must be positive for log-linear interpolation")
+    all(y -> y > 0, ys) ||
+        error("All y values must be positive for log-linear interpolation")
 
     log_ys = log.(ys)
     log_y = linear_interp(x, xs, log_ys)
@@ -150,10 +151,10 @@ function cubic_interp(x::Float64, xs::Vector{Float64}, ys::Vector{Float64})::Flo
     end
 
     # Diagonal elements
-    diag_main = [2.0 * (h[i] + h[i+1]) for i in 1:n_interior]
+    diag_main = [2.0 * (h[i] + h[i + 1]) for i in 1:n_interior]
     diag_lower = h[2:n_interior]
     diag_upper = h[2:n_interior]
-    rhs = [6.0 * (δ[i+1] - δ[i]) for i in 1:n_interior]
+    rhs = [6.0 * (δ[i + 1] - δ[i]) for i in 1:n_interior]
 
     # Solve tridiagonal system (Thomas algorithm)
     M = zeros(n)  # Second derivatives
@@ -168,17 +169,17 @@ function cubic_interp(x::Float64, xs::Vector{Float64}, ys::Vector{Float64})::Flo
         d_prime[1] = rhs[1] / diag_main[1]
 
         for i in 2:n_interior
-            denom = diag_main[i] - diag_lower[i-1] * c_prime[i-1]
+            denom = diag_main[i] - diag_lower[i - 1] * c_prime[i - 1]
             if i < n_interior
                 c_prime[i] = diag_upper[i] / denom
             end
-            d_prime[i] = (rhs[i] - diag_lower[i-1] * d_prime[i-1]) / denom
+            d_prime[i] = (rhs[i] - diag_lower[i - 1] * d_prime[i - 1]) / denom
         end
 
         # Back substitution
-        M[n-1] = d_prime[n_interior]
-        for i in (n_interior-1):-1:1
-            M[i+1] = d_prime[i] - c_prime[i] * M[i+2]
+        M[n - 1] = d_prime[n_interior]
+        for i in (n_interior - 1):-1:1
+            M[i + 1] = d_prime[i] - c_prime[i] * M[i + 2]
         end
     end
 
@@ -193,9 +194,9 @@ function cubic_interp(x::Float64, xs::Vector{Float64}, ys::Vector{Float64})::Flo
     h_i = h[i]
 
     # Cubic polynomial evaluation
-    a = (M[i+1] - M[i]) / (6.0 * h_i)
+    a = (M[i + 1] - M[i]) / (6.0 * h_i)
     b = M[i] / 2.0
-    c = δ[i] - h_i * (2.0 * M[i] + M[i+1]) / 6.0
+    c = δ[i] - h_i * (2.0 * M[i] + M[i + 1]) / 6.0
     d = ys[i]
 
     d + dx * (c + dx * (b + dx * a))
@@ -220,10 +221,7 @@ Dispatch to appropriate interpolation method.
 - `Float64`: Interpolated y value
 """
 function interpolate(
-    x::Float64,
-    xs::Vector{Float64},
-    ys::Vector{Float64},
-    method::InterpolationMethod
+    x::Float64, xs::Vector{Float64}, ys::Vector{Float64}, method::InterpolationMethod
 )::Float64
     if method == LINEAR
         linear_interp(x, xs, ys)
@@ -258,7 +256,7 @@ function interpolate_vector(
     x_new::Vector{Float64},
     xs::Vector{Float64},
     ys::Vector{Float64};
-    method::InterpolationMethod = LINEAR
+    method::InterpolationMethod=LINEAR,
 )::Vector{Float64}
     [interpolate(x, xs, ys, method) for x in x_new]
 end
@@ -307,7 +305,7 @@ function extrapolate_linear(x::Float64, xs::Vector{Float64}, ys::Vector{Float64}
     elseif x > xs[end]
         # Extrapolate using last two points
         n = length(xs)
-        slope = (ys[n] - ys[n-1]) / (xs[n] - xs[n-1])
+        slope = (ys[n] - ys[n - 1]) / (xs[n] - xs[n - 1])
         return ys[n] + slope * (x - xs[n])
     else
         linear_interp(x, xs, ys)

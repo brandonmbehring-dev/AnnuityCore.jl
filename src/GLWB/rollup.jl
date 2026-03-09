@@ -12,7 +12,6 @@ Ratchet provisions step-up the GWB to the account value on anniversaries,
 protecting against market downturns while locking in gains.
 """
 
-
 """
     simple_rollup(base, rate, years, cap_years) -> Float64
 
@@ -36,7 +35,6 @@ function simple_rollup(base::Float64, rate::Float64, years::Float64, cap_years::
     effective_years = min(years, Float64(cap_years))
     return base * (1.0 + rate * effective_years)
 end
-
 
 """
     compound_rollup(base, rate, years, cap_years) -> Float64
@@ -62,7 +60,6 @@ function compound_rollup(base::Float64, rate::Float64, years::Float64, cap_years
     return base * (1.0 + rate)^effective_years
 end
 
-
 """
     calculate_rollup(state, config) -> Float64
 
@@ -79,14 +76,21 @@ function calculate_rollup(state::GWBState, config::GWBConfig)
     if config.rollup_type == NONE
         return state.gwb
     elseif config.rollup_type == SIMPLE
-        return simple_rollup(state.rollup_base, config.rollup_rate,
-                            state.years_since_issue, config.rollup_cap_years)
+        return simple_rollup(
+            state.rollup_base,
+            config.rollup_rate,
+            state.years_since_issue,
+            config.rollup_cap_years,
+        )
     else  # COMPOUND
-        return compound_rollup(state.rollup_base, config.rollup_rate,
-                              state.years_since_issue, config.rollup_cap_years)
+        return compound_rollup(
+            state.rollup_base,
+            config.rollup_rate,
+            state.years_since_issue,
+            config.rollup_cap_years,
+        )
     end
 end
-
 
 """
     apply_ratchet(gwb, av) -> Float64
@@ -107,7 +111,6 @@ function apply_ratchet(gwb::Float64, av::Float64)
     return max(gwb, av)
 end
 
-
 """
     is_anniversary(years_since_issue, dt) -> Bool
 
@@ -127,7 +130,6 @@ function is_anniversary(years_since_issue::Float64, dt::Float64)
     return curr_year > prev_year
 end
 
-
 """
     rollup_comparison(base, rate, years, cap_years) -> NamedTuple
 
@@ -144,9 +146,9 @@ function rollup_comparison(base::Float64, rate::Float64, years::Float64, cap_yea
     simple_val = simple_rollup(base, rate, years, cap_years)
     compound_val = compound_rollup(base, rate, years, cap_years)
     return (
-        simple = simple_val,
-        compound = compound_val,
-        difference = compound_val - simple_val,
-        ratio = compound_val / simple_val
+        simple=simple_val,
+        compound=compound_val,
+        difference=compound_val - simple_val,
+        ratio=compound_val / simple_val,
     )
 end

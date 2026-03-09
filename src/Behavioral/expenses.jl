@@ -18,7 +18,6 @@ Theory
 - Acquisition: 3-8% of premium
 """
 
-
 # =============================================================================
 # Core Expense Calculation
 # =============================================================================
@@ -45,11 +44,7 @@ result = calculate_expense(config, 100_000.0, 5)
 result.total_expense  # ~100*(1.025)^5 + 0.015*100_000 ≈ 1613
 ```
 """
-function calculate_expense(
-    config::ExpenseConfig,
-    av::Real,
-    year::Int
-)
+function calculate_expense(config::ExpenseConfig, av::Real, year::Int)
     av >= 0 || throw(ArgumentError("AV cannot be negative, got $av"))
     year >= 0 || throw(ArgumentError("Year cannot be negative, got $year"))
 
@@ -65,7 +60,6 @@ function calculate_expense(
 
     return ExpenseResult(total_expense, per_policy_component, av_component)
 end
-
 
 """
     calculate_acquisition_expense(config::ExpenseConfig, premium) -> Float64
@@ -92,7 +86,6 @@ function calculate_acquisition_expense(config::ExpenseConfig, premium::Real)
     return config.acquisition_pct * premium
 end
 
-
 # =============================================================================
 # Path-Based Calculations
 # =============================================================================
@@ -116,8 +109,8 @@ Calculate expenses along a simulation path.
 function calculate_path_expenses(
     config::ExpenseConfig,
     av_path::Vector{<:Real};
-    include_acquisition::Bool = true,
-    premium::Union{Real, Nothing} = nothing
+    include_acquisition::Bool=true,
+    premium::Union{Real,Nothing}=nothing,
 )
     n = length(av_path)
     results = Vector{ExpenseResult}(undef, n)
@@ -135,7 +128,7 @@ function calculate_path_expenses(
             result = ExpenseResult(
                 result.total_expense + acq_cost,
                 result.per_policy_component + acq_cost,  # Include in per-policy for reporting
-                result.av_component
+                result.av_component,
             )
         end
 
@@ -144,7 +137,6 @@ function calculate_path_expenses(
 
     return results
 end
-
 
 # =============================================================================
 # Expense Metrics
@@ -159,7 +151,6 @@ function total_expenses(results::Vector{ExpenseResult})
     return sum(r.total_expense for r in results)
 end
 
-
 """
     expense_amounts(results::Vector{ExpenseResult}) -> Vector{Float64}
 
@@ -168,7 +159,6 @@ Extract expense amounts from results.
 function expense_amounts(results::Vector{ExpenseResult})
     return [r.total_expense for r in results]
 end
-
 
 """
     pv_expenses(results::Vector{ExpenseResult}, discount_rate::Real; dt::Real=1.0) -> Float64
@@ -185,11 +175,7 @@ Calculate present value of expenses.
 # Returns
 - `Float64`: Present value of all expenses
 """
-function pv_expenses(
-    results::Vector{ExpenseResult},
-    discount_rate::Real;
-    dt::Real = 1.0
-)
+function pv_expenses(results::Vector{ExpenseResult}, discount_rate::Real; dt::Real=1.0)
     pv = 0.0
     for (t, result) in enumerate(results)
         time = (t - 1) * dt
@@ -199,17 +185,12 @@ function pv_expenses(
     return pv
 end
 
-
 """
     pv_expenses(expenses::Vector{<:Real}, discount_rate::Real; dt::Real=1.0) -> Float64
 
 Calculate present value of expense amounts directly.
 """
-function pv_expenses(
-    expenses::Vector{<:Real},
-    discount_rate::Real;
-    dt::Real = 1.0
-)
+function pv_expenses(expenses::Vector{<:Real}, discount_rate::Real; dt::Real=1.0)
     pv = 0.0
     for (t, expense) in enumerate(expenses)
         time = (t - 1) * dt
@@ -218,7 +199,6 @@ function pv_expenses(
     end
     return pv
 end
-
 
 # =============================================================================
 # Expense Ratio Analysis
@@ -245,7 +225,6 @@ function expense_ratio(config::ExpenseConfig, av::Real, year::Int=0)
     return result.total_expense / av
 end
 
-
 """
     average_expense_ratio(config::ExpenseConfig, av_path::Vector{<:Real}) -> Float64
 
@@ -256,7 +235,6 @@ function average_expense_ratio(config::ExpenseConfig, av_path::Vector{<:Real})
     ratios = [expense_ratio(config, av, t-1) for (t, av) in enumerate(av_path)]
     return sum(ratios) / length(ratios)
 end
-
 
 # =============================================================================
 # Expense Component Analysis
@@ -284,7 +262,6 @@ function fixed_vs_variable_split(config::ExpenseConfig, av::Real, year::Int=0)
 
     return (fixed_pct=fixed_pct, variable_pct=variable_pct)
 end
-
 
 # =============================================================================
 # Breakeven Analysis
@@ -328,7 +305,6 @@ function breakeven_av(config::ExpenseConfig, target_ratio::Real, year::Int=0)
     return per_policy_adjusted / denominator
 end
 
-
 # =============================================================================
 # Projection Functions
 # =============================================================================
@@ -348,17 +324,15 @@ Project expenses assuming constant AV growth rate.
 - `Vector{ExpenseResult}`: Projected expenses
 """
 function project_expenses(
-    config::ExpenseConfig,
-    initial_av::Real,
-    growth_rate::Real,
-    n_years::Int
+    config::ExpenseConfig, initial_av::Real, growth_rate::Real, n_years::Int
 )
     n_years > 0 || throw(ArgumentError("n_years must be positive, got $n_years"))
 
     av_path = [initial_av * (1 + growth_rate)^(t-1) for t in 1:n_years]
-    return calculate_path_expenses(config, av_path; include_acquisition=true, premium=initial_av)
+    return calculate_path_expenses(
+        config, av_path; include_acquisition=true, premium=initial_av
+    )
 end
-
 
 """
     expense_sensitivity(config::ExpenseConfig, av::Real; inflation_range=0.0:0.01:0.05) -> Dict{Float64, Float64}
@@ -374,24 +348,24 @@ Calculate expense sensitivity to inflation rate.
 - `Dict{Float64, Float64}`: Mapping of inflation rate to 10-year PV of expenses
 """
 function expense_sensitivity(
-    config::ExpenseConfig,
-    av::Real;
-    inflation_range::AbstractRange = 0.0:0.01:0.05
+    config::ExpenseConfig, av::Real; inflation_range::AbstractRange=0.0:0.01:0.05
 )
-    results = Dict{Float64, Float64}()
+    results = Dict{Float64,Float64}()
 
     for inflation in inflation_range
         # Create modified config
-        modified_config = ExpenseConfig(
+        modified_config = ExpenseConfig(;
             per_policy_annual=config.per_policy_annual,
             pct_of_av_annual=config.pct_of_av_annual,
             acquisition_pct=config.acquisition_pct,
-            inflation_rate=inflation
+            inflation_rate=inflation,
         )
 
         # Project 10 years with flat AV
         av_path = fill(av, 10)
-        expenses = calculate_path_expenses(modified_config, av_path; include_acquisition=false)
+        expenses = calculate_path_expenses(
+            modified_config, av_path; include_acquisition=false
+        )
         pv = pv_expenses(expenses, 0.05)  # 5% discount rate
 
         results[inflation] = pv

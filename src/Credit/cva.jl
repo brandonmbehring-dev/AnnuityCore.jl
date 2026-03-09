@@ -40,14 +40,12 @@ At time t, exposure = Principal x (1 + rate)^t x remaining_factor
 - Exposure at each time point (per period)
 """
 function calculate_exposure_profile(
-    principal::Float64,
-    rate::Float64,
-    term_years::Int;
-    payment_frequency::Int = 1
+    principal::Float64, rate::Float64, term_years::Int; payment_frequency::Int=1
 )::Vector{Float64}
     principal > 0 || error("CRITICAL: principal must be > 0, got $principal")
     term_years >= 1 || error("CRITICAL: term_years must be >= 1, got $term_years")
-    payment_frequency >= 1 || error("CRITICAL: payment_frequency must be >= 1, got $payment_frequency")
+    payment_frequency >= 1 ||
+        error("CRITICAL: payment_frequency must be >= 1, got $payment_frequency")
 
     periods = term_years * payment_frequency
     exposures = zeros(periods)
@@ -110,11 +108,11 @@ println("CVA: \$(result.cva_net)")
 function calculate_cva(
     exposure::Float64,
     rating::AMBestRating;
-    term_years::Int = 1,
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    risk_free_rate::Float64 = 0.05,
-    state::Union{String, Nothing} = nothing,
-    coverage_type::CoverageType = ANNUITY_DEFERRED
+    term_years::Int=1,
+    lgd::Float64=DEFAULT_INSURANCE_LGD,
+    risk_free_rate::Float64=0.05,
+    state::Union{String,Nothing}=nothing,
+    coverage_type::CoverageType=ANNUITY_DEFERRED,
 )::CVAResult
     # Validation
     exposure > 0 || error("CRITICAL: exposure must be > 0, got $exposure")
@@ -153,17 +151,17 @@ function calculate_cva(
         guaranty_adjustment = 0.0
     end
 
-    CVAResult(
-        cva_gross = cva_gross,
-        cva_net = cva_net,
-        guaranty_adjustment = guaranty_adjustment,
-        expected_exposure = exposure,
-        covered_exposure = covered,
-        uncovered_exposure = uncovered,
-        coverage_ratio = coverage_ratio,
-        lgd = lgd,
-        rating = rating,
-        annual_pd = annual_pd
+    CVAResult(;
+        cva_gross=cva_gross,
+        cva_net=cva_net,
+        guaranty_adjustment=guaranty_adjustment,
+        expected_exposure=exposure,
+        covered_exposure=covered,
+        uncovered_exposure=uncovered,
+        coverage_ratio=coverage_ratio,
+        lgd=lgd,
+        rating=rating,
+        annual_pd=annual_pd,
     )
 end
 
@@ -191,9 +189,9 @@ where Q(t) is cumulative default probability.
 function calculate_cva_term_structure(
     exposure_profile::Vector{Float64},
     rating::AMBestRating;
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    risk_free_rate::Float64 = 0.05,
-    periods_per_year::Int = 1
+    lgd::Float64=DEFAULT_INSURANCE_LGD,
+    risk_free_rate::Float64=0.05,
+    periods_per_year::Int=1,
 )::Float64
     isempty(exposure_profile) && error("CRITICAL: exposure_profile cannot be empty")
 
@@ -260,20 +258,20 @@ adj_price = calculate_credit_adjusted_price(
 function calculate_credit_adjusted_price(
     base_price::Float64,
     rating::AMBestRating;
-    term_years::Int = 1,
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    risk_free_rate::Float64 = 0.05,
-    state::Union{String, Nothing} = nothing,
-    coverage_type::CoverageType = ANNUITY_DEFERRED
+    term_years::Int=1,
+    lgd::Float64=DEFAULT_INSURANCE_LGD,
+    risk_free_rate::Float64=0.05,
+    state::Union{String,Nothing}=nothing,
+    coverage_type::CoverageType=ANNUITY_DEFERRED,
 )::Float64
     cva_result = calculate_cva(
         base_price,
-        rating,
-        term_years = term_years,
-        lgd = lgd,
-        risk_free_rate = risk_free_rate,
-        state = state,
-        coverage_type = coverage_type
+        rating;
+        term_years=term_years,
+        lgd=lgd,
+        risk_free_rate=risk_free_rate,
+        state=state,
+        coverage_type=coverage_type,
     )
 
     base_price - cva_result.cva_net
@@ -300,8 +298,7 @@ println("\$(round(spread * 10000, digits=1)) bps")
 ```
 """
 function calculate_credit_spread(
-    rating::AMBestRating;
-    lgd::Float64 = DEFAULT_INSURANCE_LGD
+    rating::AMBestRating; lgd::Float64=DEFAULT_INSURANCE_LGD
 )::Float64
     hazard_rate = get_hazard_rate(rating)
     isinf(hazard_rate) ? 1.0 : hazard_rate * lgd
@@ -321,22 +318,22 @@ Useful for understanding rating migration impact.
 function cva_sensitivity_to_rating(
     exposure::Float64,
     ratings::Vector{AMBestRating};
-    term_years::Int = 1,
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    risk_free_rate::Float64 = 0.05,
-    state::Union{String, Nothing} = nothing,
-    coverage_type::CoverageType = ANNUITY_DEFERRED
-)::Dict{AMBestRating, CVAResult}
+    term_years::Int=1,
+    lgd::Float64=DEFAULT_INSURANCE_LGD,
+    risk_free_rate::Float64=0.05,
+    state::Union{String,Nothing}=nothing,
+    coverage_type::CoverageType=ANNUITY_DEFERRED,
+)::Dict{AMBestRating,CVAResult}
     Dict(
         rating => calculate_cva(
-            exposure, rating,
-            term_years = term_years,
-            lgd = lgd,
-            risk_free_rate = risk_free_rate,
-            state = state,
-            coverage_type = coverage_type
-        )
-        for rating in ratings
+            exposure,
+            rating;
+            term_years=term_years,
+            lgd=lgd,
+            risk_free_rate=risk_free_rate,
+            state=state,
+            coverage_type=coverage_type,
+        ) for rating in ratings
     )
 end
 
@@ -351,21 +348,21 @@ function cva_sensitivity_to_term(
     exposure::Float64,
     rating::AMBestRating,
     terms::Vector{Int};
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    risk_free_rate::Float64 = 0.05,
-    state::Union{String, Nothing} = nothing,
-    coverage_type::CoverageType = ANNUITY_DEFERRED
-)::Dict{Int, CVAResult}
+    lgd::Float64=DEFAULT_INSURANCE_LGD,
+    risk_free_rate::Float64=0.05,
+    state::Union{String,Nothing}=nothing,
+    coverage_type::CoverageType=ANNUITY_DEFERRED,
+)::Dict{Int,CVAResult}
     Dict(
         term => calculate_cva(
-            exposure, rating,
-            term_years = term,
-            lgd = lgd,
-            risk_free_rate = risk_free_rate,
-            state = state,
-            coverage_type = coverage_type
-        )
-        for term in terms
+            exposure,
+            rating;
+            term_years=term,
+            lgd=lgd,
+            risk_free_rate=risk_free_rate,
+            state=state,
+            coverage_type=coverage_type,
+        ) for term in terms
     )
 end
 
@@ -378,7 +375,7 @@ end
 
 Print CVA result in formatted output.
 """
-function print_cva_result(result::CVAResult; io::IO = stdout)
+function print_cva_result(result::CVAResult; io::IO=stdout)
     rating_str = rating_to_string(result.rating)
 
     println(io, "Credit Valuation Adjustment (CVA)")
@@ -403,9 +400,7 @@ end
 Print credit spreads for multiple ratings.
 """
 function print_credit_spreads(
-    ratings::Vector{AMBestRating};
-    lgd::Float64 = DEFAULT_INSURANCE_LGD,
-    io::IO = stdout
+    ratings::Vector{AMBestRating}; lgd::Float64=DEFAULT_INSURANCE_LGD, io::IO=stdout
 )
     println(io, "Credit Spreads by Rating (LGD = $(round(lgd * 100, digits=0))%)")
     println(io, "-" ^ 35)
@@ -413,14 +408,10 @@ function print_credit_spreads(
     println(io, "-" ^ 35)
 
     for rating in ratings
-        spread_bps = calculate_credit_spread(rating, lgd = lgd) * 10000
+        spread_bps = calculate_credit_spread(rating; lgd=lgd) * 10000
         rating_str = rating_to_string(rating)
         grade = is_secure(rating) ? "Secure" : "Vulnerable"
 
-        println(io,
-            rpad(rating_str, 10),
-            rpad("$(round(spread_bps, digits=1))", 15),
-            grade
-        )
+        println(io, rpad(rating_str, 10), rpad("$(round(spread_bps, digits=1))", 15), grade)
     end
 end

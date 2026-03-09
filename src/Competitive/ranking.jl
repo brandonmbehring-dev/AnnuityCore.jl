@@ -34,10 +34,16 @@ calculate_tier(30.0)  # "Follower"
 ```
 """
 function calculate_tier(percentile::Float64)::String
-    (0.0 <= percentile <= 100.0) || error("CRITICAL: percentile must be in [0,100], got $percentile")
+    (0.0 <= percentile <= 100.0) ||
+        error("CRITICAL: percentile must be in [0,100], got $percentile")
 
-    percentile >= 75.0 ? "Leader" :
-    percentile >= 50.0 ? "Competitive" : "Follower"
+    if percentile >= 75.0
+        "Leader"
+    elseif percentile >= 50.0
+        "Competitive"
+    else
+        "Follower"
+    end
 end
 
 #=============================================================================
@@ -55,8 +61,8 @@ by_company = group_by_company(data)
 athene_products = by_company["Athene"]
 ```
 """
-function group_by_company(data::ProductData)::Dict{String, ProductData}
-    result = Dict{String, ProductData}()
+function group_by_company(data::ProductData)::Dict{String,ProductData}
+    result = Dict{String,ProductData}()
     for p in data
         push!(get!(result, p.company, WINKProduct[]), p)
     end
@@ -74,8 +80,8 @@ by_duration = group_by_duration(data)
 five_year = by_duration[5]
 ```
 """
-function group_by_duration(data::ProductData)::Dict{Int, ProductData}
-    result = Dict{Int, ProductData}()
+function group_by_duration(data::ProductData)::Dict{Int,ProductData}
+    result = Dict{Int,ProductData}()
     for p in data
         push!(get!(result, p.duration, WINKProduct[]), p)
     end
@@ -119,20 +125,20 @@ println("Leader: \$(rankings[1].company) at \$(rankings[1].best_rate)")
 """
 function rank_companies(
     data::ProductData;
-    rank_by::RankBy = BEST_RATE,
-    top_n::Union{Int, Nothing} = nothing,
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    rank_by::RankBy=BEST_RATE,
+    top_n::Union{Int,Nothing}=nothing,
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::Vector{CompanyRanking}
     # Filter data
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
@@ -141,13 +147,15 @@ function rank_companies(
     by_company = group_by_company(filtered)
 
     # Calculate metrics per company
-    company_metrics = [(
-        company = company,
-        best_rate = maximum(p.rate for p in products),
-        avg_rate = mean([p.rate for p in products]),
-        product_count = length(products),
-        duration_coverage = Tuple(sort(unique([p.duration for p in products])))
-    ) for (company, products) in by_company]
+    company_metrics = [
+        (
+            company=company,
+            best_rate=maximum(p.rate for p in products),
+            avg_rate=mean([p.rate for p in products]),
+            product_count=length(products),
+            duration_coverage=Tuple(sort(unique([p.duration for p in products]))),
+        ) for (company, products) in by_company
+    ]
 
     # Sort by criterion
     sort_fn = if rank_by == BEST_RATE
@@ -157,7 +165,7 @@ function rank_companies(
     else  # PRODUCT_COUNT
         m -> -m.product_count  # Descending
     end
-    sorted_metrics = sort(company_metrics, by = sort_fn)
+    sorted_metrics = sort(company_metrics; by=sort_fn)
 
     # Apply top_n limit
     if !isnothing(top_n)
@@ -166,15 +174,14 @@ function rank_companies(
 
     # Create rankings
     [
-        CompanyRanking(
-            company = m.company,
-            rank = i,
-            best_rate = m.best_rate,
-            avg_rate = m.avg_rate,
-            product_count = m.product_count,
-            duration_coverage = m.duration_coverage
-        )
-        for (i, m) in enumerate(sorted_metrics)
+        CompanyRanking(;
+            company=m.company,
+            rank=i,
+            best_rate=m.best_rate,
+            avg_rate=m.avg_rate,
+            product_count=m.product_count,
+            duration_coverage=m.duration_coverage,
+        ) for (i, m) in enumerate(sorted_metrics)
     ]
 end
 
@@ -202,19 +209,19 @@ end
 function get_company_rank(
     company::String,
     data::ProductData;
-    rank_by::RankBy = BEST_RATE,
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
-)::Union{CompanyRanking, Nothing}
+    rank_by::RankBy=BEST_RATE,
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
+)::Union{CompanyRanking,Nothing}
     rankings = rank_companies(
-        data,
-        rank_by = rank_by,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        rank_by=rank_by,
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     company_lower = lowercase(company)
@@ -256,25 +263,25 @@ end
 """
 function rank_products(
     data::ProductData;
-    top_n::Union{Int, Nothing} = nothing,
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    top_n::Union{Int,Nothing}=nothing,
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::Vector{ProductRanking}
     # Filter data
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
 
     # Sort by rate descending
-    sorted_products = sort(filtered, by = p -> p.rate, rev = true)
+    sorted_products = sort(filtered; by=p -> p.rate, rev=true)
 
     # Apply top_n limit
     if !isnothing(top_n)
@@ -283,14 +290,9 @@ function rank_products(
 
     # Create rankings
     [
-        ProductRanking(
-            company = p.company,
-            product = p.product,
-            rank = i,
-            rate = p.rate,
-            duration = p.duration
-        )
-        for (i, p) in enumerate(sorted_products)
+        ProductRanking(;
+            company=p.company, product=p.product, rank=i, rate=p.rate, duration=p.duration
+        ) for (i, p) in enumerate(sorted_products)
     ]
 end
 
@@ -307,7 +309,7 @@ struct MarketSummary
     total_products::Int
     total_companies::Int
     rate_stats::DistributionStats
-    duration_range::Tuple{Int, Int}
+    duration_range::Tuple{Int,Int}
     product_groups::Vector{String}
 end
 
@@ -330,17 +332,17 @@ println("\$(summary.total_companies) companies offer \$(summary.total_products) 
 """
 function market_summary(
     data::ProductData;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::MarketSummary
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
@@ -352,7 +354,7 @@ function market_summary(
         length(unique(companies(filtered))),
         DistributionStats(rates(filtered)),
         (minimum(duration_vals), maximum(duration_vals)),
-        sort(unique([p.product_group for p in filtered]))
+        sort(unique([p.product_group for p in filtered])),
     )
 end
 
@@ -381,15 +383,11 @@ end
 """
 function rate_leaders_by_duration(
     data::ProductData;
-    top_n::Int = 3,
-    product_group::Union{String, Nothing} = nothing,
-    status::Symbol = :current
-)::Dict{Int, Vector{ProductRanking}}
-    filtered = filter_products(
-        data,
-        product_group = product_group,
-        status = status
-    )
+    top_n::Int=3,
+    product_group::Union{String,Nothing}=nothing,
+    status::Symbol=:current,
+)::Dict{Int,Vector{ProductRanking}}
+    filtered = filter_products(data; product_group=product_group, status=status)
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
 
@@ -397,18 +395,17 @@ function rate_leaders_by_duration(
     by_duration = group_by_duration(filtered)
 
     # Get top N for each duration
-    result = Dict{Int, Vector{ProductRanking}}()
+    result = Dict{Int,Vector{ProductRanking}}()
     for (dur, products) in by_duration
-        sorted = sort(products, by = p -> p.rate, rev = true)
+        sorted = sort(products; by=p -> p.rate, rev=true)
         result[dur] = [
-            ProductRanking(
-                company = p.company,
-                product = p.product,
-                rank = i,
-                rate = p.rate,
-                duration = p.duration
-            )
-            for (i, p) in enumerate(sorted[1:min(top_n, length(sorted))])
+            ProductRanking(;
+                company=p.company,
+                product=p.product,
+                rank=i,
+                rate=p.rate,
+                duration=p.duration,
+            ) for (i, p) in enumerate(sorted[1:min(top_n, length(sorted))])
         ]
     end
 
@@ -424,8 +421,8 @@ struct CompetitiveLandscape
     market::MarketSummary
     company_rankings::Vector{CompanyRanking}
     product_rankings::Vector{ProductRanking}
-    leaders_by_duration::Dict{Int, Vector{ProductRanking}}
-    tier_distribution::Dict{String, Int}
+    leaders_by_duration::Dict{Int,Vector{ProductRanking}}
+    tier_distribution::Dict{String,Int}
 end
 
 """
@@ -453,50 +450,39 @@ println("Leader: \$(landscape.company_rankings[1].company)")
 """
 function competitive_landscape(
     data::ProductData;
-    top_companies::Int = 10,
-    top_products::Int = 20,
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    top_companies::Int=10,
+    top_products::Int=20,
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::CompetitiveLandscape
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
 
     # Get company rankings
-    company_rankings = rank_companies(
-        filtered,
-        rank_by = BEST_RATE,
-        top_n = top_companies
-    )
+    company_rankings = rank_companies(filtered; rank_by=BEST_RATE, top_n=top_companies)
 
     # Get product rankings
-    product_rankings = rank_products(
-        filtered,
-        top_n = top_products
-    )
+    product_rankings = rank_products(filtered; top_n=top_products)
 
     # Get leaders by duration (only if no specific duration filter)
     leaders = if isnothing(duration)
-        rate_leaders_by_duration(filtered, product_group = product_group, status = status)
+        rate_leaders_by_duration(filtered; product_group=product_group, status=status)
     else
-        Dict{Int, Vector{ProductRanking}}()
+        Dict{Int,Vector{ProductRanking}}()
     end
 
     # Calculate tier distribution
-    all_company_rankings = rank_companies(filtered, rank_by = BEST_RATE)
-    tier_distribution = Dict{String, Int}(
-        "Leader" => 0,
-        "Competitive" => 0,
-        "Follower" => 0
-    )
+    all_company_rankings = rank_companies(filtered; rank_by=BEST_RATE)
+    tier_distribution = Dict{String,Int}("Leader" => 0, "Competitive" => 0, "Follower" => 0)
 
     for (i, r) in enumerate(all_company_rankings)
         percentile = (1 - i / length(all_company_rankings)) * 100
@@ -509,7 +495,7 @@ function competitive_landscape(
         company_rankings,
         product_rankings,
         leaders,
-        tier_distribution
+        tier_distribution,
     )
 end
 
@@ -522,21 +508,29 @@ end
 
 Print company rankings in formatted table.
 """
-function print_company_rankings(rankings::Vector{CompanyRanking}; io::IO = stdout)
+function print_company_rankings(rankings::Vector{CompanyRanking}; io::IO=stdout)
     println(io, "Company Rankings")
     println(io, "-" ^ 70)
-    println(io, rpad("Rank", 6), rpad("Company", 30), rpad("Best Rate", 12), rpad("Avg Rate", 12), "Products")
+    println(
+        io,
+        rpad("Rank", 6),
+        rpad("Company", 30),
+        rpad("Best Rate", 12),
+        rpad("Avg Rate", 12),
+        "Products",
+    )
     println(io, "-" ^ 70)
 
     for r in rankings
-        best_pct = round(r.best_rate * 100, digits = 2)
-        avg_pct = round(r.avg_rate * 100, digits = 2)
-        println(io,
+        best_pct = round(r.best_rate * 100; digits=2)
+        avg_pct = round(r.avg_rate * 100; digits=2)
+        println(
+            io,
             rpad("#$(r.rank)", 6),
             rpad(r.company[1:min(28, length(r.company))], 30),
             rpad("$(best_pct)%", 12),
             rpad("$(avg_pct)%", 12),
-            r.product_count
+            r.product_count,
         )
     end
 end
@@ -546,20 +540,28 @@ end
 
 Print product rankings in formatted table.
 """
-function print_product_rankings(rankings::Vector{ProductRanking}; io::IO = stdout)
+function print_product_rankings(rankings::Vector{ProductRanking}; io::IO=stdout)
     println(io, "Product Rankings")
     println(io, "-" ^ 80)
-    println(io, rpad("Rank", 6), rpad("Company", 25), rpad("Product", 25), rpad("Rate", 10), "Duration")
+    println(
+        io,
+        rpad("Rank", 6),
+        rpad("Company", 25),
+        rpad("Product", 25),
+        rpad("Rate", 10),
+        "Duration",
+    )
     println(io, "-" ^ 80)
 
     for r in rankings
-        rate_pct = round(r.rate * 100, digits = 2)
-        println(io,
+        rate_pct = round(r.rate * 100; digits=2)
+        println(
+            io,
             rpad("#$(r.rank)", 6),
             rpad(r.company[1:min(23, length(r.company))], 25),
             rpad(r.product[1:min(23, length(r.product))], 25),
             rpad("$(rate_pct)%", 10),
-            "$(r.duration)Y"
+            "$(r.duration)Y",
         )
     end
 end

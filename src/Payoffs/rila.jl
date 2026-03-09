@@ -44,9 +44,9 @@ struct BufferPayoff{T<:Real} <: RILAPayoff
 end
 
 # Constructor with default cap
-BufferPayoff(buffer_rate::T) where T<:Real = BufferPayoff(buffer_rate, nothing)
+BufferPayoff(buffer_rate::T) where {T<:Real} = BufferPayoff(buffer_rate, nothing)
 
-function calculate(p::BufferPayoff{T}, index_return::Real) where T
+function calculate(p::BufferPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     cap_applied = false
@@ -74,7 +74,6 @@ function calculate(p::BufferPayoff{T}, index_return::Real) where T
 
     PayoffResult(credited; cap_applied=cap_applied, buffer_applied=buffer_applied)
 end
-
 
 # =============================================================================
 # Floor Payoff
@@ -108,9 +107,9 @@ struct FloorPayoff{T<:Real} <: RILAPayoff
 end
 
 # Constructor with default cap
-FloorPayoff(floor_rate::T) where T<:Real = FloorPayoff(floor_rate, nothing)
+FloorPayoff(floor_rate::T) where {T<:Real} = FloorPayoff(floor_rate, nothing)
 
-function calculate(p::FloorPayoff{T}, index_return::Real) where T
+function calculate(p::FloorPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     cap_applied = false
@@ -132,7 +131,6 @@ function calculate(p::FloorPayoff{T}, index_return::Real) where T
 
     PayoffResult(credited; cap_applied=cap_applied, floor_applied=floor_applied)
 end
-
 
 # =============================================================================
 # Buffer with Floor Payoff
@@ -166,7 +164,7 @@ struct BufferWithFloorPayoff{T<:Real} <: RILAPayoff
     cap_rate::Union{T,Nothing}
 end
 
-function calculate(p::BufferWithFloorPayoff{T}, index_return::Real) where T
+function calculate(p::BufferWithFloorPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     cap_applied = false
@@ -199,10 +197,13 @@ function calculate(p::BufferWithFloorPayoff{T}, index_return::Real) where T
         end
     end
 
-    PayoffResult(credited; cap_applied=cap_applied, floor_applied=floor_applied,
-                 buffer_applied=buffer_applied)
+    PayoffResult(
+        credited;
+        cap_applied=cap_applied,
+        floor_applied=floor_applied,
+        buffer_applied=buffer_applied,
+    )
 end
-
 
 # =============================================================================
 # Step-Rate Buffer Payoff
@@ -237,11 +238,13 @@ struct StepRateBufferPayoff{T<:Real} <: RILAPayoff
 end
 
 # Constructor with default cap
-function StepRateBufferPayoff(tier1_buffer::T, tier2_buffer::T, tier2_protection::T) where T<:Real
+function StepRateBufferPayoff(
+    tier1_buffer::T, tier2_buffer::T, tier2_protection::T
+) where {T<:Real}
     StepRateBufferPayoff(tier1_buffer, tier2_buffer, tier2_protection, nothing)
 end
 
-function calculate(p::StepRateBufferPayoff{T}, index_return::Real) where T
+function calculate(p::StepRateBufferPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     cap_applied = false

@@ -20,7 +20,6 @@ References:
 - Oblój (2008), "Fine-tune your smile: Correction to Hagan et al."
 """
 
-
 """
     SABRParams
 
@@ -55,12 +54,7 @@ struct SABRParams
     τ::Float64
 
     function SABRParams(;
-        F::Float64,
-        α::Float64,
-        β::Float64 = 1.0,
-        ρ::Float64 = 0.0,
-        ν::Float64,
-        τ::Float64
+        F::Float64, α::Float64, β::Float64=1.0, ρ::Float64=0.0, ν::Float64, τ::Float64
     )
         F > 0 || throw(ArgumentError("Forward F must be positive"))
         α > 0 || throw(ArgumentError("α must be positive"))
@@ -72,7 +66,6 @@ struct SABRParams
         new(F, α, β, ρ, ν, τ)
     end
 end
-
 
 """
     sabr_implied_vol(params::SABRParams, K; method=:hagan) -> Float64
@@ -95,11 +88,7 @@ params = SABRParams(F=100.0, α=0.20, β=0.5, ρ=-0.3, ν=0.4, τ=1.0)
 σ_impl = sabr_implied_vol(params, 100.0)  # ATM vol
 ```
 """
-function sabr_implied_vol(
-    params::SABRParams,
-    K::Float64;
-    method::Symbol = :hagan
-)
+function sabr_implied_vol(params::SABRParams, K::Float64; method::Symbol=:hagan)
     F, α, β, ρ, ν, τ = params.F, params.α, params.β, params.ρ, params.ν, params.τ
 
     K > 0 || throw(ArgumentError("Strike K must be positive"))
@@ -117,7 +106,6 @@ function sabr_implied_vol(
         throw(ArgumentError("Unknown method: $method. Use :hagan or :obloj"))
     end
 end
-
 
 """
 Hagan et al. (2002) SABR implied volatility approximation.
@@ -154,8 +142,7 @@ function _sabr_hagan(F, K, α, β, ρ, ν, τ)
     one_minus_beta = 1 - β
     FK_2beta = FK^(one_minus_beta)
 
-    denom = 1 + (one_minus_beta^2 / 24) * logFK^2 +
-            (one_minus_beta^4 / 1920) * logFK^4
+    denom = 1 + (one_minus_beta^2 / 24) * logFK^2 + (one_minus_beta^4 / 1920) * logFK^4
 
     # Numerator expansion (τ-dependent corrections)
     term1 = (one_minus_beta^2 / 24) * α^2 / FK_2beta
@@ -169,7 +156,6 @@ function _sabr_hagan(F, K, α, β, ρ, ν, τ)
 
     return max(σ_B, 1e-10)  # Ensure positive
 end
-
 
 """
 Oblój (2008) corrected SABR approximation.
@@ -204,8 +190,7 @@ function _sabr_obloj(F, K, α, β, ρ, ν, τ)
     K_beta = K^one_minus_beta
 
     # Corrected denominator
-    denom = 1 + (one_minus_beta^2 / 24) * logFK^2 +
-            (one_minus_beta^4 / 1920) * logFK^4
+    denom = 1 + (one_minus_beta^2 / 24) * logFK^2 + (one_minus_beta^4 / 1920) * logFK^4
 
     # Corrected numerator terms
     term1 = (one_minus_beta^2 / 24) * α^2 / (FK^one_minus_beta)
@@ -218,7 +203,6 @@ function _sabr_obloj(F, K, α, β, ρ, ν, τ)
 
     return max(σ_B, 1e-10)
 end
-
 
 """
 ATM SABR implied volatility.
@@ -239,7 +223,6 @@ function _sabr_atm_vol(params::SABRParams)
     return max(σ_ATM, 1e-10)
 end
 
-
 """
     sabr_smile(params::SABRParams, strikes::Vector{Float64}; method=:hagan) -> Vector{Float64}
 
@@ -253,14 +236,9 @@ Compute SABR implied volatility smile across strikes.
 # Returns
 - `Vector{Float64}`: Implied volatilities for each strike
 """
-function sabr_smile(
-    params::SABRParams,
-    strikes::Vector{Float64};
-    method::Symbol = :hagan
-)
+function sabr_smile(params::SABRParams, strikes::Vector{Float64}; method::Symbol=:hagan)
     return [sabr_implied_vol(params, K; method=method) for K in strikes]
 end
-
 
 """
     calibrate_sabr(F, τ, strikes, market_vols; β=nothing, method=:least_squares) -> SABRParams
@@ -293,12 +271,11 @@ function calibrate_sabr(
     τ::Float64,
     strikes::Vector{Float64},
     market_vols::Vector{Float64};
-    β::Union{Float64, Nothing} = nothing,
-    method::Symbol = :least_squares
+    β::Union{Float64,Nothing}=nothing,
+    method::Symbol=:least_squares,
 )
-    length(strikes) == length(market_vols) || throw(ArgumentError(
-        "strikes and market_vols must have same length"
-    ))
+    length(strikes) == length(market_vols) ||
+        throw(ArgumentError("strikes and market_vols must have same length"))
 
     # Objective function
     function objective(x)
@@ -316,9 +293,9 @@ function calibrate_sabr(
         β_cal = clamp(β_cal, 0.0, 1.0)
 
         try
-            params = SABRParams(F=F, α=α, β=β_cal, ρ=ρ, ν=ν, τ=τ)
+            params = SABRParams(; F=F, α=α, β=β_cal, ρ=ρ, ν=ν, τ=τ)
             model_vols = sabr_smile(params, strikes)
-            return sum((model_vols .- market_vols).^2)
+            return sum((model_vols .- market_vols) .^ 2)
         catch
             return 1e10  # Penalty for invalid params
         end
@@ -374,16 +351,15 @@ function calibrate_sabr(
         β_cal = β
     end
 
-    return SABRParams(
-        F = F,
-        α = max(α_cal, 1e-6),
-        β = clamp(β_cal, 0.0, 1.0),
-        ρ = clamp(ρ_cal, -0.999, 0.999),
-        ν = max(ν_cal, 1e-6),
-        τ = τ
+    return SABRParams(;
+        F=F,
+        α=max(α_cal, 1e-6),
+        β=clamp(β_cal, 0.0, 1.0),
+        ρ=clamp(ρ_cal, -0.999, 0.999),
+        ν=max(ν_cal, 1e-6),
+        τ=τ,
     )
 end
-
 
 """
     sabr_delta(params::SABRParams, K, r; call=true) -> Float64
@@ -392,12 +368,7 @@ Compute SABR delta using Black formula with SABR vol.
 
 [T1] Δ = ∂V/∂S ≈ Black delta with σ = σ_SABR(K)
 """
-function sabr_delta(
-    params::SABRParams,
-    K::Float64,
-    r::Float64;
-    call::Bool = true
-)
+function sabr_delta(params::SABRParams, K::Float64, r::Float64; call::Bool=true)
     σ = sabr_implied_vol(params, K)
     F, τ = params.F, params.τ
 
@@ -411,7 +382,6 @@ function sabr_delta(
     end
 end
 
-
 """
     sabr_vega(params::SABRParams, K, r) -> Float64
 
@@ -419,11 +389,7 @@ Compute SABR vega (sensitivity to α).
 
 [T1] ∂V/∂α - sensitivity to the initial volatility level.
 """
-function sabr_vega(
-    params::SABRParams,
-    K::Float64,
-    r::Float64
-)
+function sabr_vega(params::SABRParams, K::Float64, r::Float64)
     σ = sabr_implied_vol(params, K)
     F, τ = params.F, params.τ
 
@@ -435,8 +401,8 @@ function sabr_vega(
     # Chain rule: ∂V/∂α = ∂V/∂σ × ∂σ/∂α
     # Approximate ∂σ/∂α numerically
     ε = params.α * 0.01
-    params_up = SABRParams(F=F, α=params.α + ε, β=params.β, ρ=params.ρ, ν=params.ν, τ=τ)
-    params_dn = SABRParams(F=F, α=params.α - ε, β=params.β, ρ=params.ρ, ν=params.ν, τ=τ)
+    params_up = SABRParams(; F=F, α=(params.α + ε), β=params.β, ρ=params.ρ, ν=params.ν, τ=τ)
+    params_dn = SABRParams(; F=F, α=(params.α - ε), β=params.β, ρ=params.ρ, ν=params.ν, τ=τ)
 
     σ_up = sabr_implied_vol(params_up, K)
     σ_dn = sabr_implied_vol(params_dn, K)

@@ -27,136 +27,136 @@ AM Best Impairment Rates by Rating (1977-2023 study).
 Note: These are impairment rates, which include regulatory intervention,
 not just missed payments (higher than pure default rates).
 """
-const AM_BEST_IMPAIRMENT_RATES = Dict{AMBestRating, RatingPD}(
+const AM_BEST_IMPAIRMENT_RATES = Dict{AMBestRating,RatingPD}(
     # Superior (A++, A+): Very low impairment rates
     # [T2] 10-year cumulative ~2% for combined A++/A+
-    A_PLUS_PLUS => RatingPD(
-        rating = A_PLUS_PLUS,
-        annual_pd = 0.0001,  # 0.01%
-        pd_5yr = 0.005,      # 0.5%
-        pd_10yr = 0.015,     # 1.5%
-        pd_15yr = 0.025      # 2.5%
+    A_PLUS_PLUS => RatingPD(;
+        rating=A_PLUS_PLUS,
+        annual_pd=0.0001,  # 0.01%
+        pd_5yr=0.005,      # 0.5%
+        pd_10yr=0.015,     # 1.5%
+        pd_15yr=0.025,      # 2.5%
     ),
-    A_PLUS => RatingPD(
-        rating = A_PLUS,
-        annual_pd = 0.0002,  # 0.02%
-        pd_5yr = 0.008,      # 0.8%
-        pd_10yr = 0.020,     # 2.0%
-        pd_15yr = 0.035      # 3.5%
+    A_PLUS => RatingPD(;
+        rating=A_PLUS,
+        annual_pd=0.0002,  # 0.02%
+        pd_5yr=0.008,      # 0.8%
+        pd_10yr=0.020,     # 2.0%
+        pd_15yr=0.035,      # 3.5%
     ),
 
     # Excellent (A, A-): Low impairment rates
     # [T2] "a" rating: 0.02% 1-year, 0.22% 10-year
     # [T2] "A-" rating: 0.11% 1-year, 3.10% 15-year
-    A => RatingPD(
-        rating = A,
-        annual_pd = 0.0002,  # 0.02%
-        pd_5yr = 0.008,      # 0.8%
-        pd_10yr = 0.022,     # 2.2%
-        pd_15yr = 0.040      # 4.0%
+    A => RatingPD(;
+        rating=A,
+        annual_pd=0.0002,  # 0.02%
+        pd_5yr=0.008,      # 0.8%
+        pd_10yr=0.022,     # 2.2%
+        pd_15yr=0.040,      # 4.0%
     ),
-    A_MINUS => RatingPD(
-        rating = A_MINUS,
-        annual_pd = 0.0011,  # 0.11%
-        pd_5yr = 0.015,      # 1.5%
-        pd_10yr = 0.050,     # 5.0% (NAIC/Fitch: 5-6% for A/A-)
-        pd_15yr = 0.031      # 3.1%
+    A_MINUS => RatingPD(;
+        rating=A_MINUS,
+        annual_pd=0.0011,  # 0.11%
+        pd_5yr=0.015,      # 1.5%
+        pd_10yr=0.050,     # 5.0% (NAIC/Fitch: 5-6% for A/A-)
+        pd_15yr=0.031,      # 3.1%
     ),
 
     # Very Good (B++, B+): Moderate impairment rates
-    B_PLUS_PLUS => RatingPD(
-        rating = B_PLUS_PLUS,
-        annual_pd = 0.0020,  # 0.20%
-        pd_5yr = 0.025,      # 2.5%
-        pd_10yr = 0.070,     # 7.0%
-        pd_15yr = 0.100      # 10.0%
+    B_PLUS_PLUS => RatingPD(;
+        rating=B_PLUS_PLUS,
+        annual_pd=0.0020,  # 0.20%
+        pd_5yr=0.025,      # 2.5%
+        pd_10yr=0.070,     # 7.0%
+        pd_15yr=0.100,      # 10.0%
     ),
-    B_PLUS => RatingPD(
-        rating = B_PLUS,
-        annual_pd = 0.0035,  # 0.35%
-        pd_5yr = 0.040,      # 4.0%
-        pd_10yr = 0.100,     # 10.0%
-        pd_15yr = 0.150      # 15.0%
+    B_PLUS => RatingPD(;
+        rating=B_PLUS,
+        annual_pd=0.0035,  # 0.35%
+        pd_5yr=0.040,      # 4.0%
+        pd_10yr=0.100,     # 10.0%
+        pd_15yr=0.150,      # 15.0%
     ),
 
     # Adequate (B, B-): Higher impairment rates
     # [T2] B/B-: 1.35% 1-year
-    B => RatingPD(
-        rating = B,
-        annual_pd = 0.0100,  # 1.0%
-        pd_5yr = 0.080,      # 8.0%
-        pd_10yr = 0.180,     # 18.0%
-        pd_15yr = 0.280      # 28.0%
+    B => RatingPD(;
+        rating=B,
+        annual_pd=0.0100,  # 1.0%
+        pd_5yr=0.080,      # 8.0%
+        pd_10yr=0.180,     # 18.0%
+        pd_15yr=0.280,      # 28.0%
     ),
-    B_MINUS => RatingPD(
-        rating = B_MINUS,
-        annual_pd = 0.0135,  # 1.35%
-        pd_5yr = 0.100,      # 10.0%
-        pd_10yr = 0.220,     # 22.0%
-        pd_15yr = 0.350      # 35.0%
+    B_MINUS => RatingPD(;
+        rating=B_MINUS,
+        annual_pd=0.0135,  # 1.35%
+        pd_5yr=0.100,      # 10.0%
+        pd_10yr=0.220,     # 22.0%
+        pd_15yr=0.350,      # 35.0%
     ),
 
     # Marginal (C++, C+): High impairment rates
-    C_PLUS_PLUS => RatingPD(
-        rating = C_PLUS_PLUS,
-        annual_pd = 0.0200,  # 2.0%
-        pd_5yr = 0.150,      # 15.0%
-        pd_10yr = 0.300,     # 30.0%
-        pd_15yr = 0.450      # 45.0%
+    C_PLUS_PLUS => RatingPD(;
+        rating=C_PLUS_PLUS,
+        annual_pd=0.0200,  # 2.0%
+        pd_5yr=0.150,      # 15.0%
+        pd_10yr=0.300,     # 30.0%
+        pd_15yr=0.450,      # 45.0%
     ),
-    C_PLUS => RatingPD(
-        rating = C_PLUS,
-        annual_pd = 0.0250,  # 2.5%
-        pd_5yr = 0.180,      # 18.0%
-        pd_10yr = 0.350,     # 35.0%
-        pd_15yr = 0.500      # 50.0%
+    C_PLUS => RatingPD(;
+        rating=C_PLUS,
+        annual_pd=0.0250,  # 2.5%
+        pd_5yr=0.180,      # 18.0%
+        pd_10yr=0.350,     # 35.0%
+        pd_15yr=0.500,      # 50.0%
     ),
 
     # Weak (C, C-): Very high impairment rates
     # [T2] "b" rating (comparable to C): 3.29% 1-year
-    C => RatingPD(
-        rating = C,
-        annual_pd = 0.0329,  # 3.29%
-        pd_5yr = 0.220,      # 22.0%
-        pd_10yr = 0.400,     # 40.0%
-        pd_15yr = 0.550      # 55.0%
+    C => RatingPD(;
+        rating=C,
+        annual_pd=0.0329,  # 3.29%
+        pd_5yr=0.220,      # 22.0%
+        pd_10yr=0.400,     # 40.0%
+        pd_15yr=0.550,      # 55.0%
     ),
-    C_MINUS => RatingPD(
-        rating = C_MINUS,
-        annual_pd = 0.0400,  # 4.0%
-        pd_5yr = 0.280,      # 28.0%
-        pd_10yr = 0.480,     # 48.0%
-        pd_15yr = 0.620      # 62.0%
+    C_MINUS => RatingPD(;
+        rating=C_MINUS,
+        annual_pd=0.0400,  # 4.0%
+        pd_5yr=0.280,      # 28.0%
+        pd_10yr=0.480,     # 48.0%
+        pd_15yr=0.620,      # 62.0%
     ),
 
     # Poor and worse: Near-certain impairment
-    D => RatingPD(
-        rating = D,
-        annual_pd = 0.0800,  # 8.0%
-        pd_5yr = 0.400,      # 40.0%
-        pd_10yr = 0.650,     # 65.0%
-        pd_15yr = 0.800      # 80.0%
+    D => RatingPD(;
+        rating=D,
+        annual_pd=0.0800,  # 8.0%
+        pd_5yr=0.400,      # 40.0%
+        pd_10yr=0.650,     # 65.0%
+        pd_15yr=0.800,      # 80.0%
     ),
-    E => RatingPD(
-        rating = E,
-        annual_pd = 0.2000,  # 20.0% (under regulatory supervision)
-        pd_5yr = 0.700,      # 70.0%
-        pd_10yr = 0.900,     # 90.0%
-        pd_15yr = 0.950      # 95.0%
+    E => RatingPD(;
+        rating=E,
+        annual_pd=0.2000,  # 20.0% (under regulatory supervision)
+        pd_5yr=0.700,      # 70.0%
+        pd_10yr=0.900,     # 90.0%
+        pd_15yr=0.950,      # 95.0%
     ),
-    F => RatingPD(
-        rating = F,
-        annual_pd = 1.0000,  # 100% (already in liquidation)
-        pd_5yr = 1.000,
-        pd_10yr = 1.000,
-        pd_15yr = 1.000
+    F => RatingPD(;
+        rating=F,
+        annual_pd=1.0000,  # 100% (already in liquidation)
+        pd_5yr=1.000,
+        pd_10yr=1.000,
+        pd_15yr=1.000,
     ),
-    S => RatingPD(
-        rating = S,
-        annual_pd = 0.1000,  # 10% (suspended, high uncertainty)
-        pd_5yr = 0.500,
-        pd_10yr = 0.750,
-        pd_15yr = 0.850
+    S => RatingPD(;
+        rating=S,
+        annual_pd=0.1000,  # 10% (suspended, high uncertainty)
+        pd_5yr=0.500,
+        pd_10yr=0.750,
+        pd_15yr=0.850,
     ),
 )
 
@@ -189,7 +189,7 @@ function rating_from_string(rating_str::String)::AMBestRating
 
     haskey(STRING_TO_RATING, normalized) || error(
         "CRITICAL: Unknown AM Best rating '$rating_str'. " *
-        "Valid ratings: $(join(keys(STRING_TO_RATING), ", "))"
+        "Valid ratings: $(join(keys(STRING_TO_RATING), ", "))",
     )
 
     STRING_TO_RATING[normalized]
@@ -299,7 +299,7 @@ Get PD term structure for given rating.
 # Returns
 - Vector of cumulative PDs from year 1 to max_years
 """
-function get_pd_term_structure(rating::AMBestRating; max_years::Int = 30)::Vector{Float64}
+function get_pd_term_structure(rating::AMBestRating; max_years::Int=30)::Vector{Float64}
     [get_cumulative_pd(rating, year) for year in 1:max_years]
 end
 
@@ -359,10 +359,10 @@ function compare_ratings(rating1::AMBestRating, rating2::AMBestRating)
     pd2 = get_annual_pd(rating2)
 
     (
-        rating1_pd = pd1,
-        rating2_pd = pd2,
-        pd_ratio = pd2 > 0 ? pd1 / pd2 : Inf,
-        safer_rating = pd1 <= pd2 ? rating1 : rating2
+        rating1_pd=pd1,
+        rating2_pd=pd2,
+        pd_ratio=pd2 > 0 ? pd1 / pd2 : Inf,
+        safer_rating=pd1 <= pd2 ? rating1 : rating2,
     )
 end
 
@@ -388,11 +388,18 @@ end
 
 Print table of all AM Best ratings with their PD values.
 """
-function print_pd_table(; io::IO = stdout)
+function print_pd_table(; io::IO=stdout)
     println(io, "AM Best Rating Probability of Default (Impairment Rates)")
     println(io, "-" ^ 70)
-    println(io, rpad("Rating", 8), rpad("Grade", 12), rpad("1-Year", 10),
-            rpad("5-Year", 10), rpad("10-Year", 10), "15-Year")
+    println(
+        io,
+        rpad("Rating", 8),
+        rpad("Grade", 12),
+        rpad("1-Year", 10),
+        rpad("5-Year", 10),
+        rpad("10-Year", 10),
+        "15-Year",
+    )
     println(io, "-" ^ 70)
 
     for rating in instances(AMBestRating)
@@ -400,13 +407,14 @@ function print_pd_table(; io::IO = stdout)
         rating_str = rating_to_string(rating)
         grade = is_secure(rating) ? "Secure" : "Vulnerable"
 
-        println(io,
+        println(
+            io,
             rpad(rating_str, 8),
             rpad(grade, 12),
             rpad("$(round(pd_data.annual_pd * 100, digits=2))%", 10),
             rpad("$(round(pd_data.pd_5yr * 100, digits=1))%", 10),
             rpad("$(round(pd_data.pd_10yr * 100, digits=1))%", 10),
-            "$(round(pd_data.pd_15yr * 100, digits=1))%"
+            "$(round(pd_data.pd_15yr * 100, digits=1))%",
         )
     end
 end

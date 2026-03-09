@@ -30,20 +30,19 @@ Monte Carlo pricing result.
 struct MCResult{T<:Real}
     price::T
     standard_error::T
-    confidence_interval::Tuple{T, T}
+    confidence_interval::Tuple{T,T}
     n_paths::Int
     payoffs::Vector{T}
     discount_factor::T
 end
 
 """Relative standard error (SE / price)."""
-function relative_error(result::MCResult{T}) where T
+function relative_error(result::MCResult{T}) where {T}
     abs(result.price) < 1e-10 ? T(Inf) : result.standard_error / abs(result.price)
 end
 
 """Width of 95% confidence interval."""
 ci_width(result::MCResult) = result.confidence_interval[2] - result.confidence_interval[1]
-
 
 """
     MonteCarloEngine{T}
@@ -67,17 +66,18 @@ println("Price: \$(result.price) ± \$(result.standard_error)")
 struct MonteCarloEngine
     n_paths::Int
     antithetic::Bool
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     batch_size::Int
 
     function MonteCarloEngine(;
         n_paths::Int=100000,
         antithetic::Bool=true,
-        seed::Union{Int, Nothing}=nothing,
-        batch_size::Int=10000
+        seed::Union{Int,Nothing}=nothing,
+        batch_size::Int=10000,
     )
         n_paths > 0 || throw(ArgumentError("CRITICAL: n_paths must be > 0, got $n_paths"))
-        batch_size > 0 || throw(ArgumentError("CRITICAL: batch_size must be > 0, got $batch_size"))
+        batch_size > 0 ||
+            throw(ArgumentError("CRITICAL: batch_size must be > 0, got $batch_size"))
 
         # Ensure even number for antithetic
         actual_n_paths = antithetic && n_paths % 2 != 0 ? n_paths + 1 : n_paths
@@ -85,7 +85,6 @@ struct MonteCarloEngine
         new(actual_n_paths, antithetic, seed, batch_size)
     end
 end
-
 
 """
     price_european_call(engine, params, strike) -> MCResult
@@ -103,15 +102,12 @@ Price European call option via Monte Carlo.
 - `MCResult`: Monte Carlo pricing result
 """
 function price_european_call(
-    engine::MonteCarloEngine,
-    params::GBMParams{T},
-    strike::Real
-) where T
+    engine::MonteCarloEngine, params::GBMParams{T}, strike::Real
+) where {T}
     strike > 0 || throw(ArgumentError("CRITICAL: strike must be > 0, got $strike"))
 
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     # Call payoff
@@ -119,7 +115,6 @@ function price_european_call(
 
     return _compute_result(params, payoffs)
 end
-
 
 """
     price_european_put(engine, params, strike) -> MCResult
@@ -137,15 +132,12 @@ Price European put option via Monte Carlo.
 - `MCResult`: Monte Carlo pricing result
 """
 function price_european_put(
-    engine::MonteCarloEngine,
-    params::GBMParams{T},
-    strike::Real
-) where T
+    engine::MonteCarloEngine, params::GBMParams{T}, strike::Real
+) where {T}
     strike > 0 || throw(ArgumentError("CRITICAL: strike must be > 0, got $strike"))
 
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     # Put payoff
@@ -153,7 +145,6 @@ function price_european_put(
 
     return _compute_result(params, payoffs)
 end
-
 
 """
     price_with_payoff(engine, params, payoff; n_steps=252) -> MCResult
@@ -181,15 +172,11 @@ result = price_with_payoff(engine, params, payoff)
 ```
 """
 function price_with_payoff(
-    engine::MonteCarloEngine,
-    params::GBMParams{T},
-    payoff::AbstractPayoff;
-    n_steps::Int=252
-) where T
+    engine::MonteCarloEngine, params::GBMParams{T}, payoff::AbstractPayoff; n_steps::Int=252
+) where {T}
     # Generate terminal values for point-to-point payoffs
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     # Calculate returns
@@ -207,7 +194,6 @@ function price_with_payoff(
     return _compute_result(params, payoffs)
 end
 
-
 """
     price_capped_call_return(engine, params, cap_rate) -> MCResult
 
@@ -224,15 +210,12 @@ Price capped call on return (FIA style).
 - `MCResult`: Monte Carlo pricing result
 """
 function price_capped_call_return(
-    engine::MonteCarloEngine,
-    params::GBMParams{T},
-    cap_rate::Real
-) where T
+    engine::MonteCarloEngine, params::GBMParams{T}, cap_rate::Real
+) where {T}
     cap_rate > 0 || throw(ArgumentError("CRITICAL: cap_rate must be > 0, got $cap_rate"))
 
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     # Return = (S(T) - S(0)) / S(0)
@@ -246,7 +229,6 @@ function price_capped_call_return(
 
     return _compute_result(params, payoffs)
 end
-
 
 """
     price_buffer_protection(engine, params, buffer_rate; cap_rate=nothing) -> MCResult
@@ -268,13 +250,13 @@ function price_buffer_protection(
     engine::MonteCarloEngine,
     params::GBMParams{T},
     buffer_rate::Real;
-    cap_rate::Union{Real, Nothing}=nothing
-) where T
-    buffer_rate > 0 || throw(ArgumentError("CRITICAL: buffer_rate must be > 0, got $buffer_rate"))
+    cap_rate::Union{Real,Nothing}=nothing,
+) where {T}
+    buffer_rate > 0 ||
+        throw(ArgumentError("CRITICAL: buffer_rate must be > 0, got $buffer_rate"))
 
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     returns = (terminal .- params.spot) ./ params.spot
@@ -298,7 +280,6 @@ function price_buffer_protection(
     return _compute_result(params, payoffs)
 end
 
-
 """
     price_floor_protection(engine, params, floor_rate; cap_rate=nothing) -> MCResult
 
@@ -319,13 +300,13 @@ function price_floor_protection(
     engine::MonteCarloEngine,
     params::GBMParams{T},
     floor_rate::Real;
-    cap_rate::Union{Real, Nothing}=nothing
-) where T
-    floor_rate <= 0 || throw(ArgumentError("CRITICAL: floor_rate should be <= 0, got $floor_rate"))
+    cap_rate::Union{Real,Nothing}=nothing,
+) where {T}
+    floor_rate <= 0 ||
+        throw(ArgumentError("CRITICAL: floor_rate should be <= 0, got $floor_rate"))
 
     terminal = generate_terminal_values(
-        params, engine.n_paths;
-        seed=engine.seed, antithetic=engine.antithetic
+        params, engine.n_paths; seed=engine.seed, antithetic=engine.antithetic
     )
 
     returns = (terminal .- params.spot) ./ params.spot
@@ -343,7 +324,6 @@ function price_floor_protection(
     return _compute_result(params, payoffs)
 end
 
-
 """
     _compute_result(params, payoffs) -> MCResult
 
@@ -356,7 +336,7 @@ Compute MC result from payoffs.
 # Returns
 - `MCResult`: Complete MC result with statistics
 """
-function _compute_result(params::GBMParams{T}, payoffs::Vector{T}) where T
+function _compute_result(params::GBMParams{T}, payoffs::Vector{T}) where {T}
     # Discount factor
     df = exp(-params.rate * params.time_to_expiry)
 
@@ -372,16 +352,8 @@ function _compute_result(params::GBMParams{T}, payoffs::Vector{T}) where T
     ci_lower = price - T(1.96) * se_price
     ci_upper = price + T(1.96) * se_price
 
-    return MCResult(
-        price,
-        se_price,
-        (ci_lower, ci_upper),
-        length(payoffs),
-        payoffs,
-        df
-    )
+    return MCResult(price, se_price, (ci_lower, ci_upper), length(payoffs), payoffs, df)
 end
-
 
 """
     price_vanilla_mc(spot, strike, rate, dividend, volatility, time_to_expiry; option_type=:call, n_paths=100000, seed=nothing) -> MCResult
@@ -411,10 +383,10 @@ function price_vanilla_mc(
     time_to_expiry::Real;
     option_type::Symbol=:call,
     n_paths::Int=100000,
-    seed::Union{Int, Nothing}=nothing
+    seed::Union{Int,Nothing}=nothing,
 )
     params = GBMParams(spot, rate, dividend, volatility, time_to_expiry)
-    engine = MonteCarloEngine(n_paths=n_paths, antithetic=true, seed=seed)
+    engine = MonteCarloEngine(; n_paths=n_paths, antithetic=true, seed=seed)
 
     if option_type == :call
         return price_european_call(engine, params, strike)
@@ -422,7 +394,6 @@ function price_vanilla_mc(
         return price_european_put(engine, params, strike)
     end
 end
-
 
 """
     monte_carlo_price(spot, strike, rate, dividend, volatility, time_to_expiry; option_type=:call, n_paths=100000, seed=nothing) -> T
@@ -446,15 +417,21 @@ function monte_carlo_price(
     time_to_expiry::Real;
     option_type::Symbol=:call,
     n_paths::Int=100000,
-    seed::Union{Int, Nothing}=nothing
+    seed::Union{Int,Nothing}=nothing,
 )
     result = price_vanilla_mc(
-        spot, strike, rate, dividend, volatility, time_to_expiry;
-        option_type=option_type, n_paths=n_paths, seed=seed
+        spot,
+        strike,
+        rate,
+        dividend,
+        volatility,
+        time_to_expiry;
+        option_type=option_type,
+        n_paths=n_paths,
+        seed=seed,
     )
     return result.price
 end
-
 
 """
     convergence_analysis(params, strike, analytical_price; path_counts=[1000, 5000, 10000, 50000, 100000, 500000], seed=42) -> NamedTuple
@@ -486,26 +463,31 @@ function convergence_analysis(
     strike::Real,
     analytical_price::Real;
     path_counts::Vector{Int}=[1000, 5000, 10000, 50000, 100000, 500000],
-    seed::Int=42
-) where T
+    seed::Int=42,
+) where {T}
     results = Vector{NamedTuple}()
 
     for n in path_counts
-        engine = MonteCarloEngine(n_paths=n, antithetic=true, seed=seed)
+        engine = MonteCarloEngine(; n_paths=n, antithetic=true, seed=seed)
         mc_result = price_european_call(engine, params, strike)
 
         error = abs(mc_result.price - analytical_price)
         rel_error = analytical_price > 0 ? error / analytical_price : T(Inf)
 
-        push!(results, (
-            n_paths = n,
-            mc_price = mc_result.price,
-            analytical_price = analytical_price,
-            absolute_error = error,
-            relative_error = rel_error,
-            standard_error = mc_result.standard_error,
-            within_ci = mc_result.confidence_interval[1] <= analytical_price <= mc_result.confidence_interval[2],
-        ))
+        push!(
+            results,
+            (
+                n_paths=n,
+                mc_price=mc_result.price,
+                analytical_price=analytical_price,
+                absolute_error=error,
+                relative_error=rel_error,
+                standard_error=mc_result.standard_error,
+                within_ci=mc_result.confidence_interval[1] <=
+                          analytical_price <=
+                          mc_result.confidence_interval[2],
+            ),
+        )
     end
 
     # Estimate convergence rate via log-log regression
@@ -514,11 +496,9 @@ function convergence_analysis(
 
     # Simple linear regression: log(error) = rate × log(N) + const
     n = length(log_n)
-    slope = (n * sum(log_n .* log_error) - sum(log_n) * sum(log_error)) /
-            (n * sum(log_n.^2) - sum(log_n)^2)
+    slope =
+        (n * sum(log_n .* log_error) - sum(log_n) * sum(log_error)) /
+        (n * sum(log_n .^ 2) - sum(log_n)^2)
 
-    return (
-        results = results,
-        convergence_rate = slope,
-    )
+    return (results=results, convergence_rate=slope)
 end

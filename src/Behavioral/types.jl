@@ -10,7 +10,6 @@ Defines configuration and result types for:
      and SOA 2018 VA GLB Utilization Study.
 """
 
-
 # =============================================================================
 # Lapse Configuration Types
 # =============================================================================
@@ -41,18 +40,19 @@ struct LapseConfig
     moneyness_sensitivity::Float64
 
     function LapseConfig(;
-        base_annual_lapse::Float64 = 0.05,
-        min_lapse::Float64 = 0.01,
-        max_lapse::Float64 = 0.25,
-        moneyness_sensitivity::Float64 = 1.0
+        base_annual_lapse::Float64=0.05,
+        min_lapse::Float64=0.01,
+        max_lapse::Float64=0.25,
+        moneyness_sensitivity::Float64=1.0,
     )
         base_annual_lapse >= 0 || throw(ArgumentError("base_annual_lapse must be >= 0"))
-        0 <= min_lapse <= max_lapse <= 1.0 || throw(ArgumentError("Must have 0 <= min_lapse <= max_lapse <= 1"))
-        moneyness_sensitivity >= 0 || throw(ArgumentError("moneyness_sensitivity must be >= 0"))
+        0 <= min_lapse <= max_lapse <= 1.0 ||
+            throw(ArgumentError("Must have 0 <= min_lapse <= max_lapse <= 1"))
+        moneyness_sensitivity >= 0 ||
+            throw(ArgumentError("moneyness_sensitivity must be >= 0"))
         new(base_annual_lapse, min_lapse, max_lapse, moneyness_sensitivity)
     end
 end
-
 
 """
     SOALapseConfig
@@ -86,22 +86,31 @@ struct SOALapseConfig
     max_lapse::Float64
 
     function SOALapseConfig(;
-        surrender_charge_length::Int = 7,
-        use_duration_curve::Bool = true,
-        use_sc_cliff_effect::Bool = true,
-        use_age_adjustment::Bool = false,
-        moneyness_sensitivity::Float64 = 1.0,
-        min_lapse::Float64 = 0.005,
-        max_lapse::Float64 = 0.30
+        surrender_charge_length::Int=7,
+        use_duration_curve::Bool=true,
+        use_sc_cliff_effect::Bool=true,
+        use_age_adjustment::Bool=false,
+        moneyness_sensitivity::Float64=1.0,
+        min_lapse::Float64=0.005,
+        max_lapse::Float64=0.30,
     )
-        surrender_charge_length >= 0 || throw(ArgumentError("surrender_charge_length must be >= 0"))
-        0 <= min_lapse <= max_lapse <= 1.0 || throw(ArgumentError("Must have 0 <= min_lapse <= max_lapse <= 1"))
-        moneyness_sensitivity >= 0 || throw(ArgumentError("moneyness_sensitivity must be >= 0"))
-        new(surrender_charge_length, use_duration_curve, use_sc_cliff_effect,
-            use_age_adjustment, moneyness_sensitivity, min_lapse, max_lapse)
+        surrender_charge_length >= 0 ||
+            throw(ArgumentError("surrender_charge_length must be >= 0"))
+        0 <= min_lapse <= max_lapse <= 1.0 ||
+            throw(ArgumentError("Must have 0 <= min_lapse <= max_lapse <= 1"))
+        moneyness_sensitivity >= 0 ||
+            throw(ArgumentError("moneyness_sensitivity must be >= 0"))
+        new(
+            surrender_charge_length,
+            use_duration_curve,
+            use_sc_cliff_effect,
+            use_age_adjustment,
+            moneyness_sensitivity,
+            min_lapse,
+            max_lapse,
+        )
     end
 end
-
 
 """
     LapseResult
@@ -120,7 +129,6 @@ struct LapseResult
     base_rate::Float64
     adjustment_factor::Float64
 end
-
 
 # =============================================================================
 # Withdrawal Configuration Types
@@ -151,18 +159,19 @@ struct WithdrawalConfig
     max_utilization::Float64
 
     function WithdrawalConfig(;
-        base_utilization::Float64 = 0.50,
-        age_sensitivity::Float64 = 0.01,
-        min_utilization::Float64 = 0.10,
-        max_utilization::Float64 = 1.00
+        base_utilization::Float64=0.50,
+        age_sensitivity::Float64=0.01,
+        min_utilization::Float64=0.10,
+        max_utilization::Float64=1.00,
     )
-        0 <= base_utilization <= 1 || throw(ArgumentError("base_utilization must be in [0, 1]"))
+        0 <= base_utilization <= 1 ||
+            throw(ArgumentError("base_utilization must be in [0, 1]"))
         age_sensitivity >= 0 || throw(ArgumentError("age_sensitivity must be >= 0"))
-        0 <= min_utilization <= max_utilization <= 1 || throw(ArgumentError("Must have 0 <= min <= max <= 1"))
+        0 <= min_utilization <= max_utilization <= 1 ||
+            throw(ArgumentError("Must have 0 <= min <= max <= 1"))
         new(base_utilization, age_sensitivity, min_utilization, max_utilization)
     end
 end
-
 
 """
     SOAWithdrawalConfig
@@ -196,21 +205,29 @@ struct SOAWithdrawalConfig
     max_utilization::Float64
 
     function SOAWithdrawalConfig(;
-        use_duration_curve::Bool = true,
-        use_age_curve::Bool = true,
-        use_itm_sensitivity::Bool = true,
-        use_continuous_itm::Bool = true,
-        combination_method::Symbol = :multiplicative,
-        min_utilization::Float64 = 0.05,
-        max_utilization::Float64 = 1.00
+        use_duration_curve::Bool=true,
+        use_age_curve::Bool=true,
+        use_itm_sensitivity::Bool=true,
+        use_continuous_itm::Bool=true,
+        combination_method::Symbol=:multiplicative,
+        min_utilization::Float64=0.05,
+        max_utilization::Float64=1.00,
     )
-        combination_method in (:multiplicative, :additive) || throw(ArgumentError("combination_method must be :multiplicative or :additive"))
-        0 <= min_utilization <= max_utilization <= 1 || throw(ArgumentError("Must have 0 <= min <= max <= 1"))
-        new(use_duration_curve, use_age_curve, use_itm_sensitivity,
-            use_continuous_itm, combination_method, min_utilization, max_utilization)
+        combination_method in (:multiplicative, :additive) ||
+            throw(ArgumentError("combination_method must be :multiplicative or :additive"))
+        0 <= min_utilization <= max_utilization <= 1 ||
+            throw(ArgumentError("Must have 0 <= min <= max <= 1"))
+        new(
+            use_duration_curve,
+            use_age_curve,
+            use_itm_sensitivity,
+            use_continuous_itm,
+            combination_method,
+            min_utilization,
+            max_utilization,
+        )
     end
 end
-
 
 """
     WithdrawalResult
@@ -233,7 +250,6 @@ struct WithdrawalResult
     age_factor::Float64
     itm_factor::Float64
 end
-
 
 # =============================================================================
 # Expense Configuration Types
@@ -265,10 +281,10 @@ struct ExpenseConfig
     inflation_rate::Float64
 
     function ExpenseConfig(;
-        per_policy_annual::Float64 = 100.0,
-        pct_of_av_annual::Float64 = 0.015,
-        acquisition_pct::Float64 = 0.03,
-        inflation_rate::Float64 = 0.025
+        per_policy_annual::Float64=100.0,
+        pct_of_av_annual::Float64=0.015,
+        acquisition_pct::Float64=0.03,
+        inflation_rate::Float64=0.025,
     )
         per_policy_annual >= 0 || throw(ArgumentError("per_policy_annual must be >= 0"))
         pct_of_av_annual >= 0 || throw(ArgumentError("pct_of_av_annual must be >= 0"))
@@ -277,7 +293,6 @@ struct ExpenseConfig
         new(per_policy_annual, pct_of_av_annual, acquisition_pct, inflation_rate)
     end
 end
-
 
 """
     ExpenseResult
@@ -294,7 +309,6 @@ struct ExpenseResult
     per_policy_component::Float64
     av_component::Float64
 end
-
 
 # =============================================================================
 # Behavioral Config Wrapper (for GLWBSimulator integration)
@@ -323,14 +337,14 @@ behavioral = BehavioralConfig(
 ```
 """
 struct BehavioralConfig
-    lapse::Union{LapseConfig, SOALapseConfig, Nothing}
-    withdrawal::Union{WithdrawalConfig, SOAWithdrawalConfig, Nothing}
-    expenses::Union{ExpenseConfig, Nothing}
+    lapse::Union{LapseConfig,SOALapseConfig,Nothing}
+    withdrawal::Union{WithdrawalConfig,SOAWithdrawalConfig,Nothing}
+    expenses::Union{ExpenseConfig,Nothing}
 
     function BehavioralConfig(;
-        lapse::Union{LapseConfig, SOALapseConfig, Nothing} = nothing,
-        withdrawal::Union{WithdrawalConfig, SOAWithdrawalConfig, Nothing} = nothing,
-        expenses::Union{ExpenseConfig, Nothing} = nothing
+        lapse::Union{LapseConfig,SOALapseConfig,Nothing}=nothing,
+        withdrawal::Union{WithdrawalConfig,SOAWithdrawalConfig,Nothing}=nothing,
+        expenses::Union{ExpenseConfig,Nothing}=nothing,
     )
         new(lapse, withdrawal, expenses)
     end
@@ -340,4 +354,6 @@ end
 has_lapse(bc::BehavioralConfig) = bc.lapse !== nothing
 has_withdrawal(bc::BehavioralConfig) = bc.withdrawal !== nothing
 has_expenses(bc::BehavioralConfig) = bc.expenses !== nothing
-has_any_behavior(bc::BehavioralConfig) = has_lapse(bc) || has_withdrawal(bc) || has_expenses(bc)
+function has_any_behavior(bc::BehavioralConfig)
+    has_lapse(bc) || has_withdrawal(bc) || has_expenses(bc)
+end

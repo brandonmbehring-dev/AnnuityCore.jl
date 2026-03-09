@@ -20,7 +20,6 @@ References:
 - Clark (2011), "Foreign Exchange Option Pricing"
 """
 
-
 """
     VolSurfacePoint
 
@@ -38,14 +37,13 @@ struct VolSurfacePoint
     σ::Float64
     F::Float64
 
-    function VolSurfacePoint(K, τ, σ; F::Float64 = NaN)
+    function VolSurfacePoint(K, τ, σ; F::Float64=NaN)
         K > 0 || throw(ArgumentError("K must be positive"))
         τ > 0 || throw(ArgumentError("τ must be positive"))
         σ > 0 || throw(ArgumentError("σ must be positive"))
         new(K, τ, σ, F)
     end
 end
-
 
 """
 Moneyness of a vol surface point.
@@ -55,14 +53,12 @@ function moneyness(p::VolSurfacePoint)
     return p.K / p.F
 end
 
-
 """
 Log-moneyness of a vol surface point.
 """
 function log_moneyness(p::VolSurfacePoint)
     return log(moneyness(p))
 end
-
 
 """
     VolSmile
@@ -84,9 +80,8 @@ struct VolSmile
     function VolSmile(τ, F, strikes, vols)
         τ > 0 || throw(ArgumentError("τ must be positive"))
         F > 0 || throw(ArgumentError("F must be positive"))
-        length(strikes) == length(vols) || throw(ArgumentError(
-            "strikes and vols must have same length"
-        ))
+        length(strikes) == length(vols) ||
+            throw(ArgumentError("strikes and vols must have same length"))
         all(strikes .> 0) || throw(ArgumentError("All strikes must be positive"))
         all(vols .> 0) || throw(ArgumentError("All vols must be positive"))
 
@@ -95,7 +90,6 @@ struct VolSmile
         new(τ, F, strikes[perm], vols[perm])
     end
 end
-
 
 """
     interpolate_smile(smile::VolSmile, K; method=:linear) -> Float64
@@ -110,11 +104,7 @@ Interpolate volatility at strike K.
 # Returns
 - `Float64`: Interpolated implied volatility
 """
-function interpolate_smile(
-    smile::VolSmile,
-    K::Float64;
-    method::Symbol = :linear
-)
+function interpolate_smile(smile::VolSmile, K::Float64; method::Symbol=:linear)
     K > 0 || throw(ArgumentError("K must be positive"))
 
     strikes = smile.strikes
@@ -154,7 +144,6 @@ function interpolate_smile(
     end
 end
 
-
 """
 Extrapolate volatility for strikes below the minimum observed.
 """
@@ -163,7 +152,6 @@ function _extrapolate_left(smile::VolSmile, K)
     return smile.vols[1]
 end
 
-
 """
 Extrapolate volatility for strikes above the maximum observed.
 """
@@ -171,7 +159,6 @@ function _extrapolate_right(smile::VolSmile, K)
     # Flat extrapolation is safest for calls
     return smile.vols[end]
 end
-
 
 """
 Cubic spline interpolation at a point.
@@ -197,18 +184,21 @@ function _cubic_interpolate(x, y, x_target, idx)
     end
 
     # Lagrange basis polynomials
-    L0 = ((x_target - x1) * (x_target - x2) * (x_target - x3)) /
-         ((x0 - x1) * (x0 - x2) * (x0 - x3))
-    L1 = ((x_target - x0) * (x_target - x2) * (x_target - x3)) /
-         ((x1 - x0) * (x1 - x2) * (x1 - x3))
-    L2 = ((x_target - x0) * (x_target - x1) * (x_target - x3)) /
-         ((x2 - x0) * (x2 - x1) * (x2 - x3))
-    L3 = ((x_target - x0) * (x_target - x1) * (x_target - x2)) /
-         ((x3 - x0) * (x3 - x1) * (x3 - x2))
+    L0 =
+        ((x_target - x1) * (x_target - x2) * (x_target - x3)) /
+        ((x0 - x1) * (x0 - x2) * (x0 - x3))
+    L1 =
+        ((x_target - x0) * (x_target - x2) * (x_target - x3)) /
+        ((x1 - x0) * (x1 - x2) * (x1 - x3))
+    L2 =
+        ((x_target - x0) * (x_target - x1) * (x_target - x3)) /
+        ((x2 - x0) * (x2 - x1) * (x2 - x3))
+    L3 =
+        ((x_target - x0) * (x_target - x1) * (x_target - x2)) /
+        ((x3 - x0) * (x3 - x1) * (x3 - x2))
 
     return y0 * L0 + y1 * L1 + y2 * L2 + y3 * L3
 end
-
 
 """
     VolSurface
@@ -233,7 +223,6 @@ struct VolSurface
     end
 end
 
-
 """
     interpolate_surface(surface::VolSurface, K, τ; method=:linear) -> Float64
 
@@ -249,10 +238,7 @@ Interpolate volatility at (K, τ).
 - `Float64`: Interpolated implied volatility
 """
 function interpolate_surface(
-    surface::VolSurface,
-    K::Float64,
-    τ::Float64;
-    method::Symbol = :linear
+    surface::VolSurface, K::Float64, τ::Float64; method::Symbol=:linear
 )
     K > 0 || throw(ArgumentError("K must be positive"))
     τ > 0 || throw(ArgumentError("τ must be positive"))
@@ -290,7 +276,6 @@ function interpolate_surface(
     end
 end
 
-
 """
     build_surface_from_quotes(quotes::Vector{NamedTuple}) -> VolSurface
 
@@ -302,11 +287,9 @@ Build a volatility surface from market quotes.
 # Returns
 - `VolSurface`: Constructed surface
 """
-function build_surface_from_quotes(
-    quotes::Vector{<:NamedTuple}
-)
+function build_surface_from_quotes(quotes::Vector{<:NamedTuple})
     # Group by expiry
-    expiry_groups = Dict{Float64, Vector{NamedTuple}}()
+    expiry_groups = Dict{Float64,Vector{NamedTuple}}()
 
     for q in quotes
         τ = q.τ
@@ -329,7 +312,6 @@ function build_surface_from_quotes(
     return VolSurface(smiles)
 end
 
-
 """
     fit_sabr_surface(surface::VolSurface; β=0.5) -> Vector{SABRParams}
 
@@ -342,22 +324,16 @@ Fit SABR parameters to each expiry slice of the surface.
 # Returns
 - `Vector{SABRParams}`: SABR parameters for each expiry
 """
-function fit_sabr_surface(
-    surface::VolSurface;
-    β::Float64 = 0.5
-)
+function fit_sabr_surface(surface::VolSurface; β::Float64=0.5)
     sabr_params = SABRParams[]
 
     for smile in surface.smiles
-        params = calibrate_sabr(
-            smile.F, smile.τ, smile.strikes, smile.vols; β=β
-        )
+        params = calibrate_sabr(smile.F, smile.τ, smile.strikes, smile.vols; β=β)
         push!(sabr_params, params)
     end
 
     return sabr_params
 end
-
 
 """
     atm_vol(smile::VolSmile) -> Float64
@@ -367,7 +343,6 @@ Get ATM implied volatility (interpolated at F).
 function atm_vol(smile::VolSmile)
     return interpolate_smile(smile, smile.F)
 end
-
 
 """
     atm_vol(surface::VolSurface, τ) -> Float64
@@ -397,7 +372,6 @@ function atm_vol(surface::VolSurface, τ::Float64)
     return atm_vol(smile)
 end
 
-
 """
     skew(smile::VolSmile; delta=0.25) -> Float64
 
@@ -405,7 +379,7 @@ Compute volatility skew: σ(25Δ put) - σ(25Δ call).
 
 [T1] Positive skew = downside protection is more expensive.
 """
-function skew(smile::VolSmile; delta::Float64 = 0.25)
+function skew(smile::VolSmile; delta::Float64=0.25)
     # Approximate 25Δ strikes using ATM vol and time
     σ_atm = atm_vol(smile)
     F, τ = smile.F, smile.τ
@@ -422,7 +396,6 @@ function skew(smile::VolSmile; delta::Float64 = 0.25)
     return σ_put - σ_call
 end
 
-
 """
     butterfly(smile::VolSmile; delta=0.25) -> Float64
 
@@ -430,7 +403,7 @@ Compute butterfly spread: 0.5*(σ_put + σ_call) - σ_ATM.
 
 [T1] Measures convexity/curvature of the smile.
 """
-function butterfly(smile::VolSmile; delta::Float64 = 0.25)
+function butterfly(smile::VolSmile; delta::Float64=0.25)
     σ_atm = atm_vol(smile)
     F, τ = smile.F, smile.τ
 
@@ -443,7 +416,6 @@ function butterfly(smile::VolSmile; delta::Float64 = 0.25)
     return 0.5 * (σ_put + σ_call) - σ_atm
 end
 
-
 """
     term_structure(surface::VolSurface) -> Vector{Tuple{Float64, Float64}}
 
@@ -452,7 +424,6 @@ Extract ATM term structure: [(τ₁, σ₁), (τ₂, σ₂), ...].
 function term_structure(surface::VolSurface)
     return [(s.τ, atm_vol(s)) for s in surface.smiles]
 end
-
 
 """
     validate_no_calendar_arbitrage(surface::VolSurface) -> Bool
@@ -479,31 +450,24 @@ function validate_no_calendar_arbitrage(surface::VolSurface)
     return true
 end
 
-
 """
     smile_from_heston(params::HestonParams, strikes; config=COSConfig()) -> VolSmile
 
 Generate a volatility smile from Heston parameters using COS pricing.
 """
 function smile_from_heston(
-    params::HestonParams,
-    strikes::Vector{Float64};
-    config::COSConfig = COSConfig()
+    params::HestonParams, strikes::Vector{Float64}; config::COSConfig=COSConfig()
 )
     impl_vols = heston_smile_cos(params, strikes; config=config)
     return VolSmile(params.τ, params.S₀, strikes, impl_vols)
 end
-
 
 """
     smile_from_sabr(params::SABRParams, strikes) -> VolSmile
 
 Generate a volatility smile from SABR parameters.
 """
-function smile_from_sabr(
-    params::SABRParams,
-    strikes::Vector{Float64}
-)
+function smile_from_sabr(params::SABRParams, strikes::Vector{Float64})
     impl_vols = sabr_smile(params, strikes)
     return VolSmile(params.τ, params.F, strikes, impl_vols)
 end

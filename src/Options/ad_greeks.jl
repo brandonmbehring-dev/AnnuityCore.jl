@@ -32,7 +32,6 @@ struct ADGreeks{T<:Real}
     rho::T
 end
 
-
 """
     ad_greeks_call(S, K, r, q, σ, τ) -> ADGreeks
 
@@ -55,7 +54,7 @@ bs_greeks = black_scholes_greeks(100.0, 100.0, 0.05, 0.02, 0.20, 1.0)
 abs(greeks.delta - bs_greeks.delta) < 1e-10  # true
 ```
 """
-function ad_greeks_call(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
+function ad_greeks_call(S::T, K::T, r::T, q::T, σ::T, τ::T) where {T<:Real}
     # Delta: ∂V/∂S
     delta = gradient(s -> black_scholes_call(s, K, r, q, σ, τ), S)[1]
 
@@ -83,7 +82,6 @@ function ad_greeks_call(S, K, r, q, σ, τ)
     ad_greeks_call(T(S), T(K), T(r), T(q), T(σ), T(τ))
 end
 
-
 """
     ad_greeks_put(S, K, r, q, σ, τ) -> ADGreeks
 
@@ -95,7 +93,7 @@ Compute put option Greeks using automatic differentiation.
 # Returns
 - `ADGreeks`: All first-order Greeks
 """
-function ad_greeks_put(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
+function ad_greeks_put(S::T, K::T, r::T, q::T, σ::T, τ::T) where {T<:Real}
     # Delta: ∂V/∂S
     delta = gradient(s -> black_scholes_put(s, K, r, q, σ, τ), S)[1]
 
@@ -123,7 +121,6 @@ function ad_greeks_put(S, K, r, q, σ, τ)
     ad_greeks_put(T(S), T(K), T(r), T(q), T(σ), T(τ))
 end
 
-
 """
     portfolio_greeks(positions; S, K, r, q, σ, τ) -> ADGreeks
 
@@ -146,8 +143,13 @@ greeks = portfolio_greeks(positions; S=100.0, K=100.0, r=0.05, q=0.02, σ=0.20, 
 ```
 """
 function portfolio_greeks(
-    positions::Vector{Tuple{Symbol, Float64}};
-    S::Float64, K::Float64, r::Float64, q::Float64, σ::Float64, τ::Float64
+    positions::Vector{Tuple{Symbol,Float64}};
+    S::Float64,
+    K::Float64,
+    r::Float64,
+    q::Float64,
+    σ::Float64,
+    τ::Float64,
 )
     # Portfolio value function
     function portfolio_value(spot, rate, vol, time)
@@ -183,7 +185,6 @@ function portfolio_greeks(
     return ADGreeks(delta, gamma, vega, theta, rho)
 end
 
-
 """
     ad_greeks_payoff(payoff_fn, S, K, r, q, σ, τ; n_paths=100000) -> ADGreeks
 
@@ -212,9 +213,14 @@ This function works best for smooth payoffs (calls, puts, spreads).
 """
 function ad_greeks_payoff(
     payoff_fn::Function,
-    S::Float64, K::Float64, r::Float64, q::Float64, σ::Float64, τ::Float64;
-    n_paths::Int = 100000,
-    seed::Int = 42
+    S::Float64,
+    K::Float64,
+    r::Float64,
+    q::Float64,
+    σ::Float64,
+    τ::Float64;
+    n_paths::Int=100000,
+    seed::Int=42,
 )
     # MC price function (differentiable)
     function mc_price(spot, rate, vol, time)
@@ -240,15 +246,8 @@ function ad_greeks_payoff(
     raw_theta = gradient(t -> mc_price(S, r, σ, t), τ)[1]
     raw_rho = gradient(rate -> mc_price(S, rate, σ, τ), r)[1]
 
-    return ADGreeks(
-        delta,
-        gamma,
-        raw_vega / 100,
-        -raw_theta,
-        raw_rho / 100
-    )
+    return ADGreeks(delta, gamma, raw_vega / 100, -raw_theta, raw_rho / 100)
 end
-
 
 """
     validate_ad_vs_analytical(S, K, r, q, σ, τ; tol=1e-8) -> Bool
@@ -259,8 +258,13 @@ Cross-validate AD Greeks against analytical Black-Scholes Greeks.
 - `true` if all Greeks match within tolerance
 """
 function validate_ad_vs_analytical(
-    S::Float64, K::Float64, r::Float64, q::Float64, σ::Float64, τ::Float64;
-    tol::Float64 = 1e-8
+    S::Float64,
+    K::Float64,
+    r::Float64,
+    q::Float64,
+    σ::Float64,
+    τ::Float64;
+    tol::Float64=1e-8,
 )
     ad = ad_greeks_call(S, K, r, q, σ, τ)
     bs = black_scholes_greeks(S, K, r, q, σ, τ; is_call=true)

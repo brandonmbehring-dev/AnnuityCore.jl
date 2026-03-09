@@ -100,7 +100,7 @@ function npx(table::MortalityTable, age::Int, n::Int)::Float64
     n <= 0 && return 1.0
 
     survival = 1.0
-    for k in 0:(n-1)
+    for k in 0:(n - 1)
         survival *= get_px(table, age + k)
         survival <= 0 && break
     end
@@ -201,7 +201,7 @@ Calculate lx (number living at age x).
 # Returns
 - `Float64`: Number surviving to age x
 """
-function lx(table::MortalityTable, age::Int; radix::Int = 100_000)::Float64
+function lx(table::MortalityTable, age::Int; radix::Int=100_000)::Float64
     age <= table.min_age && return Float64(radix)
     radix * npx(table, table.min_age, age - table.min_age)
 end
@@ -221,7 +221,7 @@ Calculate dx (deaths between age x and x+1).
 # Returns
 - `Float64`: Expected deaths at age x
 """
-function dx(table::MortalityTable, age::Int; radix::Int = 100_000)::Float64
+function dx(table::MortalityTable, age::Int; radix::Int=100_000)::Float64
     lx(table, age; radix) * get_qx(table, age)
 end
 
@@ -253,10 +253,7 @@ annuity_factor(table, 65, 0.04; n=10)  # 10-year temporary
 ```
 """
 function annuity_factor(
-    table::MortalityTable,
-    age::Int,
-    r::Float64;
-    n::Union{Int, Nothing} = nothing
+    table::MortalityTable, age::Int, r::Float64; n::Union{Int,Nothing}=nothing
 )::Float64
     v = 1.0 / (1.0 + r)
     max_term = isnothing(n) ? (table.max_age - age + 1) : min(n, table.max_age - age + 1)
@@ -288,10 +285,7 @@ Calculate present value factor of life annuity immediate.
 - `Float64`: Annuity immediate present value factor
 """
 function annuity_immediate_factor(
-    table::MortalityTable,
-    age::Int,
-    r::Float64;
-    n::Union{Int, Nothing} = nothing
+    table::MortalityTable, age::Int, r::Float64; n::Union{Int,Nothing}=nothing
 )::Float64
     annuity_factor(table, age, r; n) - 1.0
 end
@@ -320,16 +314,20 @@ table = soa_2012_iam()
 table = soa_2012_iam(gender=FEMALE)
 ```
 """
-function soa_2012_iam(; gender::Gender = MALE)::MortalityTable
+function soa_2012_iam(; gender::Gender=MALE)::MortalityTable
     qx = get_soa_2012_iam_qx_vector(gender)
     age_range = get_soa_2012_iam_age_range()
 
     MortalityTable(;
-        table_name = gender == MALE ? "SOA 2012 IAM Basic - Male" : "SOA 2012 IAM Basic - Female",
-        min_age = age_range.min_age,
-        max_age = age_range.max_age,
-        qx = qx,
-        gender = gender
+        table_name=if gender == MALE
+            "SOA 2012 IAM Basic - Male"
+        else
+            "SOA 2012 IAM Basic - Female"
+        end,
+        min_age=age_range.min_age,
+        max_age=age_range.max_age,
+        qx=qx,
+        gender=gender,
     )
 end
 
@@ -350,9 +348,9 @@ Load SOA table by ID.
 """
 function soa_table(table_id::Int)::MortalityTable
     if table_id == 3302
-        soa_2012_iam(gender = MALE)
+        soa_2012_iam(; gender=MALE)
     elseif table_id == 3303
-        soa_2012_iam(gender = FEMALE)
+        soa_2012_iam(; gender=FEMALE)
     else
         error("SOA table $table_id not built-in. Use MortalityTables.jl for full access.")
     end
@@ -386,11 +384,11 @@ get_qx(table, 65)  # ~0.019
 ```
 """
 function gompertz_table(;
-    a::Float64 = 0.0001,
-    b::Float64 = 0.08,
-    min_age::Int = 0,
-    max_age::Int = 120,
-    gender::Gender = UNISEX
+    a::Float64=0.0001,
+    b::Float64=0.08,
+    min_age::Int=0,
+    max_age::Int=120,
+    gender::Gender=UNISEX,
 )::MortalityTable
     a > 0 || error("Parameter a must be positive")
     b > 0 || error("Parameter b must be positive")
@@ -399,11 +397,11 @@ function gompertz_table(;
     qx = [min(a * exp(b * age), 1.0) for age in ages]
 
     MortalityTable(;
-        table_name = "Gompertz (a=$a, b=$b)",
-        min_age = min_age,
-        max_age = max_age,
-        qx = qx,
-        gender = gender
+        table_name="Gompertz (a=$a, b=$b)",
+        min_age=min_age,
+        max_age=max_age,
+        qx=qx,
+        gender=gender,
     )
 end
 
@@ -427,9 +425,7 @@ table = from_dict(qx; table_name="Custom")
 ```
 """
 function from_dict(
-    qx_dict::Dict{Int, Float64};
-    table_name::String = "Custom",
-    gender::Gender = UNISEX
+    qx_dict::Dict{Int,Float64}; table_name::String="Custom", gender::Gender=UNISEX
 )::MortalityTable
     isempty(qx_dict) && error("qx_dict cannot be empty")
 
@@ -452,11 +448,7 @@ function from_dict(
     end
 
     MortalityTable(;
-        table_name = table_name,
-        min_age = min_age,
-        max_age = max_age,
-        qx = qx,
-        gender = gender
+        table_name=table_name, min_age=min_age, max_age=max_age, qx=qx, gender=gender
     )
 end
 
@@ -487,9 +479,7 @@ get_qx(improved, 65) < get_qx(base, 65)  # true
 ```
 """
 function with_improvement(
-    table::MortalityTable,
-    improvement_rate::Float64,
-    projection_years::Int
+    table::MortalityTable, improvement_rate::Float64, projection_years::Int
 )::MortalityTable
     projection_years <= 0 && return table
     0.0 <= improvement_rate <= 1.0 || error("Improvement rate must be in [0, 1]")
@@ -498,11 +488,11 @@ function with_improvement(
     improved_qx = min.(table.qx .* factor, 1.0)
 
     MortalityTable(;
-        table_name = "$(table.table_name) + $(projection_years)yr improvement",
-        min_age = table.min_age,
-        max_age = table.max_age,
-        qx = improved_qx,
-        gender = table.gender
+        table_name="$(table.table_name) + $(projection_years)yr improvement",
+        min_age=table.min_age,
+        max_age=table.max_age,
+        qx=improved_qx,
+        gender=table.gender,
     )
 end
 
@@ -529,9 +519,7 @@ unisex = blend_tables(male, female, 0.5)
 ```
 """
 function blend_tables(
-    table1::MortalityTable,
-    table2::MortalityTable,
-    weight1::Float64
+    table1::MortalityTable, table2::MortalityTable, weight1::Float64
 )::MortalityTable
     table1.min_age == table2.min_age && table1.max_age == table2.max_age ||
         error("Tables must have same age range")
@@ -544,11 +532,11 @@ function blend_tables(
     w2_pct = 100 - w1_pct
 
     MortalityTable(;
-        table_name = "Blend: $w1_pct% $(table1.table_name) / $w2_pct% $(table2.table_name)",
-        min_age = table1.min_age,
-        max_age = table1.max_age,
-        qx = blended_qx,
-        gender = UNISEX
+        table_name="Blend: $w1_pct% $(table1.table_name) / $w2_pct% $(table2.table_name)",
+        min_age=table1.min_age,
+        max_age=table1.max_age,
+        qx=blended_qx,
+        gender=UNISEX,
     )
 end
 
@@ -579,14 +567,13 @@ results["Male"][65]  # ~20.1
 ```
 """
 function compare_life_expectancy(
-    tables::Dict{String, MortalityTable};
-    ages::Union{Vector{Int}, Nothing} = nothing
-)::Dict{String, Dict{Int, Float64}}
+    tables::Dict{String,MortalityTable}; ages::Union{Vector{Int},Nothing}=nothing
+)::Dict{String,Dict{Int,Float64}}
     ages = isnothing(ages) ? [55, 60, 65, 70, 75, 80] : ages
 
-    results = Dict{String, Dict{Int, Float64}}()
+    results = Dict{String,Dict{Int,Float64}}()
     for (name, table) in tables
-        results[name] = Dict{Int, Float64}()
+        results[name] = Dict{Int,Float64}()
         for age in ages
             results[name][age] = life_expectancy(table, age)
         end
@@ -624,15 +611,15 @@ function calculate_annuity_pv(
     age::Int,
     annual_payment::Float64,
     discount_rate::Float64;
-    term::Union{Int, Nothing} = nothing,
-    timing::Symbol = :beginning
+    term::Union{Int,Nothing}=nothing,
+    timing::Symbol=:beginning,
 )::Float64
     timing in (:beginning, :end) || error("Timing must be :beginning or :end")
 
-    factor = annuity_factor(table, age, discount_rate; n = term)
+    factor = annuity_factor(table, age, discount_rate; n=term)
 
     if timing == :end
-        factor = annuity_immediate_factor(table, age, discount_rate; n = term)
+        factor = annuity_immediate_factor(table, age, discount_rate; n=term)
     end
 
     annual_payment * factor
@@ -683,9 +670,9 @@ function validate_mortality_table(table::MortalityTable)
 
     # Summary
     (
-        valid = isempty(issues),
-        issues = issues,
-        qx_range = (minimum(table.qx), maximum(table.qx)),
-        life_exp_65 = life_expectancy(table, 65)
+        valid=isempty(issues),
+        issues=issues,
+        qx_range=(minimum(table.qx), maximum(table.qx)),
+        life_exp_65=life_expectancy(table, 65),
     )
 end

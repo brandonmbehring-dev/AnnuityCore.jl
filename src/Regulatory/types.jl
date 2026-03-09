@@ -45,19 +45,22 @@ struct EconomicScenario
     equity_returns::Vector{Float64}
     scenario_id::Int
 
-    function EconomicScenario(rates::Vector{Float64}, equity_returns::Vector{Float64}, scenario_id::Int)
+    function EconomicScenario(
+        rates::Vector{Float64}, equity_returns::Vector{Float64}, scenario_id::Int
+    )
         length(rates) == length(equity_returns) || error(
-            "CRITICAL: Rate path length ($(length(rates))) must match equity path length ($(length(equity_returns)))"
+            "CRITICAL: Rate path length ($(length(rates))) must match equity path length ($(length(equity_returns)))",
         )
         new(rates, equity_returns, scenario_id)
     end
 end
 
 # Keyword constructor
-function EconomicScenario(; rates::Vector{Float64}, equity_returns::Vector{Float64}, scenario_id::Int)
+function EconomicScenario(;
+    rates::Vector{Float64}, equity_returns::Vector{Float64}, scenario_id::Int
+)
     EconomicScenario(rates, equity_returns, scenario_id)
 end
-
 
 """
     AG43Scenarios
@@ -87,7 +90,6 @@ function get_equity_matrix(ag43::AG43Scenarios)::Matrix{Float64}
     reduce(vcat, [s.equity_returns' for s in ag43.scenarios])
 end
 
-
 """
     VasicekParams
 
@@ -107,9 +109,9 @@ struct VasicekParams
 end
 
 # Default constructor using keyword syntax
-VasicekParams(; kappa::Real = 0.20, theta::Real = 0.04, sigma::Real = 0.01) =
+function VasicekParams(; kappa::Real=0.20, theta::Real=0.04, sigma::Real=0.01)
     VasicekParams(Float64(kappa), Float64(theta), Float64(sigma))
-
+end
 
 """
     EquityParams
@@ -130,9 +132,7 @@ struct EquityParams
 end
 
 # Default constructor using keyword syntax
-EquityParams(; mu::Real = 0.07, sigma::Real = 0.18) =
-    EquityParams(Float64(mu), Float64(sigma))
-
+EquityParams(; mu::Real=0.07, sigma::Real=0.18) = EquityParams(Float64(mu), Float64(sigma))
 
 """
     RiskNeutralEquityParams
@@ -160,9 +160,7 @@ end
 
 # Default constructor with only risk_free_rate required
 function RiskNeutralEquityParams(;
-    risk_free_rate::Float64,
-    dividend_yield::Float64 = 0.02,
-    sigma::Float64 = 0.18
+    risk_free_rate::Float64, dividend_yield::Float64=0.02, sigma::Float64=0.18
 )
     RiskNeutralEquityParams(risk_free_rate, dividend_yield, sigma)
 end
@@ -174,7 +172,6 @@ risk_neutral_drift(p::RiskNeutralEquityParams) = p.risk_free_rate - p.dividend_y
 function to_equity_params(p::RiskNeutralEquityParams)::EquityParams
     EquityParams(risk_neutral_drift(p), p.sigma)
 end
-
 
 #=============================================================================
 # VM-21 Types
@@ -205,7 +202,14 @@ struct PolicyData
         av >= 0 || error("CRITICAL: Account value cannot be negative, got $av")
         gwb >= 0 || error("CRITICAL: GWB cannot be negative, got $gwb")
         age >= 0 || error("CRITICAL: Age cannot be negative, got $age")
-        new(Float64(av), Float64(gwb), age, Float64(csv), Float64(withdrawal_rate), Float64(fee_rate))
+        new(
+            Float64(av),
+            Float64(gwb),
+            age,
+            Float64(csv),
+            Float64(withdrawal_rate),
+            Float64(fee_rate),
+        )
     end
 end
 
@@ -214,13 +218,19 @@ function PolicyData(;
     av::Real,
     gwb::Real,
     age::Int,
-    csv::Real = 0.0,
-    withdrawal_rate::Real = 0.05,
-    fee_rate::Real = 0.01
+    csv::Real=0.0,
+    withdrawal_rate::Real=0.05,
+    fee_rate::Real=0.01,
 )
-    PolicyData(Float64(av), Float64(gwb), age, Float64(csv), Float64(withdrawal_rate), Float64(fee_rate))
+    PolicyData(
+        Float64(av),
+        Float64(gwb),
+        age,
+        Float64(csv),
+        Float64(withdrawal_rate),
+        Float64(fee_rate),
+    )
 end
-
 
 """
     VM21Result
@@ -255,13 +265,12 @@ function VM21Result(;
     csv_floor::Float64,
     reserve::Float64,
     scenario_count::Int,
-    mean_pv::Float64 = 0.0,
-    std_pv::Float64 = 0.0,
-    worst_pv::Float64 = 0.0
+    mean_pv::Float64=0.0,
+    std_pv::Float64=0.0,
+    worst_pv::Float64=0.0,
 )
     VM21Result(cte70, ssa, csv_floor, reserve, scenario_count, mean_pv, std_pv, worst_pv)
 end
-
 
 #=============================================================================
 # VM-22 Types
@@ -276,7 +285,6 @@ Type of reserve calculation used in VM-22.
     DETERMINISTIC
     STOCHASTIC
 end
-
 
 """
     FixedAnnuityPolicy
@@ -297,15 +305,28 @@ struct FixedAnnuityPolicy
     term_years::Int
     current_year::Int
     surrender_charge_pct::Float64
-    account_value::Union{Float64, Nothing}
+    account_value::Union{Float64,Nothing}
 
-    function FixedAnnuityPolicy(premium, guaranteed_rate, term_years, current_year,
-                                 surrender_charge_pct, account_value)
+    function FixedAnnuityPolicy(
+        premium,
+        guaranteed_rate,
+        term_years,
+        current_year,
+        surrender_charge_pct,
+        account_value,
+    )
         premium > 0 || error("CRITICAL: Premium must be positive, got $premium")
-        guaranteed_rate >= 0 || error("CRITICAL: Guaranteed rate cannot be negative, got $guaranteed_rate")
+        guaranteed_rate >= 0 ||
+            error("CRITICAL: Guaranteed rate cannot be negative, got $guaranteed_rate")
         term_years > 0 || error("CRITICAL: Term years must be positive, got $term_years")
-        new(Float64(premium), Float64(guaranteed_rate), term_years, current_year,
-            Float64(surrender_charge_pct), account_value)
+        new(
+            Float64(premium),
+            Float64(guaranteed_rate),
+            term_years,
+            current_year,
+            Float64(surrender_charge_pct),
+            account_value,
+        )
     end
 end
 
@@ -314,20 +335,25 @@ function FixedAnnuityPolicy(;
     premium::Real,
     guaranteed_rate::Real,
     term_years::Int,
-    current_year::Int = 0,
-    surrender_charge_pct::Real = 0.07,
-    account_value::Union{Real, Nothing} = nothing
+    current_year::Int=0,
+    surrender_charge_pct::Real=0.07,
+    account_value::Union{Real,Nothing}=nothing,
 )
     av = account_value === nothing ? nothing : Float64(account_value)
-    FixedAnnuityPolicy(Float64(premium), Float64(guaranteed_rate), term_years,
-                       current_year, Float64(surrender_charge_pct), av)
+    FixedAnnuityPolicy(
+        Float64(premium),
+        Float64(guaranteed_rate),
+        term_years,
+        current_year,
+        Float64(surrender_charge_pct),
+        av,
+    )
 end
 
 """Get account value (defaults to premium if not specified)."""
 function get_av(policy::FixedAnnuityPolicy)::Float64
     policy.account_value !== nothing ? policy.account_value : policy.premium
 end
-
 
 """
     StochasticExclusionResult
@@ -344,7 +370,6 @@ struct StochasticExclusionResult
     ratio::Float64
     threshold::Float64
 end
-
 
 """
     VM22Result
@@ -364,7 +389,7 @@ struct VM22Result
     reserve::Float64
     net_premium_reserve::Float64
     deterministic_reserve::Float64
-    stochastic_reserve::Union{Float64, Nothing}
+    stochastic_reserve::Union{Float64,Nothing}
     reserve_type::ReserveType
     set_passed::Bool
     sst_passed::Bool
@@ -375,11 +400,18 @@ function VM22Result(;
     reserve::Float64,
     net_premium_reserve::Float64,
     deterministic_reserve::Float64,
-    stochastic_reserve::Union{Float64, Nothing} = nothing,
-    reserve_type::ReserveType = DETERMINISTIC,
-    set_passed::Bool = true,
-    sst_passed::Bool = true
+    stochastic_reserve::Union{Float64,Nothing}=nothing,
+    reserve_type::ReserveType=DETERMINISTIC,
+    set_passed::Bool=true,
+    sst_passed::Bool=true,
 )
-    VM22Result(reserve, net_premium_reserve, deterministic_reserve,
-               stochastic_reserve, reserve_type, set_passed, sst_passed)
+    VM22Result(
+        reserve,
+        net_premium_reserve,
+        deterministic_reserve,
+        stochastic_reserve,
+        reserve_type,
+        set_passed,
+        sst_passed,
+    )
 end

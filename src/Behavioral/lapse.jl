@@ -24,7 +24,6 @@ References:
 - SOA 2006 Deferred Annuity Persistency Study
 """
 
-
 # =============================================================================
 # Simple Lapse Model
 # =============================================================================
@@ -56,10 +55,7 @@ result.lapse_rate < 0.05  # Lower than base (ITM reduces lapse)
 ```
 """
 function calculate_lapse(
-    config::LapseConfig,
-    gwb::Real,
-    av::Real;
-    surrender_period_complete::Bool = false
+    config::LapseConfig, gwb::Real, av::Real; surrender_period_complete::Bool=false
 )
     # Validate inputs
     av > 0 || throw(ArgumentError("Account value must be positive, got $av"))
@@ -89,7 +85,6 @@ function calculate_lapse(
 
     return LapseResult(lapse_rate, moneyness, base_rate, adjustment_factor)
 end
-
 
 # =============================================================================
 # SOA-Calibrated Lapse Model
@@ -130,7 +125,7 @@ function calculate_lapse(
     av::Real,
     duration::Int,
     years_to_sc_end::Int;
-    age::Union{Int, Nothing} = nothing
+    age::Union{Int,Nothing}=nothing,
 )
     # Validate inputs
     av > 0 || throw(ArgumentError("Account value must be positive, got $av"))
@@ -142,7 +137,9 @@ function calculate_lapse(
 
     # Start with duration-based rate from SOA 2006
     if config.use_duration_curve
-        base_rate = interpolate_surrender_by_duration(duration; sc_length=config.surrender_charge_length)
+        base_rate = interpolate_surrender_by_duration(
+            duration; sc_length=config.surrender_charge_length
+        )
     else
         # Use flat rate based on position in SC period
         base_rate = years_to_sc_end > 0 ? 0.03 : 0.08  # Simple in-SC vs post-SC
@@ -182,7 +179,6 @@ function calculate_lapse(
     return LapseResult(lapse_rate, moneyness, base_rate, adjustment_factor)
 end
 
-
 # =============================================================================
 # Path-Based Calculations
 # =============================================================================
@@ -211,19 +207,22 @@ function calculate_path_lapses(
     config::LapseConfig,
     gwb_path::Vector{<:Real},
     av_path::Vector{<:Real};
-    surrender_period_ends::Int = 0
+    surrender_period_ends::Int=0,
 )
-    length(gwb_path) == length(av_path) || throw(ArgumentError(
-        "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
-    ))
+    length(gwb_path) == length(av_path) || throw(
+        ArgumentError(
+            "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
+        ),
+    )
 
     n_steps = length(gwb_path)
     lapse_rates = zeros(Float64, n_steps)
 
     for t in 1:n_steps
         surrender_complete = t > surrender_period_ends
-        result = calculate_lapse(config, gwb_path[t], av_path[t];
-                                surrender_period_complete=surrender_complete)
+        result = calculate_lapse(
+            config, gwb_path[t], av_path[t]; surrender_period_complete=surrender_complete
+        )
         lapse_rates[t] = result.lapse_rate
     end
 
@@ -234,12 +233,14 @@ function calculate_path_lapses(
     config::SOALapseConfig,
     gwb_path::Vector{<:Real},
     av_path::Vector{<:Real};
-    sc_length::Int = config.surrender_charge_length,
-    start_age::Union{Int, Nothing} = nothing
+    sc_length::Int=config.surrender_charge_length,
+    start_age::Union{Int,Nothing}=nothing,
 )
-    length(gwb_path) == length(av_path) || throw(ArgumentError(
-        "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
-    ))
+    length(gwb_path) == length(av_path) || throw(
+        ArgumentError(
+            "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
+        ),
+    )
 
     n_steps = length(gwb_path)
     lapse_rates = zeros(Float64, n_steps)
@@ -249,13 +250,14 @@ function calculate_path_lapses(
         years_to_sc_end = sc_length - t + 1  # SC ends at year sc_length
         age = start_age !== nothing ? start_age + t - 1 : nothing
 
-        result = calculate_lapse(config, gwb_path[t], av_path[t], duration, years_to_sc_end; age=age)
+        result = calculate_lapse(
+            config, gwb_path[t], av_path[t], duration, years_to_sc_end; age=age
+        )
         lapse_rates[t] = result.lapse_rate
     end
 
     return lapse_rates
 end
-
 
 # =============================================================================
 # Survival Probability
@@ -296,7 +298,6 @@ function survival_from_lapses(lapse_rates::Vector{<:Real}; dt::Real=1.0)
     return survival
 end
 
-
 """
     lapse_probability(lapse_rates; dt=1.0) -> Float64
 
@@ -315,7 +316,6 @@ function lapse_probability(lapse_rates::Vector{<:Real}; dt::Real=1.0)
     survival = survival_from_lapses(lapse_rates; dt=dt)
     return 1.0 - survival[end]
 end
-
 
 # =============================================================================
 # Moneyness Utilities
@@ -337,7 +337,6 @@ function moneyness_from_state(gwb::Real, av::Real)
     av > 0 || throw(ArgumentError("Account value must be positive"))
     return gwb > 0 ? (gwb / av) : 1.0
 end
-
 
 """
     is_itm(gwb, av) -> Bool

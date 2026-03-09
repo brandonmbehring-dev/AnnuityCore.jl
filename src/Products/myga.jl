@@ -9,7 +9,6 @@ MYGA is the simplest annuity product:
 [T1] Value = PV of guaranteed maturity value
 """
 
-
 """
     price_myga(product, principal; discount_rate) -> PricingResult
 
@@ -40,9 +39,9 @@ result = price_myga(product, 100_000.0)
 """
 function price_myga(
     product::MYGAProduct{T},
-    principal::Real = T(100_000);
-    discount_rate::Union{Real, Nothing} = nothing
-) where T<:Real
+    principal::Real=T(100_000);
+    discount_rate::Union{Real,Nothing}=nothing,
+) where {T<:Real}
     rate = product.fixed_rate
     years = product.guarantee_duration
     disc = discount_rate === nothing ? rate : T(discount_rate)
@@ -67,7 +66,7 @@ function price_myga(
     convexity = T(years * (years + 1)) / (1 + disc)^2
 
     # Build details dictionary
-    details = Dict{Symbol, Any}(
+    details = Dict{Symbol,Any}(
         :principal => principal_t,
         :fixed_rate => rate,
         :guarantee_duration => years,
@@ -79,7 +78,6 @@ function price_myga(
 
     PricingResult(present_value, duration, convexity, details)
 end
-
 
 """
     myga_sensitivity(product, principal, discount_rate; bump_size) -> NamedTuple
@@ -98,11 +96,8 @@ Returns DV01 (dollar value of 1 basis point move) and convexity effect.
 - `NamedTuple`: (dv01, convexity_effect, duration, modified_duration)
 """
 function myga_sensitivity(
-    product::MYGAProduct{T},
-    principal::Real,
-    discount_rate::Real;
-    bump_size::Real = 0.0001
-) where T<:Real
+    product::MYGAProduct{T}, principal::Real, discount_rate::Real; bump_size::Real=0.0001
+) where {T<:Real}
     base = price_myga(product, principal; discount_rate=discount_rate)
 
     # Bump up
@@ -115,16 +110,16 @@ function myga_sensitivity(
     dv01 = (down.present_value - up.present_value) / 2
 
     # Convexity effect
-    convexity_effect = (up.present_value + down.present_value - 2 * base.present_value) / bump_size^2
+    convexity_effect =
+        (up.present_value + down.present_value - 2 * base.present_value) / bump_size^2
 
     (
-        dv01 = dv01,
-        convexity_effect = convexity_effect,
-        duration = base.duration,
-        modified_duration = base.details[:modified_duration]
+        dv01=dv01,
+        convexity_effect=convexity_effect,
+        duration=base.duration,
+        modified_duration=base.details[:modified_duration],
     )
 end
-
 
 """
     myga_breakeven_rate(product, principal, target_pv) -> Float64
@@ -145,9 +140,9 @@ function myga_breakeven_rate(
     product::MYGAProduct{T},
     principal::Real,
     target_pv::Real;
-    tol::Real = 1e-10,
-    max_iter::Int = 100
-) where T<:Real
+    tol::Real=1e-10,
+    max_iter::Int=100,
+) where {T<:Real}
     # Bounds for bisection
     low = -0.5
     high = 1.0
@@ -168,7 +163,6 @@ function myga_breakeven_rate(
     return (low + high) / 2
 end
 
-
 """
     myga_total_return(product) -> Float64
 
@@ -182,6 +176,6 @@ product = MYGAProduct(fixed_rate=0.045, guarantee_duration=5)
 myga_total_return(product)  # ≈ 0.2462 (24.62%)
 ```
 """
-function myga_total_return(product::MYGAProduct{T}) where T<:Real
+function myga_total_return(product::MYGAProduct{T}) where {T<:Real}
     (1 + product.fixed_rate)^product.guarantee_duration - 1
 end

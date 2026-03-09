@@ -15,7 +15,6 @@ using Distributions: Normal, cdf
 using StableRNGs
 using Statistics: mean
 
-
 """
     price_fia(product, market, premium; kwargs...) -> FIAPricingResult
 
@@ -48,11 +47,11 @@ result = price_fia(product, market)
 function price_fia(
     product::FIAProduct{T},
     market::MarketParams{T},
-    premium::Real = T(100);
-    option_budget_pct::Real = T(0.03),
-    n_paths::Int = 10000,
-    seed::Union{Int, Nothing} = nothing
-) where T<:Real
+    premium::Real=T(100);
+    option_budget_pct::Real=T(0.03),
+    n_paths::Int=10000,
+    seed::Union{Int,Nothing}=nothing,
+) where {T<:Real}
     term = T(product.term_years)
     premium_t = T(premium)
     budget_pct = T(option_budget_pct)
@@ -80,7 +79,7 @@ function price_fia(
     discount_factor = exp(-r * term)
     present_value = discount_factor * premium_t * (1 + expected_credit)
 
-    details = Dict{Symbol, Any}(
+    details = Dict{Symbol,Any}(
         :term_years => term,
         :premium => premium_t,
         :discount_factor => discount_factor,
@@ -95,10 +94,9 @@ function price_fia(
         fair_cap,
         fair_participation,
         expected_credit,
-        details
+        details,
     )
 end
-
 
 """
     _price_fia_option(product, market, term, premium) -> Float64
@@ -106,11 +104,8 @@ end
 Price the embedded option based on crediting method.
 """
 function _price_fia_option(
-    product::FIAProduct{T},
-    market::MarketParams{T},
-    term::T,
-    premium::T
-) where T<:Real
+    product::FIAProduct{T}, market::MarketParams{T}, term::T, premium::T
+) where {T<:Real}
     S = market.spot
     r = market.risk_free_rate
     q = market.dividend_yield
@@ -156,7 +151,6 @@ function _price_fia_option(
     end
 end
 
-
 """
     _calculate_fia_expected_credit(product, market, term, n_paths, seed) -> Float64
 
@@ -167,8 +161,8 @@ function _calculate_fia_expected_credit(
     market::MarketParams{T},
     term::T,
     n_paths::Int,
-    seed::Union{Int, Nothing}
-) where T<:Real
+    seed::Union{Int,Nothing},
+) where {T<:Real}
     rng = seed === nothing ? StableRNG(42) : StableRNG(seed)
 
     S = market.spot
@@ -198,13 +192,12 @@ function _calculate_fia_expected_credit(
     mean(credits)
 end
 
-
 """
     _create_fia_payoff(product) -> AbstractPayoff
 
 Create the appropriate FIA payoff object.
 """
-function _create_fia_payoff(product::FIAProduct{T}) where T<:Real
+function _create_fia_payoff(product::FIAProduct{T}) where {T<:Real}
     if product.cap_rate !== nothing
         CappedCallPayoff(product.cap_rate)
     elseif product.participation_rate !== nothing
@@ -220,7 +213,6 @@ function _create_fia_payoff(product::FIAProduct{T}) where T<:Real
     end
 end
 
-
 """
     _solve_fair_cap(market, term, option_budget, premium) -> Float64
 
@@ -233,9 +225,9 @@ function _solve_fair_cap(
     term::T,
     option_budget::T,
     premium::T;
-    tol::Real = 1e-6,
-    max_iter::Int = 50
-) where T<:Real
+    tol::Real=1e-6,
+    max_iter::Int=50,
+) where {T<:Real}
     S = market.spot
     r = market.risk_free_rate
     q = market.dividend_yield
@@ -276,7 +268,6 @@ function _solve_fair_cap(
     return (low + high) / 2
 end
 
-
 """
     _solve_fair_participation(market, term, option_budget, premium) -> Float64
 
@@ -285,11 +276,8 @@ Solve for fair participation rate given option budget.
 [T1] Participation = option_budget / ATM_call_value
 """
 function _solve_fair_participation(
-    market::MarketParams{T},
-    term::T,
-    option_budget::T,
-    premium::T
-) where T<:Real
+    market::MarketParams{T}, term::T, option_budget::T, premium::T
+) where {T<:Real}
     S = market.spot
     r = market.risk_free_rate
     q = market.dividend_yield
@@ -312,13 +300,12 @@ function _solve_fair_participation(
     return participation
 end
 
-
 """
     _calculate_d1_d2(S, K, r, q, σ, T) -> Tuple{Float64, Float64}
 
 Calculate d1 and d2 for Black-Scholes formula.
 """
-function _calculate_d1_d2(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
+function _calculate_d1_d2(S::T, K::T, r::T, q::T, σ::T, τ::T) where {T<:Real}
     if τ <= 0 || σ <= 0
         return (zero(T), zero(T))
     end
@@ -328,7 +315,6 @@ function _calculate_d1_d2(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
 
     return (d1, d2)
 end
-
 
 """
     _cdf_normal(x) -> Float64

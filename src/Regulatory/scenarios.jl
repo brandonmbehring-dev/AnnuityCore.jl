@@ -52,12 +52,15 @@ length(scenarios.scenarios)  # 1000
 mutable struct ScenarioGenerator
     n_scenarios::Int
     projection_years::Int
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     rng::AbstractRNG
 
-    function ScenarioGenerator(n_scenarios::Int, projection_years::Int, seed::Union{Int, Nothing})
+    function ScenarioGenerator(
+        n_scenarios::Int, projection_years::Int, seed::Union{Int,Nothing}
+    )
         n_scenarios > 0 || error("CRITICAL: n_scenarios must be positive, got $n_scenarios")
-        projection_years > 0 || error("CRITICAL: projection_years must be positive, got $projection_years")
+        projection_years > 0 ||
+            error("CRITICAL: projection_years must be positive, got $projection_years")
         rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
         new(n_scenarios, projection_years, seed, rng)
     end
@@ -65,13 +68,10 @@ end
 
 # Keyword constructor
 function ScenarioGenerator(;
-    n_scenarios::Int = 1000,
-    projection_years::Int = 30,
-    seed::Union{Int, Nothing} = nothing
+    n_scenarios::Int=1000, projection_years::Int=30, seed::Union{Int,Nothing}=nothing
 )
     ScenarioGenerator(n_scenarios, projection_years, seed)
 end
-
 
 """
     generate_ag43_scenarios(gen; initial_rate, initial_equity, rate_params, equity_params, correlation)
@@ -102,13 +102,14 @@ length(scenarios.scenarios)  # 100
 """
 function generate_ag43_scenarios(
     gen::ScenarioGenerator;
-    initial_rate::Float64 = 0.04,
-    initial_equity::Float64 = 100.0,
-    rate_params::VasicekParams = VasicekParams(),
-    equity_params::EquityParams = EquityParams(),
-    correlation::Float64 = -0.20
+    initial_rate::Float64=0.04,
+    initial_equity::Float64=100.0,
+    rate_params::VasicekParams=VasicekParams(),
+    equity_params::EquityParams=EquityParams(),
+    correlation::Float64=-0.20,
 )::AG43Scenarios
-    -1 <= correlation <= 1 || error("CRITICAL: Correlation must be in [-1, 1], got $correlation")
+    -1 <= correlation <= 1 ||
+        error("CRITICAL: Correlation must be in [-1, 1], got $correlation")
 
     # Generate correlated shocks
     rate_shocks, equity_shocks = _generate_correlated_shocks(gen, correlation)
@@ -120,17 +121,14 @@ function generate_ag43_scenarios(
     # Build scenario objects
     scenarios = EconomicScenario[]
     for i in 1:gen.n_scenarios
-        scenario = EconomicScenario(
-            rates = rate_paths[i, :],
-            equity_returns = equity_paths[i, :],
-            scenario_id = i
+        scenario = EconomicScenario(;
+            rates=rate_paths[i, :], equity_returns=equity_paths[i, :], scenario_id=i
         )
         push!(scenarios, scenario)
     end
 
     AG43Scenarios(scenarios, gen.n_scenarios, gen.projection_years)
 end
-
 
 """
     generate_risk_neutral_scenarios(gen; yield_curve, dividend_yield, equity_sigma, rate_params, correlation)
@@ -157,13 +155,14 @@ Use generate_ag43_scenarios() for real-world scenarios (stress testing).
 """
 function generate_risk_neutral_scenarios(
     gen::ScenarioGenerator;
-    yield_curve::Union{YieldCurve, Nothing} = nothing,
-    dividend_yield::Float64 = 0.02,
-    equity_sigma::Float64 = 0.18,
-    rate_params::VasicekParams = VasicekParams(),
-    correlation::Float64 = -0.20
+    yield_curve::Union{YieldCurve,Nothing}=nothing,
+    dividend_yield::Float64=0.02,
+    equity_sigma::Float64=0.18,
+    rate_params::VasicekParams=VasicekParams(),
+    correlation::Float64=-0.20,
 )::AG43Scenarios
-    -1 <= correlation <= 1 || error("CRITICAL: Correlation must be in [-1, 1], got $correlation")
+    -1 <= correlation <= 1 ||
+        error("CRITICAL: Correlation must be in [-1, 1], got $correlation")
 
     # Default to flat 4% curve
     if yield_curve === nothing
@@ -174,10 +173,8 @@ function generate_risk_neutral_scenarios(
 
     # Create risk-neutral equity params using yield curve
     # [T1] Under risk-neutral: mu = r - q
-    rn_equity_params = RiskNeutralEquityParams(
-        risk_free_rate = initial_rate,
-        dividend_yield = dividend_yield,
-        sigma = equity_sigma
+    rn_equity_params = RiskNeutralEquityParams(;
+        risk_free_rate=initial_rate, dividend_yield=dividend_yield, sigma=equity_sigma
     )
 
     # Generate correlated shocks
@@ -187,22 +184,21 @@ function generate_risk_neutral_scenarios(
     rate_paths = _generate_vasicek_paths(gen, initial_rate, rate_params, rate_shocks)
 
     # Generate equity returns using risk-neutral drift
-    equity_paths = _generate_gbm_returns(gen, to_equity_params(rn_equity_params), equity_shocks)
+    equity_paths = _generate_gbm_returns(
+        gen, to_equity_params(rn_equity_params), equity_shocks
+    )
 
     # Build scenario objects
     scenarios = EconomicScenario[]
     for i in 1:gen.n_scenarios
-        scenario = EconomicScenario(
-            rates = rate_paths[i, :],
-            equity_returns = equity_paths[i, :],
-            scenario_id = i
+        scenario = EconomicScenario(;
+            rates=rate_paths[i, :], equity_returns=equity_paths[i, :], scenario_id=i
         )
         push!(scenarios, scenario)
     end
 
     AG43Scenarios(scenarios, gen.n_scenarios, gen.projection_years)
 end
-
 
 """
     generate_rate_scenarios(gen; initial_rate, params)
@@ -230,15 +226,15 @@ size(rates)  # (100, 30)
 """
 function generate_rate_scenarios(
     gen::ScenarioGenerator;
-    initial_rate::Float64 = 0.04,
-    params::VasicekParams = VasicekParams()
+    initial_rate::Float64=0.04,
+    params::VasicekParams=VasicekParams(),
 )::Matrix{Float64}
-    initial_rate >= 0 || error("CRITICAL: Initial rate cannot be negative, got $initial_rate")
+    initial_rate >= 0 ||
+        error("CRITICAL: Initial rate cannot be negative, got $initial_rate")
 
     shocks = randn(gen.rng, gen.n_scenarios, gen.projection_years)
     _generate_vasicek_paths(gen, initial_rate, params, shocks)
 end
-
 
 """
     generate_equity_scenarios(gen; mu, sigma)
@@ -258,9 +254,7 @@ Generate equity return scenarios using GBM.
 - `Matrix{Float64}`: Equity return scenarios [n_scenarios × projection_years]
 """
 function generate_equity_scenarios(
-    gen::ScenarioGenerator;
-    mu::Float64 = 0.07,
-    sigma::Float64 = 0.18
+    gen::ScenarioGenerator; mu::Float64=0.07, sigma::Float64=0.18
 )::Matrix{Float64}
     sigma >= 0 || error("CRITICAL: Volatility cannot be negative, got $sigma")
 
@@ -269,16 +263,14 @@ function generate_equity_scenarios(
     _generate_gbm_returns(gen, params, shocks)
 end
 
-
 #=============================================================================
 # Internal Helper Functions
 =============================================================================#
 
 """Generate correlated standard normal shocks using Cholesky decomposition."""
 function _generate_correlated_shocks(
-    gen::ScenarioGenerator,
-    correlation::Float64
-)::Tuple{Matrix{Float64}, Matrix{Float64}}
+    gen::ScenarioGenerator, correlation::Float64
+)::Tuple{Matrix{Float64},Matrix{Float64}}
     # Generate independent shocks
     z1 = randn(gen.rng, gen.n_scenarios, gen.projection_years)
     z2 = randn(gen.rng, gen.n_scenarios, gen.projection_years)
@@ -291,7 +283,6 @@ function _generate_correlated_shocks(
     (rate_shocks, equity_shocks)
 end
 
-
 """
 Generate Vasicek rate paths.
 
@@ -301,7 +292,7 @@ function _generate_vasicek_paths(
     gen::ScenarioGenerator,
     initial_rate::Float64,
     params::VasicekParams,
-    shocks::Matrix{Float64}
+    shocks::Matrix{Float64},
 )::Matrix{Float64}
     n_scenarios, n_years = size(shocks)
     rates = zeros(n_scenarios, n_years)
@@ -312,7 +303,9 @@ function _generate_vasicek_paths(
     for t in 1:n_years
         # Vasicek: r_{t+1} = r_t + κ(θ - r_t)*dt + σ*sqrt(dt)*Z
         # With dt = 1 year:
-        r_new = r_prev .+ params.kappa .* (params.theta .- r_prev) .+ params.sigma .* shocks[:, t]
+        r_new =
+            r_prev .+ params.kappa .* (params.theta .- r_prev) .+
+            params.sigma .* shocks[:, t]
         # Floor at zero (avoid negative rates in this simple model)
         rates[:, t] = max.(r_new, 0.0)
         r_prev = rates[:, t]
@@ -321,16 +314,13 @@ function _generate_vasicek_paths(
     rates
 end
 
-
 """
 Generate GBM returns.
 
 [T1] Log return = (μ - σ²/2) + σZ
 """
 function _generate_gbm_returns(
-    gen::ScenarioGenerator,
-    params::EquityParams,
-    shocks::Matrix{Float64}
+    gen::ScenarioGenerator, params::EquityParams, shocks::Matrix{Float64}
 )::Matrix{Float64}
     # Log return: (μ - σ²/2) + σZ
     log_returns = (params.mu - 0.5 * params.sigma^2) .+ params.sigma .* shocks
@@ -338,7 +328,6 @@ function _generate_gbm_returns(
     returns = exp.(log_returns) .- 1
     returns
 end
-
 
 #=============================================================================
 # Convenience Functions
@@ -366,36 +355,42 @@ length(scenarios)  # 3
 ```
 """
 function generate_deterministic_scenarios(;
-    n_years::Int = 30,
-    base_rate::Float64 = 0.04,
-    base_equity::Float64 = 0.07
+    n_years::Int=30, base_rate::Float64=0.04, base_equity::Float64=0.07
 )::Vector{EconomicScenario}
     scenarios = EconomicScenario[]
 
     # Base scenario
-    push!(scenarios, EconomicScenario(
-        rates = fill(base_rate, n_years),
-        equity_returns = fill(base_equity, n_years),
-        scenario_id = 0
-    ))
+    push!(
+        scenarios,
+        EconomicScenario(;
+            rates=fill(base_rate, n_years),
+            equity_returns=fill(base_equity, n_years),
+            scenario_id=0,
+        ),
+    )
 
     # Rate up scenario (+2%)
-    push!(scenarios, EconomicScenario(
-        rates = fill(base_rate + 0.02, n_years),
-        equity_returns = fill(base_equity - 0.02, n_years),  # Inverse correlation
-        scenario_id = 1
-    ))
+    push!(
+        scenarios,
+        EconomicScenario(;
+            rates=fill(base_rate + 0.02, n_years),
+            equity_returns=fill(base_equity - 0.02, n_years),  # Inverse correlation
+            scenario_id=1,
+        ),
+    )
 
     # Rate down scenario (-2%)
-    push!(scenarios, EconomicScenario(
-        rates = fill(max(0.0, base_rate - 0.02), n_years),
-        equity_returns = fill(base_equity + 0.02, n_years),
-        scenario_id = 2
-    ))
+    push!(
+        scenarios,
+        EconomicScenario(;
+            rates=fill(max(0.0, base_rate - 0.02), n_years),
+            equity_returns=fill(base_equity + 0.02, n_years),
+            scenario_id=2,
+        ),
+    )
 
     scenarios
 end
-
 
 """
     calculate_scenario_statistics(scenarios::AG43Scenarios)
@@ -416,15 +411,15 @@ stats = calculate_scenario_statistics(scenarios)
 haskey(stats, "rate_mean")  # true
 ```
 """
-function calculate_scenario_statistics(scenarios::AG43Scenarios)::Dict{String, Any}
+function calculate_scenario_statistics(scenarios::AG43Scenarios)::Dict{String,Any}
     rate_matrix = get_rate_matrix(scenarios)
     equity_matrix = get_equity_matrix(scenarios)
 
     # Terminal values (last year)
     terminal_rates = rate_matrix[:, end]
-    cumulative_equity = prod(1 .+ equity_matrix, dims=2) .- 1
+    cumulative_equity = prod(1 .+ equity_matrix; dims=2) .- 1
 
-    Dict{String, Any}(
+    Dict{String,Any}(
         # Rate statistics
         "rate_mean" => mean(rate_matrix),
         "rate_std" => std(rate_matrix),
@@ -441,6 +436,6 @@ function calculate_scenario_statistics(scenarios::AG43Scenarios)::Dict{String, A
         "cumulative_return_95pct" => quantile(vec(cumulative_equity), 0.95),
         # Counts
         "n_scenarios" => scenarios.n_scenarios,
-        "projection_years" => scenarios.projection_years
+        "projection_years" => scenarios.projection_years,
     )
 end

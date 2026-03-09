@@ -39,9 +39,9 @@ struct CappedCallPayoff{T<:Real} <: FIAPayoff
 end
 
 # Constructor with default floor
-CappedCallPayoff(cap_rate::T) where T<:Real = CappedCallPayoff(cap_rate, zero(T))
+CappedCallPayoff(cap_rate::T) where {T<:Real} = CappedCallPayoff(cap_rate, zero(T))
 
-function calculate(p::CappedCallPayoff{T}, index_return::Real) where T
+function calculate(p::CappedCallPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     # Apply cap
@@ -54,7 +54,6 @@ function calculate(p::CappedCallPayoff{T}, index_return::Real) where T
 
     PayoffResult(floored; cap_applied=cap_applied, floor_applied=floor_applied)
 end
-
 
 # =============================================================================
 # Participation Payoff
@@ -86,13 +85,13 @@ struct ParticipationPayoff{T<:Real} <: FIAPayoff
 end
 
 # Constructor with defaults
-function ParticipationPayoff(participation_rate::T;
-                             cap_rate::Union{T,Nothing}=nothing,
-                             floor_rate::T=zero(T)) where T<:Real
+function ParticipationPayoff(
+    participation_rate::T; cap_rate::Union{T,Nothing}=nothing, floor_rate::T=zero(T)
+) where {T<:Real}
     ParticipationPayoff(participation_rate, cap_rate, floor_rate)
 end
 
-function calculate(p::ParticipationPayoff{T}, index_return::Real) where T
+function calculate(p::ParticipationPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     # Apply participation rate
@@ -111,7 +110,6 @@ function calculate(p::ParticipationPayoff{T}, index_return::Real) where T
 
     PayoffResult(credited; cap_applied=cap_applied, floor_applied=floor_applied)
 end
-
 
 # =============================================================================
 # Spread Payoff
@@ -143,13 +141,13 @@ struct SpreadPayoff{T<:Real} <: FIAPayoff
 end
 
 # Constructor with defaults
-function SpreadPayoff(spread_rate::T;
-                      cap_rate::Union{T,Nothing}=nothing,
-                      floor_rate::T=zero(T)) where T<:Real
+function SpreadPayoff(
+    spread_rate::T; cap_rate::Union{T,Nothing}=nothing, floor_rate::T=zero(T)
+) where {T<:Real}
     SpreadPayoff(spread_rate, cap_rate, floor_rate)
 end
 
-function calculate(p::SpreadPayoff{T}, index_return::Real) where T
+function calculate(p::SpreadPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     # Apply spread (can go negative before floor)
@@ -168,7 +166,6 @@ function calculate(p::SpreadPayoff{T}, index_return::Real) where T
 
     PayoffResult(credited; cap_applied=cap_applied, floor_applied=floor_applied)
 end
-
 
 # =============================================================================
 # Trigger Payoff
@@ -203,13 +200,13 @@ struct TriggerPayoff{T<:Real} <: FIAPayoff
 end
 
 # Constructor with defaults
-function TriggerPayoff(trigger_rate::T;
-                       trigger_threshold::T=zero(T),
-                       floor_rate::T=zero(T)) where T<:Real
+function TriggerPayoff(
+    trigger_rate::T; trigger_threshold::T=zero(T), floor_rate::T=zero(T)
+) where {T<:Real}
     TriggerPayoff(trigger_rate, trigger_threshold, floor_rate)
 end
 
-function calculate(p::TriggerPayoff{T}, index_return::Real) where T
+function calculate(p::TriggerPayoff{T}, index_return::Real) where {T}
     r = T(index_return)
 
     # Check if threshold is met (>= triggers)

@@ -15,7 +15,6 @@ References:
 - Bauer, Kling & Russ (2008), "Universal Pricing of Guaranteed Minimum Benefits"
 """
 
-
 """
     RollupType
 
@@ -30,7 +29,6 @@ Enumeration of rollup calculation methods.
     COMPOUND
     NONE
 end
-
 
 """
     GWBConfig
@@ -69,24 +67,32 @@ struct GWBConfig
     fee_basis::Symbol
 
     function GWBConfig(;
-        rollup_type::RollupType = COMPOUND,
-        rollup_rate::Float64 = 0.06,
-        rollup_cap_years::Int = 10,
-        withdrawal_rate::Float64 = 0.05,
-        fee_rate::Float64 = 0.01,
-        ratchet_enabled::Bool = true,
-        fee_basis::Symbol = :gwb
+        rollup_type::RollupType=COMPOUND,
+        rollup_rate::Float64=0.06,
+        rollup_cap_years::Int=10,
+        withdrawal_rate::Float64=0.05,
+        fee_rate::Float64=0.01,
+        ratchet_enabled::Bool=true,
+        fee_basis::Symbol=:gwb,
     )
         rollup_rate >= 0 || throw(ArgumentError("rollup_rate must be >= 0"))
         rollup_cap_years >= 0 || throw(ArgumentError("rollup_cap_years must be >= 0"))
-        0 < withdrawal_rate <= 0.20 || throw(ArgumentError("withdrawal_rate must be in (0, 0.20]"))
+        0 < withdrawal_rate <= 0.20 ||
+            throw(ArgumentError("withdrawal_rate must be in (0, 0.20]"))
         fee_rate >= 0 || throw(ArgumentError("fee_rate must be >= 0"))
         fee_basis in (:gwb, :av) || throw(ArgumentError("fee_basis must be :gwb or :av"))
 
-        new(rollup_type, rollup_rate, rollup_cap_years, withdrawal_rate, fee_rate, ratchet_enabled, fee_basis)
+        new(
+            rollup_type,
+            rollup_rate,
+            rollup_cap_years,
+            withdrawal_rate,
+            fee_rate,
+            ratchet_enabled,
+            fee_basis,
+        )
     end
 end
-
 
 """
     GWBState
@@ -121,13 +127,21 @@ mutable struct GWBState
         high_water_mark::Float64,
         years_since_issue::Float64,
         withdrawal_phase_started::Bool,
-        total_withdrawals::Float64
+        total_withdrawals::Float64,
     )
         gwb >= 0 || throw(ArgumentError("gwb must be >= 0"))
         av >= 0 || throw(ArgumentError("av must be >= 0"))
         years_since_issue >= 0 || throw(ArgumentError("years_since_issue must be >= 0"))
 
-        new(gwb, av, rollup_base, high_water_mark, years_since_issue, withdrawal_phase_started, total_withdrawals)
+        new(
+            gwb,
+            av,
+            rollup_base,
+            high_water_mark,
+            years_since_issue,
+            withdrawal_phase_started,
+            total_withdrawals,
+        )
     end
 end
 
@@ -135,7 +149,6 @@ end
 function GWBState(premium::Float64)
     GWBState(premium, premium, premium, premium, 0.0, false, 0.0)
 end
-
 
 """
     StepResult
@@ -156,7 +169,6 @@ struct StepResult
     withdrawal_taken::Float64
     max_withdrawal::Float64
 end
-
 
 """
     GLWBPricingResult
@@ -192,9 +204,9 @@ struct GLWBPricingResult
     mean_lapse_year::Float64
     n_paths::Int
     # Behavioral fields (optional)
-    avg_utilization::Union{Float64, Nothing}
-    total_expenses_pv::Union{Float64, Nothing}
-    lapse_year_histogram::Union{Vector{Int}, Nothing}
+    avg_utilization::Union{Float64,Nothing}
+    total_expenses_pv::Union{Float64,Nothing}
+    lapse_year_histogram::Union{Vector{Int},Nothing}
 end
 
 # Convenience constructor for backward compatibility (no behavioral fields)
@@ -208,11 +220,21 @@ function GLWBPricingResult(
     mean_ruin_year::Float64,
     prob_lapse::Float64,
     mean_lapse_year::Float64,
-    n_paths::Int
+    n_paths::Int,
 )
     GLWBPricingResult(
-        price, guarantee_cost, mean_payoff, std_payoff, standard_error,
-        prob_ruin, mean_ruin_year, prob_lapse, mean_lapse_year, n_paths,
-        nothing, nothing, nothing  # No behavioral data
+        price,
+        guarantee_cost,
+        mean_payoff,
+        std_payoff,
+        standard_error,
+        prob_ruin,
+        mean_ruin_year,
+        prob_lapse,
+        mean_lapse_year,
+        n_paths,
+        nothing,
+        nothing,
+        nothing,  # No behavioral data
     )
 end

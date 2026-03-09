@@ -63,7 +63,7 @@ end
 """
 String representation for AM Best ratings.
 """
-const RATING_STRINGS = Dict{AMBestRating, String}(
+const RATING_STRINGS = Dict{AMBestRating,String}(
     A_PLUS_PLUS => "A++",
     A_PLUS => "A+",
     A => "A",
@@ -85,9 +85,7 @@ const RATING_STRINGS = Dict{AMBestRating, String}(
 """
 Parse string to AM Best rating.
 """
-const STRING_TO_RATING = Dict{String, AMBestRating}(
-    v => k for (k, v) in RATING_STRINGS
-)
+const STRING_TO_RATING = Dict{String,AMBestRating}(v => k for (k, v) in RATING_STRINGS)
 
 """
 Check if rating is considered "secure" (investment grade).
@@ -135,10 +133,11 @@ struct RatingPD
         annual_pd::Float64,
         pd_5yr::Float64,
         pd_10yr::Float64,
-        pd_15yr::Float64
+        pd_15yr::Float64,
     )
         # Validation
-        (0.0 <= annual_pd <= 1.0) || error("CRITICAL: annual_pd must be in [0,1], got $annual_pd")
+        (0.0 <= annual_pd <= 1.0) ||
+            error("CRITICAL: annual_pd must be in [0,1], got $annual_pd")
         (0.0 <= pd_5yr <= 1.0) || error("CRITICAL: pd_5yr must be in [0,1], got $pd_5yr")
         (0.0 <= pd_10yr <= 1.0) || error("CRITICAL: pd_10yr must be in [0,1], got $pd_10yr")
         (0.0 <= pd_15yr <= 1.0) || error("CRITICAL: pd_15yr must be in [0,1], got $pd_15yr")
@@ -218,14 +217,27 @@ struct GuarantyFundCoverage
         annuity_ssa::Float64,
         group_annuity::Float64,
         health::Float64,
-        coverage_percentage::Float64 = 1.0
+        coverage_percentage::Float64=1.0,
     )
         # Validation
-        length(state) == 2 || state == "DEFAULT" || error("CRITICAL: state must be 2-letter code, got '$state'")
-        (0.0 < coverage_percentage <= 1.0) || error("CRITICAL: coverage_percentage must be in (0,1], got $coverage_percentage")
+        length(state) == 2 ||
+            state == "DEFAULT" ||
+            error("CRITICAL: state must be 2-letter code, got '$state'")
+        (0.0 < coverage_percentage <= 1.0) || error(
+            "CRITICAL: coverage_percentage must be in (0,1], got $coverage_percentage"
+        )
 
-        new(state, life_death_benefit, life_cash_value, annuity_deferred,
-            annuity_payout, annuity_ssa, group_annuity, health, coverage_percentage)
+        new(
+            state,
+            life_death_benefit,
+            life_cash_value,
+            annuity_deferred,
+            annuity_payout,
+            annuity_ssa,
+            group_annuity,
+            health,
+            coverage_percentage,
+        )
     end
 end
 
@@ -278,17 +290,29 @@ struct CVAResult
         coverage_ratio::Float64,
         lgd::Float64,
         rating::AMBestRating,
-        annual_pd::Float64
+        annual_pd::Float64,
     )
         # Validation
         cva_gross >= 0.0 || error("CRITICAL: cva_gross must be >= 0, got $cva_gross")
         cva_net >= 0.0 || error("CRITICAL: cva_net must be >= 0, got $cva_net")
-        (0.0 <= coverage_ratio <= 1.0) || error("CRITICAL: coverage_ratio must be in [0,1], got $coverage_ratio")
+        (0.0 <= coverage_ratio <= 1.0) ||
+            error("CRITICAL: coverage_ratio must be in [0,1], got $coverage_ratio")
         (0.0 < lgd <= 1.0) || error("CRITICAL: lgd must be in (0,1], got $lgd")
-        (0.0 <= annual_pd <= 1.0) || error("CRITICAL: annual_pd must be in [0,1], got $annual_pd")
+        (0.0 <= annual_pd <= 1.0) ||
+            error("CRITICAL: annual_pd must be in [0,1], got $annual_pd")
 
-        new(cva_gross, cva_net, guaranty_adjustment, expected_exposure,
-            covered_exposure, uncovered_exposure, coverage_ratio, lgd, rating, annual_pd)
+        new(
+            cva_gross,
+            cva_net,
+            guaranty_adjustment,
+            expected_exposure,
+            covered_exposure,
+            uncovered_exposure,
+            coverage_ratio,
+            lgd,
+            rating,
+            annual_pd,
+        )
     end
 end
 
@@ -306,10 +330,56 @@ const DEFAULT_INSURANCE_LGD = 0.70  # 70% LGD (30% recovery)
 All valid US state codes for guaranty fund lookup.
 """
 const US_STATE_CODES = Set([
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-    "DC", "PR"  # DC and Puerto Rico
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+    "PR",  # DC and Puerto Rico
 ])

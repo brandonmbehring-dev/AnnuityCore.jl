@@ -16,12 +16,12 @@ Reserve exhaustion target (reserve ratio falls to zero).
 
 [T2] Based on industry practice - find shock that exhausts reserves.
 """
-const RESERVE_EXHAUSTION = ReverseStressTarget(
-    name = "reserve_exhaustion",
-    display_name = "Reserve Exhaustion",
-    threshold = 0.0,
-    direction = :below,
-    metric = :reserve_ratio
+const RESERVE_EXHAUSTION = ReverseStressTarget(;
+    name="reserve_exhaustion",
+    display_name="Reserve Exhaustion",
+    threshold=0.0,
+    direction=:below,
+    metric=:reserve_ratio,
 )
 
 """
@@ -32,12 +32,12 @@ RBC ratio falls below 200% (regulatory action level).
 - 150% = Regulatory Action Level
 - 100% = Authorized Control Level
 """
-const RBC_BREACH_200 = ReverseStressTarget(
-    name = "rbc_200",
-    display_name = "RBC Below 200%",
-    threshold = 2.0,
-    direction = :below,
-    metric = :rbc_ratio
+const RBC_BREACH_200 = ReverseStressTarget(;
+    name="rbc_200",
+    display_name="RBC Below 200%",
+    threshold=2.0,
+    direction=:below,
+    metric=:rbc_ratio,
 )
 
 """
@@ -45,33 +45,30 @@ RBC ratio falls below 300% (company action consideration).
 
 [T2] Many companies target 300%+ as management threshold.
 """
-const RBC_BREACH_300 = ReverseStressTarget(
-    name = "rbc_300",
-    display_name = "RBC Below 300%",
-    threshold = 3.0,
-    direction = :below,
-    metric = :rbc_ratio
+const RBC_BREACH_300 = ReverseStressTarget(;
+    name="rbc_300",
+    display_name="RBC Below 300%",
+    threshold=3.0,
+    direction=:below,
+    metric=:rbc_ratio,
 )
 
 """
 Reserve ratio falls below 50% (severe depletion).
 """
-const RESERVE_RATIO_50 = ReverseStressTarget(
-    name = "reserve_50",
-    display_name = "Reserve Below 50%",
-    threshold = 0.5,
-    direction = :below,
-    metric = :reserve_ratio
+const RESERVE_RATIO_50 = ReverseStressTarget(;
+    name="reserve_50",
+    display_name="Reserve Below 50%",
+    threshold=0.5,
+    direction=:below,
+    metric=:reserve_ratio,
 )
 
 """
 All predefined reverse stress targets.
 """
 const PREDEFINED_TARGETS = [
-    RESERVE_EXHAUSTION,
-    RBC_BREACH_200,
-    RBC_BREACH_300,
-    RESERVE_RATIO_50
+    RESERVE_EXHAUSTION, RBC_BREACH_200, RBC_BREACH_300, RESERVE_RATIO_50
 ]
 
 # ============================================================================
@@ -108,8 +105,8 @@ function find_breaking_point(
     target::ReverseStressTarget,
     param::SensitivityParameter,
     metric_fn::Function;
-    max_iter::Int = 50,
-    tol::Float64 = 1e-4
+    max_iter::Int=50,
+    tol::Float64=1e-4,
 )::ReverseStressResult
     low = param.range_low
     high = param.range_high
@@ -128,7 +125,7 @@ function find_breaking_point(
             param.name,
             nothing,  # No breaking point found
             0,
-            false
+            false,
         )
     end
 
@@ -148,13 +145,7 @@ function find_breaking_point(
 
         if abs(high - low) < tol
             # Converged - return the boundary point
-            return ReverseStressResult(
-                target,
-                param.name,
-                mid,
-                iterations,
-                true
-            )
+            return ReverseStressResult(target, param.name, mid, iterations, true)
         end
 
         metric_mid = metric_fn(mid)
@@ -174,7 +165,7 @@ function find_breaking_point(
         param.name,
         mid,
         iterations,
-        abs(high - low) < tol * 10  # Relaxed convergence check
+        abs(high - low) < tol * 10,  # Relaxed convergence check
     )
 end
 
@@ -209,46 +200,33 @@ Run reverse stress test for all parameters.
 - `ReverseStressReport`: Complete report with all parameter results
 """
 function run_reverse_test(
-    tester::ReverseStressTester;
-    max_iter::Int = 50,
-    tol::Float64 = 1e-4
+    tester::ReverseStressTester; max_iter::Int=50, tol::Float64=1e-4
 )::ReverseStressReport
     results = ReverseStressResult[]
 
     for param in tester.parameters
         # Create metric function that varies only this parameter
-        param_metric_fn = function(value)
+        param_metric_fn = function (value)
             scenario = tester.scenario_builder(param.name, value)
             tester.metric_fn(scenario)
         end
 
-        result = find_breaking_point(
-            tester.target,
-            param,
-            param_metric_fn;
-            max_iter,
-            tol
-        )
+        result = find_breaking_point(tester.target, param, param_metric_fn; max_iter, tol)
         push!(results, result)
     end
 
     # Find most vulnerable parameter (smallest distance to breaking point)
     most_vulnerable = find_most_vulnerable(results, tester.parameters)
 
-    ReverseStressReport(
-        tester.target,
-        results,
-        most_vulnerable
-    )
+    ReverseStressReport(tester.target, results, most_vulnerable)
 end
 
 """
 Find the most vulnerable parameter (breaking point closest to base value).
 """
 function find_most_vulnerable(
-    results::Vector{ReverseStressResult},
-    params::Vector{SensitivityParameter}
-)::Union{String, Nothing}
+    results::Vector{ReverseStressResult}, params::Vector{SensitivityParameter}
+)::Union{String,Nothing}
     min_distance = Inf
     most_vulnerable = nothing
 
@@ -289,23 +267,18 @@ Run reverse stress tests for multiple targets.
 function run_multi_target_reverse(
     targets::Vector{ReverseStressTarget},
     params::Vector{SensitivityParameter},
-    metric_fns::Dict{Symbol, Function},
+    metric_fns::Dict{Symbol,Function},
     scenario_builder::Function;
-    max_iter::Int = 50,
-    tol::Float64 = 1e-4
-)::Dict{String, ReverseStressReport}
-    reports = Dict{String, ReverseStressReport}()
+    max_iter::Int=50,
+    tol::Float64=1e-4,
+)::Dict{String,ReverseStressReport}
+    reports = Dict{String,ReverseStressReport}()
 
     for target in targets
         metric_fn = get(metric_fns, target.metric, nothing)
         isnothing(metric_fn) && continue
 
-        tester = ReverseStressTester(
-            target,
-            params,
-            metric_fn,
-            scenario_builder
-        )
+        tester = ReverseStressTester(target, params, metric_fn, scenario_builder)
 
         reports[target.name] = run_reverse_test(tester; max_iter, tol)
     end
@@ -325,8 +298,7 @@ Calculate distance from base value to breaking point.
 Returns (breaking_point - base_value) / range, or Inf if no breaking point.
 """
 function breaking_point_distance(
-    result::ReverseStressResult,
-    param::SensitivityParameter
+    result::ReverseStressResult, param::SensitivityParameter
 )::Float64
     isnothing(result.breaking_point) && return Inf
 
@@ -347,8 +319,7 @@ Return severity level based on breaking point distance.
 - `:none`: No breaking point in range
 """
 function breaking_point_severity(
-    result::ReverseStressResult,
-    param::SensitivityParameter
+    result::ReverseStressResult, param::SensitivityParameter
 )::Symbol
     isnothing(result.breaking_point) && return :none
 
@@ -366,8 +337,7 @@ end
 Format breaking point for display.
 """
 function format_breaking_point(
-    result::ReverseStressResult,
-    param::SensitivityParameter
+    result::ReverseStressResult, param::SensitivityParameter
 )::String
     isnothing(result.breaking_point) && return "Not found in range"
 
@@ -395,8 +365,7 @@ end
 Print reverse stress test report.
 """
 function print_reverse_report(
-    report::ReverseStressReport,
-    params::Vector{SensitivityParameter}
+    report::ReverseStressReport, params::Vector{SensitivityParameter}
 )
     println("Reverse Stress Test Report")
     println("Target: $(report.target.display_name)")
@@ -440,17 +409,16 @@ Named tuple with:
 - `all_results::Dict{String, Dict{String, Symbol}}`: target -> param -> severity
 """
 function vulnerability_summary(
-    reports::Dict{String, ReverseStressReport},
-    params::Vector{SensitivityParameter}
+    reports::Dict{String,ReverseStressReport}, params::Vector{SensitivityParameter}
 )
     param_dict = Dict(p.name => p for p in params)
 
     critical = String[]
     warning = String[]
-    all_results = Dict{String, Dict{String, Symbol}}()
+    all_results = Dict{String,Dict{String,Symbol}}()
 
     for (target_name, report) in reports
-        all_results[target_name] = Dict{String, Symbol}()
+        all_results[target_name] = Dict{String,Symbol}()
 
         for result in report.results
             param = get(param_dict, result.parameter, nothing)
@@ -467,11 +435,7 @@ function vulnerability_summary(
         end
     end
 
-    (
-        critical = critical,
-        warning = warning,
-        all_results = all_results
-    )
+    (critical=critical, warning=warning, all_results=all_results)
 end
 
 # ============================================================================
@@ -500,10 +464,10 @@ function binary_search_scenario(
     base_scenario::StressScenario,
     scale_fn::Function,
     metric_fn::Function;
-    scale_low::Float64 = 0.0,
-    scale_high::Float64 = 2.0,
-    max_iter::Int = 50,
-    tol::Float64 = 1e-4
+    scale_low::Float64=0.0,
+    scale_high::Float64=2.0,
+    max_iter::Int=50,
+    tol::Float64=1e-4,
 )
     # Check bounds
     metric_low = metric_fn(scale_fn(base_scenario, scale_low))
@@ -514,10 +478,10 @@ function binary_search_scenario(
 
     if triggers_low == triggers_high
         return (
-            scale = nothing,
-            scenario = nothing,
-            converged = false,
-            message = "Target not triggered in scale range"
+            scale=nothing,
+            scenario=nothing,
+            converged=false,
+            message="Target not triggered in scale range",
         )
     end
 
@@ -531,10 +495,10 @@ function binary_search_scenario(
         if abs(scale_high - scale_low) < tol
             mid = (scale_low + scale_high) / 2.0
             return (
-                scale = mid,
-                scenario = scale_fn(base_scenario, mid),
-                converged = true,
-                message = "Converged in $i iterations"
+                scale=mid,
+                scenario=scale_fn(base_scenario, mid),
+                converged=true,
+                message="Converged in $i iterations",
             )
         end
 
@@ -550,10 +514,10 @@ function binary_search_scenario(
 
     mid = (scale_low + scale_high) / 2.0
     (
-        scale = mid,
-        scenario = scale_fn(base_scenario, mid),
-        converged = false,
-        message = "Max iterations reached"
+        scale=mid,
+        scenario=scale_fn(base_scenario, mid),
+        converged=false,
+        message="Max iterations reached",
     )
 end
 
@@ -574,9 +538,7 @@ Named tuple with:
 - `all_results::Vector`: Results for all crises tested
 """
 function find_minimum_crisis(
-    target::ReverseStressTarget,
-    crises::Vector{HistoricalCrisis},
-    metric_fn::Function
+    target::ReverseStressTarget, crises::Vector{HistoricalCrisis}, metric_fn::Function
 )
     results = []
 
@@ -585,32 +547,19 @@ function find_minimum_crisis(
         metric = metric_fn(scenario)
         triggers = triggers_target(target, metric)
 
-        push!(results, (
-            crisis = crisis,
-            scenario = scenario,
-            metric = metric,
-            triggers = triggers
-        ))
+        push!(results, (crisis=crisis, scenario=scenario, metric=metric, triggers=triggers))
     end
 
     # Sort by severity (least severe first)
-    sort!(results, by=r -> abs(r.crisis.equity_shock))
+    sort!(results; by=r -> abs(r.crisis.equity_shock))
 
     # Find mildest triggering crisis
     triggering = filter(r -> r.triggers, results)
 
     if isempty(triggering)
-        return (
-            crisis = nothing,
-            metric = NaN,
-            all_results = results
-        )
+        return (crisis=nothing, metric=NaN, all_results=results)
     end
 
     mildest = first(triggering)
-    (
-        crisis = mildest.crisis,
-        metric = mildest.metric,
-        all_results = results
-    )
+    (crisis=mildest.crisis, metric=mildest.metric, all_results=results)
 end

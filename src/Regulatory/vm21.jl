@@ -61,25 +61,26 @@ result.reserve > 0  # true
 mutable struct VM21Calculator
     n_scenarios::Int
     projection_years::Int
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     scenario_generator::ScenarioGenerator
 
-    function VM21Calculator(n_scenarios::Int, projection_years::Int, seed::Union{Int, Nothing})
+    function VM21Calculator(
+        n_scenarios::Int, projection_years::Int, seed::Union{Int,Nothing}
+    )
         n_scenarios > 0 || error("CRITICAL: n_scenarios must be positive, got $n_scenarios")
-        sg = ScenarioGenerator(n_scenarios=n_scenarios, projection_years=projection_years, seed=seed)
+        sg = ScenarioGenerator(;
+            n_scenarios=n_scenarios, projection_years=projection_years, seed=seed
+        )
         new(n_scenarios, projection_years, seed, sg)
     end
 end
 
 # Keyword constructor
 function VM21Calculator(;
-    n_scenarios::Int = 1000,
-    projection_years::Int = 30,
-    seed::Union{Int, Nothing} = nothing
+    n_scenarios::Int=1000, projection_years::Int=30, seed::Union{Int,Nothing}=nothing
 )
     VM21Calculator(n_scenarios, projection_years, seed)
 end
-
 
 #=============================================================================
 # Core Calculations
@@ -110,15 +111,13 @@ calculate_cte(calc, results, alpha=0.70)  # ≈ 900.0
 ```
 """
 function calculate_cte(
-    calc::VM21Calculator,
-    scenario_results::Vector{Float64};
-    alpha::Float64 = 0.70
+    calc::VM21Calculator, scenario_results::Vector{Float64}; alpha::Float64=0.70
 )::Float64
     0 < alpha < 1 || error("CRITICAL: Alpha must be in (0, 1), got $alpha")
     !isempty(scenario_results) || error("CRITICAL: scenario_results cannot be empty")
 
     # Sort descending (worst = highest liability first)
-    sorted_results = sort(scenario_results, rev=true)
+    sorted_results = sort(scenario_results; rev=true)
 
     # Take worst (1-α)% of scenarios
     n_tail = max(1, Int(floor(length(sorted_results) * (1 - alpha))))
@@ -126,7 +125,6 @@ function calculate_cte(
 
     mean(tail_values)
 end
-
 
 """
     calculate_cte70(calc, scenario_results)
@@ -143,9 +141,8 @@ Calculate CTE(70) from scenario results.
 - `Float64`: CTE(70)
 """
 function calculate_cte70(calc::VM21Calculator, scenario_results::Vector{Float64})::Float64
-    calculate_cte(calc, scenario_results, alpha=0.70)
+    calculate_cte(calc, scenario_results; alpha=0.70)
 end
-
 
 """
     calculate_ssa(calc, policy; mortality_table, yield_curve, gender)
@@ -169,13 +166,13 @@ Calculate Standard Scenario Amount.
 function calculate_ssa(
     calc::VM21Calculator,
     policy::PolicyData;
-    mortality_table::Union{MortalityTable, Nothing} = nothing,
-    yield_curve::Union{YieldCurve, Nothing} = nothing,
-    gender::Gender = MALE
+    mortality_table::Union{MortalityTable,Nothing}=nothing,
+    yield_curve::Union{YieldCurve,Nothing}=nothing,
+    gender::Gender=MALE,
 )::Float64
     # Default to SOA 2012 IAM mortality
     if mortality_table === nothing
-        mortality_table = soa_2012_iam(gender=gender)
+        mortality_table = soa_2012_iam(; gender=gender)
     end
 
     # Default to flat 4% yield curve
@@ -234,7 +231,6 @@ function calculate_ssa(
     pv_liability
 end
 
-
 """
     calculate_reserve(calc, policy; scenarios, mortality_table, yield_curve, gender)
 
@@ -266,14 +262,14 @@ result.reserve >= result.csv_floor  # true
 function calculate_reserve(
     calc::VM21Calculator,
     policy::PolicyData;
-    scenarios::Union{AG43Scenarios, Nothing} = nothing,
-    mortality_table::Union{MortalityTable, Nothing} = nothing,
-    yield_curve::Union{YieldCurve, Nothing} = nothing,
-    gender::Gender = MALE
+    scenarios::Union{AG43Scenarios,Nothing}=nothing,
+    mortality_table::Union{MortalityTable,Nothing}=nothing,
+    yield_curve::Union{YieldCurve,Nothing}=nothing,
+    gender::Gender=MALE,
 )::VM21Result
     # Default to SOA 2012 IAM mortality
     if mortality_table === nothing
-        mortality_table = soa_2012_iam(gender=gender)
+        mortality_table = soa_2012_iam(; gender=gender)
     end
 
     # Default to flat 4% yield curve
@@ -293,24 +289,29 @@ function calculate_reserve(
 
     # Calculate components
     cte70 = calculate_cte70(calc, scenario_pvs)
-    ssa = calculate_ssa(calc, policy, mortality_table=mortality_table, yield_curve=yield_curve, gender=gender)
+    ssa = calculate_ssa(
+        calc,
+        policy;
+        mortality_table=mortality_table,
+        yield_curve=yield_curve,
+        gender=gender,
+    )
     csv_floor = policy.csv
 
     # Reserve = max of three components
     reserve = max(cte70, ssa, csv_floor)
 
-    VM21Result(
-        cte70 = cte70,
-        ssa = ssa,
-        csv_floor = csv_floor,
-        reserve = reserve,
-        scenario_count = length(scenario_pvs),
-        mean_pv = mean(scenario_pvs),
-        std_pv = std(scenario_pvs),
-        worst_pv = maximum(scenario_pvs)
+    VM21Result(;
+        cte70=cte70,
+        ssa=ssa,
+        csv_floor=csv_floor,
+        reserve=reserve,
+        scenario_count=length(scenario_pvs),
+        mean_pv=mean(scenario_pvs),
+        std_pv=std(scenario_pvs),
+        worst_pv=maximum(scenario_pvs),
     )
 end
-
 
 #=============================================================================
 # Internal Helper Functions
@@ -322,7 +323,7 @@ function _run_scenarios(
     policy::PolicyData,
     scenarios::AG43Scenarios,
     mortality_table::MortalityTable,
-    r::Float64
+    r::Float64,
 )::Vector{Float64}
     pvs = Float64[]
     for scenario in scenarios.scenarios
@@ -331,7 +332,6 @@ function _run_scenarios(
     end
     pvs
 end
-
 
 """
 Run single scenario and calculate PV of liability.
@@ -343,7 +343,7 @@ function _run_single_scenario(
     policy::PolicyData,
     scenario::EconomicScenario,
     mortality_table::MortalityTable,
-    r::Float64
+    r::Float64,
 )::Float64
     max_age = 100
     n_years = min(max_age - policy.age, length(scenario.equity_returns))
@@ -391,7 +391,6 @@ function _run_single_scenario(
     pv_liability
 end
 
-
 """
 Default mortality table (Gompertz approximation).
 
@@ -402,7 +401,6 @@ function _default_mortality(age::Int)::Float64
     qx = 0.0001 * exp(0.08 * age)
     min(qx, 1.0)
 end
-
 
 #=============================================================================
 # Convenience Functions
@@ -431,19 +429,18 @@ haskey(ctes, "CTE70")  # true
 """
 function calculate_cte_levels(
     scenario_results::Vector{Float64};
-    levels::Vector{Float64} = [0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-)::Dict{String, Float64}
+    levels::Vector{Float64}=[0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95],
+)::Dict{String,Float64}
     calc = VM21Calculator()
-    ctes = Dict{String, Float64}()
+    ctes = Dict{String,Float64}()
 
     for level in levels
         key = "CTE$(Int(level * 100))"
-        ctes[key] = calculate_cte(calc, scenario_results, alpha=level)
+        ctes[key] = calculate_cte(calc, scenario_results; alpha=level)
     end
 
     ctes
 end
-
 
 """
     vm21_sensitivity_analysis(policy; n_scenarios, seed)
@@ -468,59 +465,66 @@ haskey(sens, "base_reserve")  # true
 ```
 """
 function vm21_sensitivity_analysis(
-    policy::PolicyData;
-    n_scenarios::Int = 1000,
-    seed::Union{Int, Nothing} = nothing
-)::Dict{String, Any}
-    calc = VM21Calculator(n_scenarios=n_scenarios, seed=seed)
+    policy::PolicyData; n_scenarios::Int=1000, seed::Union{Int,Nothing}=nothing
+)::Dict{String,Any}
+    calc = VM21Calculator(; n_scenarios=n_scenarios, seed=seed)
 
     # Base case
     base_result = calculate_reserve(calc, policy)
 
     # GWB +10%
-    policy_gwb_up = PolicyData(
-        av = policy.av,
-        gwb = policy.gwb * 1.10,
-        age = policy.age,
-        csv = policy.csv,
-        withdrawal_rate = policy.withdrawal_rate,
-        fee_rate = policy.fee_rate
+    policy_gwb_up = PolicyData(;
+        av=policy.av,
+        gwb=(policy.gwb * 1.10),
+        age=policy.age,
+        csv=policy.csv,
+        withdrawal_rate=policy.withdrawal_rate,
+        fee_rate=policy.fee_rate,
     )
     result_gwb_up = calculate_reserve(calc, policy_gwb_up)
 
     # Age +5
-    policy_older = PolicyData(
-        av = policy.av,
-        gwb = policy.gwb,
-        age = policy.age + 5,
-        csv = policy.csv,
-        withdrawal_rate = policy.withdrawal_rate,
-        fee_rate = policy.fee_rate
+    policy_older = PolicyData(;
+        av=policy.av,
+        gwb=policy.gwb,
+        age=(policy.age + 5),
+        csv=policy.csv,
+        withdrawal_rate=policy.withdrawal_rate,
+        fee_rate=policy.fee_rate,
     )
     result_older = calculate_reserve(calc, policy_older)
 
     # AV -20%
-    policy_av_down = PolicyData(
-        av = policy.av * 0.80,
-        gwb = policy.gwb,
-        age = policy.age,
-        csv = policy.csv,
-        withdrawal_rate = policy.withdrawal_rate,
-        fee_rate = policy.fee_rate
+    policy_av_down = PolicyData(;
+        av=(policy.av * 0.80),
+        gwb=policy.gwb,
+        age=policy.age,
+        csv=policy.csv,
+        withdrawal_rate=policy.withdrawal_rate,
+        fee_rate=policy.fee_rate,
     )
     result_av_down = calculate_reserve(calc, policy_av_down)
 
-    Dict{String, Any}(
+    Dict{String,Any}(
         "base_reserve" => base_result.reserve,
         "base_cte70" => base_result.cte70,
         "gwb_up_10pct" => result_gwb_up.reserve,
-        "gwb_sensitivity" => base_result.reserve > 0 ?
-            (result_gwb_up.reserve - base_result.reserve) / base_result.reserve : 0.0,
+        "gwb_sensitivity" => if base_result.reserve > 0
+            (result_gwb_up.reserve - base_result.reserve) / base_result.reserve
+        else
+            0.0
+        end,
         "age_plus_5" => result_older.reserve,
-        "age_sensitivity" => base_result.reserve > 0 ?
-            (result_older.reserve - base_result.reserve) / base_result.reserve : 0.0,
+        "age_sensitivity" => if base_result.reserve > 0
+            (result_older.reserve - base_result.reserve) / base_result.reserve
+        else
+            0.0
+        end,
         "av_down_20pct" => result_av_down.reserve,
-        "av_sensitivity" => base_result.reserve > 0 ?
-            (result_av_down.reserve - base_result.reserve) / base_result.reserve : 0.0
+        "av_sensitivity" => if base_result.reserve > 0
+            (result_av_down.reserve - base_result.reserve) / base_result.reserve
+        else
+            0.0
+        end,
     )
 end

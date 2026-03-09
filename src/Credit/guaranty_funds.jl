@@ -24,16 +24,16 @@ References
 """
 Standard NOLHGA limits (used as default for most states).
 """
-const STANDARD_LIMITS = GuarantyFundCoverage(
-    state = "DEFAULT",
-    life_death_benefit = 300_000.0,
-    life_cash_value = 100_000.0,
-    annuity_deferred = 250_000.0,
-    annuity_payout = 300_000.0,
-    annuity_ssa = 250_000.0,
-    group_annuity = 5_000_000.0,
-    health = 500_000.0,
-    coverage_percentage = 1.0
+const STANDARD_LIMITS = GuarantyFundCoverage(;
+    state="DEFAULT",
+    life_death_benefit=300_000.0,
+    life_cash_value=100_000.0,
+    annuity_deferred=250_000.0,
+    annuity_payout=300_000.0,
+    annuity_ssa=250_000.0,
+    group_annuity=5_000_000.0,
+    health=500_000.0,
+    coverage_percentage=1.0,
 )
 
 #=============================================================================
@@ -44,109 +44,109 @@ const STANDARD_LIMITS = GuarantyFundCoverage(
 State-specific guaranty fund limits where they differ from standard.
 [T2] Based on NOLHGA and state guaranty association websites.
 """
-const STATE_GUARANTY_LIMITS = Dict{String, GuarantyFundCoverage}(
+const STATE_GUARANTY_LIMITS = Dict{String,GuarantyFundCoverage}(
     # California - 80% of benefits
-    "CA" => GuarantyFundCoverage(
-        state = "CA",
-        life_death_benefit = 300_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 250_000.0,
-        annuity_payout = 300_000.0,
-        annuity_ssa = 250_000.0,
-        group_annuity = 5_000_000.0,
-        health = 668_205.0,  # Inflation-adjusted as of 2024
-        coverage_percentage = 0.80  # California covers only 80%
+    "CA" => GuarantyFundCoverage(;
+        state="CA",
+        life_death_benefit=300_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=250_000.0,
+        annuity_payout=300_000.0,
+        annuity_ssa=250_000.0,
+        group_annuity=5_000_000.0,
+        health=668_205.0,  # Inflation-adjusted as of 2024
+        coverage_percentage=0.80,  # California covers only 80%
     ),
 
     # New York - higher limits across the board
-    "NY" => GuarantyFundCoverage(
-        state = "NY",
-        life_death_benefit = 500_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 500_000.0,
-        annuity_payout = 500_000.0,
-        annuity_ssa = 500_000.0,
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "NY" => GuarantyFundCoverage(;
+        state="NY",
+        life_death_benefit=500_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=500_000.0,
+        annuity_payout=500_000.0,
+        annuity_ssa=500_000.0,
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # Minnesota - higher SSA limits
-    "MN" => GuarantyFundCoverage(
-        state = "MN",
-        life_death_benefit = 300_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 250_000.0,
-        annuity_payout = 300_000.0,
-        annuity_ssa = 410_000.0,  # Higher for SSA and 10yr+ certain
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "MN" => GuarantyFundCoverage(;
+        state="MN",
+        life_death_benefit=300_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=250_000.0,
+        annuity_payout=300_000.0,
+        annuity_ssa=410_000.0,  # Higher for SSA and 10yr+ certain
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # North Carolina - higher SSA limits
-    "NC" => GuarantyFundCoverage(
-        state = "NC",
-        life_death_benefit = 300_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 300_000.0,
-        annuity_payout = 300_000.0,
-        annuity_ssa = 1_000_000.0,  # $1M for SSA
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "NC" => GuarantyFundCoverage(;
+        state="NC",
+        life_death_benefit=300_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=300_000.0,
+        annuity_payout=300_000.0,
+        annuity_ssa=1_000_000.0,  # $1M for SSA
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # Texas - standard limits
-    "TX" => GuarantyFundCoverage(
-        state = "TX",
-        life_death_benefit = 300_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 250_000.0,
-        annuity_payout = 300_000.0,
-        annuity_ssa = 250_000.0,
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "TX" => GuarantyFundCoverage(;
+        state="TX",
+        life_death_benefit=300_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=250_000.0,
+        annuity_payout=300_000.0,
+        annuity_ssa=250_000.0,
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # Florida - standard limits
-    "FL" => GuarantyFundCoverage(
-        state = "FL",
-        life_death_benefit = 300_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 250_000.0,
-        annuity_payout = 300_000.0,
-        annuity_ssa = 250_000.0,
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "FL" => GuarantyFundCoverage(;
+        state="FL",
+        life_death_benefit=300_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=250_000.0,
+        annuity_payout=300_000.0,
+        annuity_ssa=250_000.0,
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # Washington - higher limits
-    "WA" => GuarantyFundCoverage(
-        state = "WA",
-        life_death_benefit = 500_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 500_000.0,
-        annuity_payout = 500_000.0,
-        annuity_ssa = 500_000.0,
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "WA" => GuarantyFundCoverage(;
+        state="WA",
+        life_death_benefit=500_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=500_000.0,
+        annuity_payout=500_000.0,
+        annuity_ssa=500_000.0,
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 
     # New Jersey - higher limits
-    "NJ" => GuarantyFundCoverage(
-        state = "NJ",
-        life_death_benefit = 500_000.0,
-        life_cash_value = 100_000.0,
-        annuity_deferred = 500_000.0,
-        annuity_payout = 500_000.0,
-        annuity_ssa = 500_000.0,
-        group_annuity = 5_000_000.0,
-        health = 500_000.0,
-        coverage_percentage = 1.0
+    "NJ" => GuarantyFundCoverage(;
+        state="NJ",
+        life_death_benefit=500_000.0,
+        life_cash_value=100_000.0,
+        annuity_deferred=500_000.0,
+        annuity_payout=500_000.0,
+        annuity_ssa=500_000.0,
+        group_annuity=5_000_000.0,
+        health=500_000.0,
+        coverage_percentage=1.0,
     ),
 )
 
@@ -183,16 +183,16 @@ function get_state_coverage(state::String)::GuarantyFundCoverage
     end
 
     # Return standard limits with state code
-    GuarantyFundCoverage(
-        state = state_upper,
-        life_death_benefit = STANDARD_LIMITS.life_death_benefit,
-        life_cash_value = STANDARD_LIMITS.life_cash_value,
-        annuity_deferred = STANDARD_LIMITS.annuity_deferred,
-        annuity_payout = STANDARD_LIMITS.annuity_payout,
-        annuity_ssa = STANDARD_LIMITS.annuity_ssa,
-        group_annuity = STANDARD_LIMITS.group_annuity,
-        health = STANDARD_LIMITS.health,
-        coverage_percentage = STANDARD_LIMITS.coverage_percentage
+    GuarantyFundCoverage(;
+        state=state_upper,
+        life_death_benefit=STANDARD_LIMITS.life_death_benefit,
+        life_cash_value=STANDARD_LIMITS.life_cash_value,
+        annuity_deferred=STANDARD_LIMITS.annuity_deferred,
+        annuity_payout=STANDARD_LIMITS.annuity_payout,
+        annuity_ssa=STANDARD_LIMITS.annuity_ssa,
+        group_annuity=STANDARD_LIMITS.group_annuity,
+        health=STANDARD_LIMITS.health,
+        coverage_percentage=STANDARD_LIMITS.coverage_percentage,
     )
 end
 
@@ -259,9 +259,7 @@ calculate_covered_amount(100000, "TX", ANNUITY_DEFERRED)
 ```
 """
 function calculate_covered_amount(
-    benefit_amount::Float64,
-    state::String,
-    coverage_type::CoverageType
+    benefit_amount::Float64, state::String, coverage_type::CoverageType
 )::Float64
     benefit_amount <= 0 && return 0.0
 
@@ -300,9 +298,7 @@ calculate_uncovered_amount(100000, "TX", ANNUITY_DEFERRED)
 ```
 """
 function calculate_uncovered_amount(
-    benefit_amount::Float64,
-    state::String,
-    coverage_type::CoverageType
+    benefit_amount::Float64, state::String, coverage_type::CoverageType
 )::Float64
     covered = calculate_covered_amount(benefit_amount, state, coverage_type)
     max(0.0, benefit_amount - covered)
@@ -322,9 +318,7 @@ Get ratio of benefit covered by guaranty fund.
 - Coverage ratio (0 to 1)
 """
 function get_coverage_ratio(
-    benefit_amount::Float64,
-    state::String,
-    coverage_type::CoverageType
+    benefit_amount::Float64, state::String, coverage_type::CoverageType
 )::Float64
     benefit_amount <= 0 && return 0.0
 
@@ -344,11 +338,7 @@ Compare coverage limits between two states.
 # Returns
 Named tuple with limits and which state offers better coverage.
 """
-function compare_state_coverage(
-    state1::String,
-    state2::String,
-    coverage_type::CoverageType
-)
+function compare_state_coverage(state1::String, state2::String, coverage_type::CoverageType)
     cov1 = get_state_coverage(state1)
     cov2 = get_state_coverage(state2)
 
@@ -360,13 +350,13 @@ function compare_state_coverage(
     effective2 = limit2 * cov2.coverage_percentage
 
     (
-        state1_limit = limit1,
-        state1_percentage = cov1.coverage_percentage,
-        state1_effective = effective1,
-        state2_limit = limit2,
-        state2_percentage = cov2.coverage_percentage,
-        state2_effective = effective2,
-        better_state = effective1 >= effective2 ? state1 : state2
+        state1_limit=limit1,
+        state1_percentage=cov1.coverage_percentage,
+        state1_effective=effective1,
+        state2_limit=limit2,
+        state2_percentage=cov2.coverage_percentage,
+        state2_effective=effective2,
+        better_state=effective1 >= effective2 ? state1 : state2,
     )
 end
 
@@ -398,7 +388,7 @@ end
 
 Print coverage summary for a state.
 """
-function print_state_coverage(state::String; io::IO = stdout)
+function print_state_coverage(state::String; io::IO=stdout)
     coverage = get_state_coverage(state)
 
     println(io, "Guaranty Fund Coverage: $(coverage.state)")
@@ -419,9 +409,7 @@ end
 Print comparison of coverage across multiple states.
 """
 function print_coverage_comparison(
-    states::Vector{String},
-    coverage_type::CoverageType;
-    io::IO = stdout
+    states::Vector{String}, coverage_type::CoverageType; io::IO=stdout
 )
     println(io, "State Guaranty Coverage Comparison: $coverage_type")
     println(io, "-" ^ 50)
@@ -433,11 +421,12 @@ function print_coverage_comparison(
         limit = get_coverage_limit(state, coverage_type)
         effective = limit * coverage.coverage_percentage
 
-        println(io,
+        println(
+            io,
             rpad(state, 8),
             rpad("\$$(Int(limit))", 15),
             rpad("$(Int(coverage.coverage_percentage * 100))%", 12),
-            "\$$(Int(effective))"
+            "\$$(Int(effective))",
         )
     end
 end

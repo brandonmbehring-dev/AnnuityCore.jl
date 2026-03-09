@@ -46,10 +46,8 @@ struct RateRecommenderConfig{T<:Real}
     min_comparables::Int
 
     function RateRecommenderConfig(;
-        default_expense_load::T = 0.0050,
-        duration_tolerance::Int = 1,
-        min_comparables::Int = 5
-    ) where T<:Real
+        default_expense_load::T=0.0050, duration_tolerance::Int=1, min_comparables::Int=5
+    ) where {T<:Real}
         default_expense_load >= 0 || error("CRITICAL: default_expense_load must be >= 0")
         duration_tolerance >= 0 || error("CRITICAL: duration_tolerance must be >= 0")
         min_comparables >= 1 || error("CRITICAL: min_comparables must be >= 1")
@@ -58,12 +56,9 @@ struct RateRecommenderConfig{T<:Real}
 end
 
 # Default configuration
-const DEFAULT_RECOMMENDER_CONFIG = RateRecommenderConfig(
-    default_expense_load = 0.0050,
-    duration_tolerance = 1,
-    min_comparables = 5
+const DEFAULT_RECOMMENDER_CONFIG = RateRecommenderConfig(;
+    default_expense_load=0.0050, duration_tolerance=1, min_comparables=5
 )
-
 
 #=============================================================================
 # Core Recommendation Functions
@@ -105,13 +100,15 @@ function recommend_rate(
     guarantee_duration::Int,
     target_percentile::Real,
     market_data::Vector{WINKProduct};
-    treasury_rate::Union{Real, Nothing} = nothing,
-    min_margin_bps::Real = 50.0,
-    config::RateRecommenderConfig = DEFAULT_RECOMMENDER_CONFIG
+    treasury_rate::Union{Real,Nothing}=nothing,
+    min_margin_bps::Real=50.0,
+    config::RateRecommenderConfig=DEFAULT_RECOMMENDER_CONFIG,
 )::RateRecommendation
     # Validate inputs
-    0 <= target_percentile <= 100 || error("CRITICAL: target_percentile must be 0-100, got $target_percentile")
-    guarantee_duration > 0 || error("CRITICAL: guarantee_duration must be > 0, got $guarantee_duration")
+    0 <= target_percentile <= 100 ||
+        error("CRITICAL: target_percentile must be 0-100, got $target_percentile")
+    guarantee_duration > 0 ||
+        error("CRITICAL: guarantee_duration must be > 0, got $guarantee_duration")
 
     # Filter to comparable products
     comparables = get_comparables(market_data, guarantee_duration, config)
@@ -120,7 +117,7 @@ function recommend_rate(
         error(
             "CRITICAL: No comparable MYGA products found for " *
             "duration $guarantee_duration ± $(config.duration_tolerance) years. " *
-            "Check market_data filters."
+            "Check market_data filters.",
         )
     end
 
@@ -151,26 +148,25 @@ function recommend_rate(
     confidence = assess_confidence(length(rates), target_percentile, margin_bps)
 
     # Build rationale
-    rationale = build_rationale(
-        recommended_rate = recommended_rate,
-        target_percentile = Float64(target_percentile),
-        spread_bps = spread_bps,
-        margin_bps = margin_bps,
-        min_margin_bps = Float64(min_margin_bps),
-        comparable_count = length(rates)
+    rationale = build_rationale(;
+        recommended_rate=recommended_rate,
+        target_percentile=Float64(target_percentile),
+        spread_bps=spread_bps,
+        margin_bps=margin_bps,
+        min_margin_bps=Float64(min_margin_bps),
+        comparable_count=length(rates),
     )
 
-    RateRecommendation(
-        recommended_rate = recommended_rate,
-        target_percentile = Float64(target_percentile),
-        spread_over_treasury = spread_bps,
-        margin_estimate = margin_bps,
-        confidence = confidence,
-        rationale = rationale,
-        comparable_count = length(rates)
+    RateRecommendation(;
+        recommended_rate=recommended_rate,
+        target_percentile=Float64(target_percentile),
+        spread_over_treasury=spread_bps,
+        margin_estimate=margin_bps,
+        confidence=confidence,
+        rationale=rationale,
+        comparable_count=length(rates),
     )
 end
-
 
 """
     recommend_for_spread(guarantee_duration, treasury_rate, target_spread_bps, market_data; kwargs...) -> RateRecommendation
@@ -200,7 +196,7 @@ function recommend_for_spread(
     treasury_rate::Real,
     target_spread_bps::Real,
     market_data::Vector{WINKProduct};
-    config::RateRecommenderConfig = DEFAULT_RECOMMENDER_CONFIG
+    config::RateRecommenderConfig=DEFAULT_RECOMMENDER_CONFIG,
 )::RateRecommendation
     treasury_rate >= 0 || error("CRITICAL: treasury_rate must be >= 0, got $treasury_rate")
 
@@ -225,21 +221,21 @@ function recommend_for_spread(
 
     confidence = assess_confidence(length(rates), percentile, margin_bps)
 
-    rationale = "Rate $(round(recommended_rate * 100, digits=3))% achieves $(round(target_spread_bps, digits=0))bps spread " *
-                "over $(guarantee_duration)-year Treasury ($(round(Float64(treasury_rate) * 100, digits=3))%). " *
-                "Positions at $(round(percentile, digits=0))th percentile among $(length(rates)) comparables."
+    rationale =
+        "Rate $(round(recommended_rate * 100, digits=3))% achieves $(round(target_spread_bps, digits=0))bps spread " *
+        "over $(guarantee_duration)-year Treasury ($(round(Float64(treasury_rate) * 100, digits=3))%). " *
+        "Positions at $(round(percentile, digits=0))th percentile among $(length(rates)) comparables."
 
-    RateRecommendation(
-        recommended_rate = recommended_rate,
-        target_percentile = percentile,
-        spread_over_treasury = Float64(target_spread_bps),
-        margin_estimate = margin_bps,
-        confidence = confidence,
-        rationale = rationale,
-        comparable_count = length(rates)
+    RateRecommendation(;
+        recommended_rate=recommended_rate,
+        target_percentile=percentile,
+        spread_over_treasury=Float64(target_spread_bps),
+        margin_estimate=margin_bps,
+        confidence=confidence,
+        rationale=rationale,
+        comparable_count=length(rates),
     )
 end
-
 
 """
     analyze_margin(rate, treasury_rate; expense_load=nothing, config=DEFAULT_RECOMMENDER_CONFIG) -> MarginAnalysis
@@ -268,8 +264,8 @@ margin = analyze_margin(0.048, 0.040)
 function analyze_margin(
     rate::Real,
     treasury_rate::Real;
-    expense_load::Union{Real, Nothing} = nothing,
-    config::RateRecommenderConfig = DEFAULT_RECOMMENDER_CONFIG
+    expense_load::Union{Real,Nothing}=nothing,
+    config::RateRecommenderConfig=DEFAULT_RECOMMENDER_CONFIG,
 )::MarginAnalysis
     expense = expense_load === nothing ? config.default_expense_load : Float64(expense_load)
 
@@ -278,14 +274,13 @@ function analyze_margin(
     expense_bps = expense * 10000
     net_margin_bps = gross_spread_bps - option_cost_bps - expense_bps
 
-    MarginAnalysis(
-        gross_spread = gross_spread_bps,
-        option_cost = option_cost_bps,
-        expense_load = expense_bps,
-        net_margin = net_margin_bps
+    MarginAnalysis(;
+        gross_spread=gross_spread_bps,
+        option_cost=option_cost_bps,
+        expense_load=expense_bps,
+        net_margin=net_margin_bps,
     )
 end
-
 
 """
     sensitivity_analysis(guarantee_duration, market_data, treasury_rate; kwargs...) -> Vector{SensitivityPoint}
@@ -316,8 +311,8 @@ function sensitivity_analysis(
     guarantee_duration::Int,
     market_data::Vector{WINKProduct},
     treasury_rate::Real;
-    percentile_range::Vector{<:Real} = [25.0, 50.0, 75.0, 90.0],
-    config::RateRecommenderConfig = DEFAULT_RECOMMENDER_CONFIG
+    percentile_range::Vector{<:Real}=[25.0, 50.0, 75.0, 90.0],
+    config::RateRecommenderConfig=DEFAULT_RECOMMENDER_CONFIG,
 )::Vector{SensitivityPoint{Float64}}
     results = SensitivityPoint{Float64}[]
 
@@ -326,33 +321,38 @@ function sensitivity_analysis(
             rec = recommend_rate(
                 guarantee_duration,
                 Float64(pct),
-                market_data,
-                treasury_rate = treasury_rate,
-                config = config
+                market_data;
+                treasury_rate=treasury_rate,
+                config=config,
             )
-            push!(results, SensitivityPoint(
-                percentile = Float64(pct),
-                rate = rec.recommended_rate,
-                spread_bps = rec.spread_over_treasury,
-                margin_bps = rec.margin_estimate,
-                comparable_count = rec.comparable_count,
-                error = nothing
-            ))
+            push!(
+                results,
+                SensitivityPoint(;
+                    percentile=Float64(pct),
+                    rate=rec.recommended_rate,
+                    spread_bps=rec.spread_over_treasury,
+                    margin_bps=rec.margin_estimate,
+                    comparable_count=rec.comparable_count,
+                    error=nothing,
+                ),
+            )
         catch e
-            push!(results, SensitivityPoint(
-                percentile = Float64(pct),
-                rate = nothing,
-                spread_bps = nothing,
-                margin_bps = nothing,
-                comparable_count = 0,
-                error = string(e)
-            ))
+            push!(
+                results,
+                SensitivityPoint(;
+                    percentile=Float64(pct),
+                    rate=nothing,
+                    spread_bps=nothing,
+                    margin_bps=nothing,
+                    comparable_count=0,
+                    error=string(e),
+                ),
+            )
         end
     end
 
     results
 end
-
 
 #=============================================================================
 # Helper Functions
@@ -372,19 +372,16 @@ Filter market data to comparable products.
 - `Vector{WINKProduct}`: Filtered to comparable products
 """
 function get_comparables(
-    market_data::Vector{WINKProduct},
-    guarantee_duration::Int,
-    config::RateRecommenderConfig
+    market_data::Vector{WINKProduct}, guarantee_duration::Int, config::RateRecommenderConfig
 )::Vector{WINKProduct}
     filter(market_data) do p
         # Filter to current MYGA products
         p.status == :current &&
-        p.product_group == "MYGA" &&
-        # Duration matching within tolerance
-        abs(p.duration - guarantee_duration) <= config.duration_tolerance
+            p.product_group == "MYGA" &&
+            # Duration matching within tolerance
+            abs(p.duration - guarantee_duration) <= config.duration_tolerance
     end
 end
-
 
 """
     calculate_rate_percentile(value, distribution) -> Float64
@@ -394,11 +391,11 @@ Calculate percentile of value within distribution.
 Uses count-based percentile (percentage of values <= value).
 """
 function calculate_rate_percentile(value::Real, distribution::Vector{<:Real})::Float64
-    isempty(distribution) && error("CRITICAL: Cannot calculate percentile with empty distribution")
+    isempty(distribution) &&
+        error("CRITICAL: Cannot calculate percentile with empty distribution")
     count_le = count(x -> x <= value, distribution)
     Float64((count_le / length(distribution)) * 100)
 end
-
 
 """
     assess_confidence(sample_size, percentile, margin_bps) -> ConfidenceLevel
@@ -414,9 +411,7 @@ Assess confidence level of recommendation.
 - `ConfidenceLevel`: HIGH, MEDIUM, or LOW
 """
 function assess_confidence(
-    sample_size::Int,
-    percentile::Real,
-    margin_bps::Union{Real, Nothing}
+    sample_size::Int, percentile::Real, margin_bps::Union{Real,Nothing}
 )::ConfidenceLevel
     # Start with medium confidence
     score = 2
@@ -452,7 +447,6 @@ function assess_confidence(
     end
 end
 
-
 """
     build_rationale(; kwargs...) -> String
 
@@ -461,16 +455,16 @@ Build human-readable rationale for recommendation.
 function build_rationale(;
     recommended_rate::Float64,
     target_percentile::Float64,
-    spread_bps::Union{Float64, Nothing},
-    margin_bps::Union{Float64, Nothing},
+    spread_bps::Union{Float64,Nothing},
+    margin_bps::Union{Float64,Nothing},
     min_margin_bps::Float64,
-    comparable_count::Int
+    comparable_count::Int,
 )::String
-    rate_pct = round(recommended_rate * 100, digits=3)
-    pct_str = round(target_percentile, digits=0)
+    rate_pct = round(recommended_rate * 100; digits=3)
+    pct_str = round(target_percentile; digits=0)
 
     parts = [
-        "Recommended rate: $(rate_pct)% (targets $(pct_str)th percentile among $comparable_count comparables)"
+        "Recommended rate: $(rate_pct)% (targets $(pct_str)th percentile among $comparable_count comparables)",
     ]
 
     if spread_bps !== nothing
@@ -479,15 +473,20 @@ function build_rationale(;
 
     if margin_bps !== nothing
         if margin_bps >= min_margin_bps
-            push!(parts, "Estimated margin: $(round(margin_bps, digits=0))bps (meets $(round(min_margin_bps, digits=0))bps target)")
+            push!(
+                parts,
+                "Estimated margin: $(round(margin_bps, digits=0))bps (meets $(round(min_margin_bps, digits=0))bps target)",
+            )
         else
-            push!(parts, "WARNING: Estimated margin $(round(margin_bps, digits=0))bps below $(round(min_margin_bps, digits=0))bps target")
+            push!(
+                parts,
+                "WARNING: Estimated margin $(round(margin_bps, digits=0))bps below $(round(min_margin_bps, digits=0))bps target",
+            )
         end
     end
 
     join(parts, ". ")
 end
-
 
 #=============================================================================
 # Convenience Functions
@@ -521,17 +520,16 @@ function quick_rate_recommendation(
     duration::Int,
     target_pct::Real,
     rates::Vector{<:Real};
-    treasury_rate::Union{Real, Nothing} = nothing
+    treasury_rate::Union{Real,Nothing}=nothing,
 )::RateRecommendation
     # Create synthetic WINKProducts
     products = [
-        WINKProduct("Synthetic", "Product $i", Float64(r), duration, "MYGA", :current)
-        for (i, r) in enumerate(rates)
+        WINKProduct("Synthetic", "Product $i", Float64(r), duration, "MYGA", :current) for
+        (i, r) in enumerate(rates)
     ]
 
-    recommend_rate(duration, Float64(target_pct), products, treasury_rate = treasury_rate)
+    recommend_rate(duration, Float64(target_pct), products; treasury_rate=treasury_rate)
 end
-
 
 """
     rate_grid(treasury_rate, spread_range_bps; step_bps=10) -> Vector{Tuple{Float64, Float64}}
@@ -555,63 +553,81 @@ grid = rate_grid(0.04, (50, 150), step_bps=25)
 ```
 """
 function rate_grid(
-    treasury_rate::Real,
-    spread_range_bps::Tuple{Real, Real};
-    step_bps::Real = 10
-)::Vector{Tuple{Float64, Float64}}
+    treasury_rate::Real, spread_range_bps::Tuple{Real,Real}; step_bps::Real=10
+)::Vector{Tuple{Float64,Float64}}
     min_spread, max_spread = spread_range_bps
     spreads = min_spread:step_bps:max_spread
 
     [(Float64(treasury_rate) + s / 10000, Float64(s)) for s in spreads]
 end
 
-
 """
     compare_recommendations(recs::Vector{RateRecommendation}; io::IO=stdout)
 
 Compare multiple rate recommendations side by side.
 """
-function compare_recommendations(recs::Vector{<:RateRecommendation}; io::IO = stdout)
-    isempty(recs) && return
+function compare_recommendations(recs::Vector{<:RateRecommendation}; io::IO=stdout)
+    isempty(recs) && return nothing
 
     println(io, "=" ^ 80)
     println(io, "Rate Recommendation Comparison")
     println(io, "=" ^ 80)
 
     # Header
-    println(io, rpad("Percentile", 12), rpad("Rate", 10), rpad("Spread", 12),
-            rpad("Margin", 12), rpad("Confidence", 12), "Comparables")
+    println(
+        io,
+        rpad("Percentile", 12),
+        rpad("Rate", 10),
+        rpad("Spread", 12),
+        rpad("Margin", 12),
+        rpad("Confidence", 12),
+        "Comparables",
+    )
     println(io, "-" ^ 80)
 
     for rec in recs
         rate_pct = "$(round(rec.recommended_rate * 100, digits=3))%"
-        spread = rec.spread_over_treasury !== nothing ? "$(round(rec.spread_over_treasury, digits=0)) bps" : "N/A"
-        margin = rec.margin_estimate !== nothing ? "$(round(rec.margin_estimate, digits=0)) bps" : "N/A"
+        spread = if rec.spread_over_treasury !== nothing
+            "$(round(rec.spread_over_treasury, digits=0)) bps"
+        else
+            "N/A"
+        end
+        margin = if rec.margin_estimate !== nothing
+            "$(round(rec.margin_estimate, digits=0)) bps"
+        else
+            "N/A"
+        end
 
-        println(io,
+        println(
+            io,
             rpad("$(Int(round(rec.target_percentile)))th", 12),
             rpad(rate_pct, 10),
             rpad(spread, 12),
             rpad(margin, 12),
             rpad(confidence_string(rec.confidence), 12),
-            rec.comparable_count
+            rec.comparable_count,
         )
     end
 
     println(io, "=" ^ 80)
 end
 
-
 """
     print_sensitivity_analysis(results::Vector{SensitivityPoint}; io::IO=stdout)
 
 Print sensitivity analysis results.
 """
-function print_sensitivity_analysis(results::Vector{<:SensitivityPoint}; io::IO = stdout)
+function print_sensitivity_analysis(results::Vector{<:SensitivityPoint}; io::IO=stdout)
     println(io, "Sensitivity Analysis")
     println(io, "-" ^ 60)
-    println(io, rpad("Percentile", 12), rpad("Rate", 10), rpad("Spread", 12),
-            rpad("Margin", 12), "Status")
+    println(
+        io,
+        rpad("Percentile", 12),
+        rpad("Rate", 10),
+        rpad("Spread", 12),
+        rpad("Margin", 12),
+        "Status",
+    )
     println(io, "-" ^ 60)
 
     for pt in results
@@ -621,16 +637,19 @@ function print_sensitivity_analysis(results::Vector{<:SensitivityPoint}; io::IO 
             println(io, rpad(pct_str, 12), "ERROR: $(pt.error)")
         else
             rate_str = pt.rate !== nothing ? "$(round(pt.rate * 100, digits=3))%" : "N/A"
-            spread_str = pt.spread_bps !== nothing ? "$(round(pt.spread_bps, digits=0)) bps" : "N/A"
-            margin_str = pt.margin_bps !== nothing ? "$(round(pt.margin_bps, digits=0)) bps" : "N/A"
+            spread_str =
+                pt.spread_bps !== nothing ? "$(round(pt.spread_bps, digits=0)) bps" : "N/A"
+            margin_str =
+                pt.margin_bps !== nothing ? "$(round(pt.margin_bps, digits=0)) bps" : "N/A"
             status = pt.margin_bps !== nothing && pt.margin_bps > 0 ? "✓" : "⚠"
 
-            println(io,
+            println(
+                io,
                 rpad(pct_str, 12),
                 rpad(rate_str, 10),
                 rpad(spread_str, 12),
                 rpad(margin_str, 12),
-                status
+                status,
             )
         end
     end

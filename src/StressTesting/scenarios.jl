@@ -20,15 +20,15 @@ ORSA Moderate Adverse scenario (~1-in-10 year event).
 - Volatility: 30% increase
 - Behavioral: No change assumed
 """
-const ORSA_MODERATE_ADVERSE = StressScenario(
-    name = "orsa_moderate_adverse",
-    display_name = "ORSA Moderate Adverse",
-    equity_shock = -0.15,
-    rate_shock = -0.0050,
-    vol_shock = 1.3,
-    lapse_multiplier = 1.0,
-    withdrawal_multiplier = 1.0,
-    scenario_type = ORSA
+const ORSA_MODERATE_ADVERSE = StressScenario(;
+    name="orsa_moderate_adverse",
+    display_name="ORSA Moderate Adverse",
+    equity_shock=-0.15,
+    rate_shock=-0.0050,
+    vol_shock=1.3,
+    lapse_multiplier=1.0,
+    withdrawal_multiplier=1.0,
+    scenario_type=ORSA,
 )
 
 """
@@ -41,15 +41,15 @@ ORSA Severely Adverse scenario (~1-in-25 year event).
 - Lapse: 10% increase
 - Withdrawal: 20% increase
 """
-const ORSA_SEVERELY_ADVERSE = StressScenario(
-    name = "orsa_severely_adverse",
-    display_name = "ORSA Severely Adverse",
-    equity_shock = -0.30,
-    rate_shock = -0.0100,
-    vol_shock = 2.0,
-    lapse_multiplier = 1.1,
-    withdrawal_multiplier = 1.2,
-    scenario_type = ORSA
+const ORSA_SEVERELY_ADVERSE = StressScenario(;
+    name="orsa_severely_adverse",
+    display_name="ORSA Severely Adverse",
+    equity_shock=-0.30,
+    rate_shock=-0.0100,
+    vol_shock=2.0,
+    lapse_multiplier=1.1,
+    withdrawal_multiplier=1.2,
+    scenario_type=ORSA,
 )
 
 """
@@ -62,24 +62,22 @@ ORSA Extremely Adverse scenario (~1-in-100 year event).
 - Lapse: 20% increase
 - Withdrawal: 50% increase
 """
-const ORSA_EXTREMELY_ADVERSE = StressScenario(
-    name = "orsa_extremely_adverse",
-    display_name = "ORSA Extremely Adverse",
-    equity_shock = -0.50,
-    rate_shock = -0.0200,
-    vol_shock = 4.0,
-    lapse_multiplier = 1.2,
-    withdrawal_multiplier = 1.5,
-    scenario_type = ORSA
+const ORSA_EXTREMELY_ADVERSE = StressScenario(;
+    name="orsa_extremely_adverse",
+    display_name="ORSA Extremely Adverse",
+    equity_shock=-0.50,
+    rate_shock=-0.0200,
+    vol_shock=4.0,
+    lapse_multiplier=1.2,
+    withdrawal_multiplier=1.5,
+    scenario_type=ORSA,
 )
 
 """
 All ORSA standard scenarios.
 """
 const ORSA_SCENARIOS = [
-    ORSA_MODERATE_ADVERSE,
-    ORSA_SEVERELY_ADVERSE,
-    ORSA_EXTREMELY_ADVERSE
+    ORSA_MODERATE_ADVERSE, ORSA_SEVERELY_ADVERSE, ORSA_EXTREMELY_ADVERSE
 ]
 
 # ============================================================================
@@ -100,16 +98,16 @@ Create a scenario with only equity shock.
 scenario = create_equity_shock(-0.25)  # 25% equity decline
 ```
 """
-function create_equity_shock(shock::Float64; name::Union{String, Nothing} = nothing)
+function create_equity_shock(shock::Float64; name::Union{String,Nothing}=nothing)
     scenario_name = isnothing(name) ? "equity_$(round(Int, shock * 100))" : name
     display = "Equity $(round(Int, shock * 100))%"
 
-    StressScenario(
-        name = scenario_name,
-        display_name = display,
-        equity_shock = shock,
-        rate_shock = 0.0,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=scenario_name,
+        display_name=display,
+        equity_shock=shock,
+        rate_shock=0.0,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -127,17 +125,17 @@ Create a scenario with only interest rate shock.
 scenario = create_rate_shock(-150)  # -150 bps rate drop
 ```
 """
-function create_rate_shock(shock_bps::Float64; name::Union{String, Nothing} = nothing)
+function create_rate_shock(shock_bps::Float64; name::Union{String,Nothing}=nothing)
     shock_decimal = shock_bps / 10000.0
     scenario_name = isnothing(name) ? "rate_$(round(Int, shock_bps))bps" : name
     display = "Rate $(shock_bps > 0 ? "+" : "")$(round(Int, shock_bps)) bps"
 
-    StressScenario(
-        name = scenario_name,
-        display_name = display,
-        equity_shock = 0.0,
-        rate_shock = shock_decimal,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=scenario_name,
+        display_name=display,
+        equity_shock=0.0,
+        rate_shock=shock_decimal,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -155,17 +153,17 @@ Create a scenario with only volatility shock.
 scenario = create_vol_shock(2.5)  # 2.5x volatility
 ```
 """
-function create_vol_shock(multiplier::Float64; name::Union{String, Nothing} = nothing)
+function create_vol_shock(multiplier::Float64; name::Union{String,Nothing}=nothing)
     scenario_name = isnothing(name) ? "vol_$(round(Int, multiplier * 100))pct" : name
     display = "Vol $(round(Int, multiplier * 100))%"
 
-    StressScenario(
-        name = scenario_name,
-        display_name = display,
-        equity_shock = 0.0,
-        rate_shock = 0.0,
-        vol_shock = multiplier,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=scenario_name,
+        display_name=display,
+        equity_shock=0.0,
+        rate_shock=0.0,
+        vol_shock=multiplier,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -185,21 +183,23 @@ scenario = create_behavioral_shock(1.5, 2.0)  # 50% more lapses, 2x withdrawals
 ```
 """
 function create_behavioral_shock(
-    lapse_mult::Float64,
-    withdrawal_mult::Float64;
-    name::Union{String, Nothing} = nothing
+    lapse_mult::Float64, withdrawal_mult::Float64; name::Union{String,Nothing}=nothing
 )
-    scenario_name = isnothing(name) ? "behavioral_l$(round(Int, lapse_mult*100))_w$(round(Int, withdrawal_mult*100))" : name
+    scenario_name = if isnothing(name)
+        "behavioral_l$(round(Int, lapse_mult*100))_w$(round(Int, withdrawal_mult*100))"
+    else
+        name
+    end
     display = "Behavioral L:$(round(Int, lapse_mult*100))% W:$(round(Int, withdrawal_mult*100))%"
 
-    StressScenario(
-        name = scenario_name,
-        display_name = display,
-        equity_shock = 0.0,
-        rate_shock = 0.0,
-        lapse_multiplier = lapse_mult,
-        withdrawal_multiplier = withdrawal_mult,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=scenario_name,
+        display_name=display,
+        equity_shock=0.0,
+        rate_shock=0.0,
+        lapse_multiplier=lapse_mult,
+        withdrawal_multiplier=withdrawal_mult,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -223,21 +223,21 @@ scenario = create_combined_scenario(
 function create_combined_scenario(;
     name::String,
     display_name::String,
-    equity_shock::Float64 = 0.0,
-    rate_shock::Float64 = 0.0,
-    vol_shock::Float64 = 1.0,
-    lapse_multiplier::Float64 = 1.0,
-    withdrawal_multiplier::Float64 = 1.0
+    equity_shock::Float64=0.0,
+    rate_shock::Float64=0.0,
+    vol_shock::Float64=1.0,
+    lapse_multiplier::Float64=1.0,
+    withdrawal_multiplier::Float64=1.0,
 )
-    StressScenario(
-        name = name,
-        display_name = display_name,
-        equity_shock = equity_shock,
-        rate_shock = rate_shock,
-        vol_shock = vol_shock,
-        lapse_multiplier = lapse_multiplier,
-        withdrawal_multiplier = withdrawal_multiplier,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=name,
+        display_name=display_name,
+        equity_shock=equity_shock,
+        rate_shock=rate_shock,
+        vol_shock=vol_shock,
+        lapse_multiplier=lapse_multiplier,
+        withdrawal_multiplier=withdrawal_multiplier,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -266,22 +266,20 @@ combined = combine_scenarios(equity_stress, rate_stress, name="combined_stress")
 ```
 """
 function combine_scenarios(
-    s1::StressScenario,
-    s2::StressScenario;
-    name::Union{String, Nothing} = nothing
+    s1::StressScenario, s2::StressScenario; name::Union{String,Nothing}=nothing
 )
     combined_name = isnothing(name) ? "$(s1.name)+$(s2.name)" : name
     display = "$(s1.display_name) + $(s2.display_name)"
 
-    StressScenario(
-        name = combined_name,
-        display_name = display,
-        equity_shock = s1.equity_shock + s2.equity_shock,
-        rate_shock = s1.rate_shock + s2.rate_shock,
-        vol_shock = s1.vol_shock * s2.vol_shock,  # Multiplicative
-        lapse_multiplier = s1.lapse_multiplier * s2.lapse_multiplier,
-        withdrawal_multiplier = s1.withdrawal_multiplier * s2.withdrawal_multiplier,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=combined_name,
+        display_name=display,
+        equity_shock=(s1.equity_shock + s2.equity_shock),
+        rate_shock=(s1.rate_shock + s2.rate_shock),
+        vol_shock=(s1.vol_shock * s2.vol_shock),  # Multiplicative
+        lapse_multiplier=(s1.lapse_multiplier * s2.lapse_multiplier),
+        withdrawal_multiplier=(s1.withdrawal_multiplier * s2.withdrawal_multiplier),
+        scenario_type=CUSTOM,
     )
 end
 
@@ -301,23 +299,21 @@ mild_gfc = scale_scenario(crisis_to_scenario(CRISIS_2008_GFC), 0.5)  # Half-inte
 ```
 """
 function scale_scenario(
-    scenario::StressScenario,
-    factor::Float64;
-    name::Union{String, Nothing} = nothing
+    scenario::StressScenario, factor::Float64; name::Union{String,Nothing}=nothing
 )
     pct = round(Int, factor * 100)
     scaled_name = isnothing(name) ? "$(scenario.name)_$(pct)pct" : name
     display = "$(scenario.display_name) ($(pct)%)"
 
-    StressScenario(
-        name = scaled_name,
-        display_name = display,
-        equity_shock = scenario.equity_shock * factor,
-        rate_shock = scenario.rate_shock * factor,
-        vol_shock = 1.0 + (scenario.vol_shock - 1.0) * factor,  # Scale excess vol
-        lapse_multiplier = 1.0 + (scenario.lapse_multiplier - 1.0) * factor,
-        withdrawal_multiplier = 1.0 + (scenario.withdrawal_multiplier - 1.0) * factor,
-        scenario_type = CUSTOM
+    StressScenario(;
+        name=scaled_name,
+        display_name=display,
+        equity_shock=(scenario.equity_shock * factor),
+        rate_shock=(scenario.rate_shock * factor),
+        vol_shock=1.0 + (scenario.vol_shock - 1.0) * factor,  # Scale excess vol
+        lapse_multiplier=1.0 + (scenario.lapse_multiplier - 1.0) * factor,
+        withdrawal_multiplier=1.0 + (scenario.withdrawal_multiplier - 1.0) * factor,
+        scenario_type=CUSTOM,
     )
 end
 
@@ -391,11 +387,11 @@ function generate_2d_grid(equity_shocks::Vector{Float64}, rate_shocks_bps::Vecto
 
     for (i, eq) in enumerate(equity_shocks)
         for (j, rt) in enumerate(rate_shocks_bps)
-            grid[i, j] = create_combined_scenario(
-                name = "grid_eq$(round(Int, eq*100))_rt$(round(Int, rt))",
-                display_name = "E:$(round(Int, eq*100))% R:$(round(Int, rt))bps",
-                equity_shock = eq,
-                rate_shock = rt / 10000.0
+            grid[i, j] = create_combined_scenario(;
+                name="grid_eq$(round(Int, eq*100))_rt$(round(Int, rt))",
+                display_name="E:$(round(Int, eq*100))% R:$(round(Int, rt))bps",
+                equity_shock=eq,
+                rate_shock=rt / 10000.0,
             )
         end
     end
@@ -417,8 +413,10 @@ function scenario_summary(s::StressScenario)
     s.equity_shock != 0.0 && push!(parts, "Eq:$(round(Int, s.equity_shock*100))%")
     s.rate_shock != 0.0 && push!(parts, "Rt:$(round(Int, s.rate_shock*10000))bps")
     s.vol_shock != 1.0 && push!(parts, "Vol:$(round(s.vol_shock, digits=1))x")
-    s.lapse_multiplier != 1.0 && push!(parts, "Lapse:$(round(s.lapse_multiplier, digits=2))x")
-    s.withdrawal_multiplier != 1.0 && push!(parts, "Wdrl:$(round(s.withdrawal_multiplier, digits=2))x")
+    s.lapse_multiplier != 1.0 &&
+        push!(parts, "Lapse:$(round(s.lapse_multiplier, digits=2))x")
+    s.withdrawal_multiplier != 1.0 &&
+        push!(parts, "Wdrl:$(round(s.withdrawal_multiplier, digits=2))x")
 
     isempty(parts) ? "No shocks" : join(parts, ", ")
 end
@@ -448,8 +446,11 @@ function severity_score(s::StressScenario)
     wdrl_score = max(0.0, s.withdrawal_multiplier - 1.0) / 1.0  # 2x = 1.0
 
     # Weighted average (equity most important for annuities)
-    0.40 * eq_score + 0.25 * rt_score + 0.15 * vol_score +
-    0.10 * lapse_score + 0.10 * wdrl_score
+    0.40 * eq_score +
+    0.25 * rt_score +
+    0.15 * vol_score +
+    0.10 * lapse_score +
+    0.10 * wdrl_score
 end
 
 """
@@ -457,6 +458,6 @@ end
 
 Sort scenarios by severity score.
 """
-function sort_by_severity(scenarios::Vector{StressScenario}; descending::Bool = true)
-    sort(scenarios, by=severity_score, rev=descending)
+function sort_by_severity(scenarios::Vector{StressScenario}; descending::Bool=true)
+    sort(scenarios; by=severity_score, rev=descending)
 end

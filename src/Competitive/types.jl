@@ -56,13 +56,14 @@ struct WINKProduct
         rate::Float64,
         duration::Int,
         product_group::String,
-        status::Symbol = :current
+        status::Symbol=:current,
     )
         # Validation
         isempty(company) && error("CRITICAL: company cannot be empty")
         isempty(product) && error("CRITICAL: product cannot be empty")
         duration < 1 && error("CRITICAL: duration must be >= 1, got $duration")
-        status in (:current, :discontinued) || error("CRITICAL: status must be :current or :discontinued, got $status")
+        status in (:current, :discontinued) ||
+            error("CRITICAL: status must be :current or :discontinued, got $status")
 
         new(company, product, rate, duration, product_group, status)
     end
@@ -75,15 +76,15 @@ function WINKProduct(
     rate::Float64,
     duration::Int,
     product_group::String,
-    status::Symbol = :current
+    status::Symbol=:current,
 )
-    WINKProduct(
-        company = company,
-        product = product,
-        rate = rate,
-        duration = duration,
-        product_group = product_group,
-        status = status
+    WINKProduct(;
+        company=company,
+        product=product,
+        rate=rate,
+        duration=duration,
+        product_group=product_group,
+        status=status,
     )
 end
 
@@ -129,14 +130,17 @@ struct PositionResult
         rank::Int,
         total_products::Int,
         quartile::Int,
-        position_label::String
+        position_label::String,
     )
         # Validation
-        (0.0 <= percentile <= 100.0) || error("CRITICAL: percentile must be in [0,100], got $percentile")
+        (0.0 <= percentile <= 100.0) ||
+            error("CRITICAL: percentile must be in [0,100], got $percentile")
         rank >= 1 || error("CRITICAL: rank must be >= 1, got $rank")
         (1 <= quartile <= 4) || error("CRITICAL: quartile must be 1-4, got $quartile")
-        total_products >= 1 || error("CRITICAL: total_products must be >= 1, got $total_products")
-        rank <= total_products || error("CRITICAL: rank ($rank) cannot exceed total_products ($total_products)")
+        total_products >= 1 ||
+            error("CRITICAL: total_products must be >= 1, got $total_products")
+        rank <= total_products ||
+            error("CRITICAL: rank ($rank) cannot exceed total_products ($total_products)")
 
         new(rate, percentile, rank, total_products, quartile, position_label)
     end
@@ -175,7 +179,7 @@ struct DistributionStats
         std::Float64,
         q1::Float64,
         q3::Float64,
-        count::Int
+        count::Int,
     )
         count >= 1 || error("CRITICAL: count must be >= 1, got $count")
         min <= max || error("CRITICAL: min ($min) cannot exceed max ($max)")
@@ -190,15 +194,15 @@ Construct DistributionStats from a vector of rates.
 function DistributionStats(rates::Vector{Float64})
     isempty(rates) && error("CRITICAL: Cannot compute distribution stats from empty data")
 
-    DistributionStats(
-        min = minimum(rates),
-        max = maximum(rates),
-        mean = mean(rates),
-        median = median(rates),
-        std = length(rates) > 1 ? std(rates) : 0.0,
-        q1 = quantile(rates, 0.25),
-        q3 = quantile(rates, 0.75),
-        count = length(rates)
+    DistributionStats(;
+        min=minimum(rates),
+        max=maximum(rates),
+        mean=mean(rates),
+        median=median(rates),
+        std=length(rates) > 1 ? std(rates) : 0.0,
+        q1=quantile(rates, 0.25),
+        q3=quantile(rates, 0.75),
+        count=length(rates),
     )
 end
 
@@ -237,11 +241,12 @@ struct CompanyRanking
         best_rate::Float64,
         avg_rate::Float64,
         product_count::Int,
-        duration_coverage::Tuple{Vararg{Int}}
+        duration_coverage::Tuple{Vararg{Int}},
     )
         isempty(company) && error("CRITICAL: company cannot be empty")
         rank >= 1 || error("CRITICAL: rank must be >= 1, got $rank")
-        product_count >= 1 || error("CRITICAL: product_count must be >= 1, got $product_count")
+        product_count >= 1 ||
+            error("CRITICAL: product_count must be >= 1, got $product_count")
 
         new(company, rank, best_rate, avg_rate, product_count, duration_coverage)
     end
@@ -270,11 +275,7 @@ struct ProductRanking
     duration::Int
 
     function ProductRanking(;
-        company::String,
-        product::String,
-        rank::Int,
-        rate::Float64,
-        duration::Int
+        company::String, product::String, rank::Int, rate::Float64, duration::Int
     )
         isempty(company) && error("CRITICAL: company cannot be empty")
         isempty(product) && error("CRITICAL: product cannot be empty")
@@ -318,7 +319,7 @@ struct SpreadResult
         spread_bps::Float64,
         spread_pct::Float64,
         duration::Int,
-        as_of_date::Date
+        as_of_date::Date,
     )
         duration >= 1 || error("CRITICAL: duration must be >= 1, got $duration")
 
@@ -359,7 +360,7 @@ struct SpreadDistribution
         std_bps::Float64,
         q1_bps::Float64,
         q3_bps::Float64,
-        count::Int
+        count::Int,
     )
         count >= 1 || error("CRITICAL: count must be >= 1, got $count")
 
@@ -371,17 +372,18 @@ end
 Construct SpreadDistribution from a vector of spreads in basis points.
 """
 function SpreadDistribution(spreads_bps::Vector{Float64})
-    isempty(spreads_bps) && error("CRITICAL: Cannot compute spread distribution from empty data")
+    isempty(spreads_bps) &&
+        error("CRITICAL: Cannot compute spread distribution from empty data")
 
-    SpreadDistribution(
-        min_bps = minimum(spreads_bps),
-        max_bps = maximum(spreads_bps),
-        mean_bps = mean(spreads_bps),
-        median_bps = median(spreads_bps),
-        std_bps = length(spreads_bps) > 1 ? std(spreads_bps) : 0.0,
-        q1_bps = quantile(spreads_bps, 0.25),
-        q3_bps = quantile(spreads_bps, 0.75),
-        count = length(spreads_bps)
+    SpreadDistribution(;
+        min_bps=minimum(spreads_bps),
+        max_bps=maximum(spreads_bps),
+        mean_bps=mean(spreads_bps),
+        median_bps=median(spreads_bps),
+        std_bps=length(spreads_bps) > 1 ? std(spreads_bps) : 0.0,
+        q1_bps=quantile(spreads_bps, 0.25),
+        q3_bps=quantile(spreads_bps, 0.75),
+        count=length(spreads_bps),
     )
 end
 
@@ -392,13 +394,8 @@ end
 """
 FRED Treasury series identifiers by duration (years).
 """
-const TREASURY_SERIES = Dict{Int, String}(
-    1 => "DGS1",
-    2 => "DGS2",
-    3 => "DGS3",
-    5 => "DGS5",
-    7 => "DGS7",
-    10 => "DGS10"
+const TREASURY_SERIES = Dict{Int,String}(
+    1 => "DGS1", 2 => "DGS2", 3 => "DGS3", 5 => "DGS5", 7 => "DGS7", 10 => "DGS10"
 )
 
 #=============================================================================

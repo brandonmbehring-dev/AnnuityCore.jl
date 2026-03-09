@@ -15,7 +15,6 @@ References:
   Based on Fourier-Cosine Series Expansions"
 """
 
-
 """
     COSConfig
 
@@ -31,13 +30,12 @@ struct COSConfig
     N::Int
     L::Float64
 
-    function COSConfig(; N::Int = 256, L::Float64 = 10.0)
+    function COSConfig(; N::Int=256, L::Float64=10.0)
         N > 0 || throw(ArgumentError("N must be positive"))
         L > 0 || throw(ArgumentError("L must be positive"))
         new(N, L)
     end
 end
-
 
 """
     heston_cos_call(params::HestonParams, K; config=COSConfig()) -> Float64
@@ -60,11 +58,7 @@ params = HestonParams(S₀=100.0, r=0.05, q=0.0, V₀=0.04, κ=2.0, θ=0.04, σ_
 price = heston_cos_call(params, 100.0)
 ```
 """
-function heston_cos_call(
-    params::HestonParams,
-    K::Float64;
-    config::COSConfig = COSConfig()
-)
+function heston_cos_call(params::HestonParams, K::Float64; config::COSConfig=COSConfig())
     K > 0 || throw(ArgumentError("Strike K must be positive"))
 
     # Log-moneyness x = log(S₀/K)
@@ -86,17 +80,12 @@ function heston_cos_call(
     return max(price, 0.0)
 end
 
-
 """
     heston_cos_put(params::HestonParams, K; config=COSConfig()) -> Float64
 
 Price a European put under Heston using the COS method.
 """
-function heston_cos_put(
-    params::HestonParams,
-    K::Float64;
-    config::COSConfig = COSConfig()
-)
+function heston_cos_put(params::HestonParams, K::Float64; config::COSConfig=COSConfig())
     K > 0 || throw(ArgumentError("Strike K must be positive"))
 
     # Same log-moneyness shift as for calls
@@ -113,7 +102,6 @@ function heston_cos_put(
     return max(price, 0.0)
 end
 
-
 """
 Compute cumulants of log-spot under Heston.
 
@@ -127,20 +115,20 @@ function _heston_cumulants(params::HestonParams)
     c1 = (r - q) * τ + (1 - exp(-κ * τ)) * (θ - V₀) / (2 * κ) - 0.5 * θ * τ
 
     # Second cumulant (variance)
-    c2 = (1 / (8 * κ^3)) * (
-        σ_v * τ * κ * exp(-κ * τ) * (V₀ - θ) * (8 * κ * ρ - 4 * σ_v) +
-        κ * ρ * σ_v * (1 - exp(-κ * τ)) * (16 * θ - 8 * V₀) +
-        2 * θ * κ * τ * (-4 * κ * ρ * σ_v + σ_v^2 + 4 * κ^2) +
-        σ_v^2 * ((θ - 2 * V₀) * exp(-2 * κ * τ) + θ * (6 * exp(-κ * τ) - 7) + 2 * V₀) +
-        8 * κ^2 * (V₀ - θ) * (1 - exp(-κ * τ))
-    )
+    c2 =
+        (1 / (8 * κ^3)) * (
+            σ_v * τ * κ * exp(-κ * τ) * (V₀ - θ) * (8 * κ * ρ - 4 * σ_v) +
+            κ * ρ * σ_v * (1 - exp(-κ * τ)) * (16 * θ - 8 * V₀) +
+            2 * θ * κ * τ * (-4 * κ * ρ * σ_v + σ_v^2 + 4 * κ^2) +
+            σ_v^2 * ((θ - 2 * V₀) * exp(-2 * κ * τ) + θ * (6 * exp(-κ * τ) - 7) + 2 * V₀) +
+            8 * κ^2 * (V₀ - θ) * (1 - exp(-κ * τ))
+        )
 
     # Fourth cumulant (approximation for tail behavior)
     c4 = 0.0  # Can be computed but c2 usually sufficient
 
     return c1, max(c2, 1e-10), c4
 end
-
 
 """
 Determine truncation range [a, b] for COS method.
@@ -157,7 +145,6 @@ function _cos_truncation_range(c1, c2, c4, L)
 
     return a, b
 end
-
 
 """
 COS method call price computation.
@@ -181,7 +168,7 @@ function _cos_call_price(params::HestonParams, K, x, a, b, N)
     # Sum over k
     sum_val = 0.0
 
-    for k in 0:N-1
+    for k in 0:(N - 1)
         # Payoff coefficients U_k for call - uses shifted (a, b)
         # U_k = (2/(b-a)) * (χ_k(0,b) - ψ_k(0,b))
         χ_k = _chi_call(k, a, b)
@@ -210,7 +197,6 @@ function _cos_call_price(params::HestonParams, K, x, a, b, N)
     return K * df * sum_val
 end
 
-
 """
 COS method put price computation.
 
@@ -225,7 +211,7 @@ function _cos_put_price(params::HestonParams, K, x, a, b, N)
 
     sum_val = 0.0
 
-    for k in 0:N-1
+    for k in 0:(N - 1)
         # Payoff coefficients for put
         # U_k = (2/(b-a)) * (ψ_k(a,0) - χ_k(a,0))
         χ_k = _chi_put(k, a, b)
@@ -249,7 +235,6 @@ function _cos_put_price(params::HestonParams, K, x, a, b, N)
     return K * df * sum_val
 end
 
-
 """
 χ coefficient for call payoff (integration from 0 to b).
 """
@@ -260,11 +245,11 @@ function _chi_call(k, a, b)
     end
     ω = k * π / bma
     # ∫_0^b exp(y) cos(kπ(y-a)/(b-a)) dy
-    num = exp(b) * (cos(ω * (b - a)) + ω * sin(ω * (b - a))) -
-          exp(0.0) * (cos(ω * (0 - a)) + ω * sin(ω * (0 - a)))
+    num =
+        exp(b) * (cos(ω * (b - a)) + ω * sin(ω * (b - a))) -
+        exp(0.0) * (cos(ω * (0 - a)) + ω * sin(ω * (0 - a)))
     return num / (1 + ω^2)
 end
-
 
 """
 ψ coefficient for call payoff (integration from 0 to b).
@@ -279,7 +264,6 @@ function _psi_call(k, a, b)
     return (sin(ω * (b - a)) - sin(ω * (0 - a))) / ω
 end
 
-
 """
 χ coefficient for put payoff (integration from a to 0).
 """
@@ -289,11 +273,11 @@ function _chi_put(k, a, b)
         return 1.0 - exp(a)
     end
     ω = k * π / bma
-    num = exp(0.0) * (cos(ω * (0 - a)) + ω * sin(ω * (0 - a))) -
-          exp(a) * (cos(ω * (a - a)) + ω * sin(ω * (a - a)))
+    num =
+        exp(0.0) * (cos(ω * (0 - a)) + ω * sin(ω * (0 - a))) -
+        exp(a) * (cos(ω * (a - a)) + ω * sin(ω * (a - a)))
     return num / (1 + ω^2)
 end
-
 
 """
 ψ coefficient for put payoff (integration from a to 0).
@@ -307,9 +291,6 @@ function _psi_put(k, a, b)
     return (sin(ω * (0 - a)) - sin(ω * (a - a))) / ω
 end
 
-
-
-
 """
     heston_cos_greeks(params::HestonParams, K; config=COSConfig()) -> NamedTuple
 
@@ -318,25 +299,33 @@ Compute Greeks under Heston using COS method with finite differences.
 # Returns
 NamedTuple with: delta, gamma, vega, theta, rho
 """
-function heston_cos_greeks(
-    params::HestonParams,
-    K::Float64;
-    config::COSConfig = COSConfig()
-)
+function heston_cos_greeks(params::HestonParams, K::Float64; config::COSConfig=COSConfig())
     # Base price
     price = heston_cos_call(params, K; config=config)
 
     # Delta and Gamma (spot sensitivity)
     ε_S = params.S₀ * 0.01
-    params_up = HestonParams(
-        S₀ = params.S₀ + ε_S, r = params.r, q = params.q,
-        V₀ = params.V₀, κ = params.κ, θ = params.θ,
-        σ_v = params.σ_v, ρ = params.ρ, τ = params.τ
+    params_up = HestonParams(;
+        S₀=(params.S₀ + ε_S),
+        r=params.r,
+        q=params.q,
+        V₀=params.V₀,
+        κ=params.κ,
+        θ=params.θ,
+        σ_v=params.σ_v,
+        ρ=params.ρ,
+        τ=params.τ,
     )
-    params_dn = HestonParams(
-        S₀ = params.S₀ - ε_S, r = params.r, q = params.q,
-        V₀ = params.V₀, κ = params.κ, θ = params.θ,
-        σ_v = params.σ_v, ρ = params.ρ, τ = params.τ
+    params_dn = HestonParams(;
+        S₀=(params.S₀ - ε_S),
+        r=params.r,
+        q=params.q,
+        V₀=params.V₀,
+        κ=params.κ,
+        θ=params.θ,
+        σ_v=params.σ_v,
+        ρ=params.ρ,
+        τ=params.τ,
     )
 
     price_up = heston_cos_call(params_up, K; config=config)
@@ -347,10 +336,16 @@ function heston_cos_greeks(
 
     # Vega (V₀ sensitivity, scaled to 1% vol change)
     ε_V = 0.0001  # Small variance bump
-    params_v_up = HestonParams(
-        S₀ = params.S₀, r = params.r, q = params.q,
-        V₀ = params.V₀ + ε_V, κ = params.κ, θ = params.θ,
-        σ_v = params.σ_v, ρ = params.ρ, τ = params.τ
+    params_v_up = HestonParams(;
+        S₀=params.S₀,
+        r=params.r,
+        q=params.q,
+        V₀=(params.V₀ + ε_V),
+        κ=params.κ,
+        θ=params.θ,
+        σ_v=params.σ_v,
+        ρ=params.ρ,
+        τ=params.τ,
     )
     price_v_up = heston_cos_call(params_v_up, K; config=config)
     vega = (price_v_up - price) / ε_V * 0.01  # Per 1% vol
@@ -358,10 +353,16 @@ function heston_cos_greeks(
     # Theta (time decay)
     ε_τ = 1 / 365  # One day
     if params.τ > ε_τ
-        params_tau = HestonParams(
-            S₀ = params.S₀, r = params.r, q = params.q,
-            V₀ = params.V₀, κ = params.κ, θ = params.θ,
-            σ_v = params.σ_v, ρ = params.ρ, τ = params.τ - ε_τ
+        params_tau = HestonParams(;
+            S₀=params.S₀,
+            r=params.r,
+            q=params.q,
+            V₀=params.V₀,
+            κ=params.κ,
+            θ=params.θ,
+            σ_v=params.σ_v,
+            ρ=params.ρ,
+            τ=(params.τ - ε_τ),
         )
         price_tau = heston_cos_call(params_tau, K; config=config)
         theta = -(price_tau - price) / ε_τ * (1 / 365)  # Daily theta
@@ -371,24 +372,22 @@ function heston_cos_greeks(
 
     # Rho (rate sensitivity)
     ε_r = 0.0001
-    params_r_up = HestonParams(
-        S₀ = params.S₀, r = params.r + ε_r, q = params.q,
-        V₀ = params.V₀, κ = params.κ, θ = params.θ,
-        σ_v = params.σ_v, ρ = params.ρ, τ = params.τ
+    params_r_up = HestonParams(;
+        S₀=params.S₀,
+        r=(params.r + ε_r),
+        q=params.q,
+        V₀=params.V₀,
+        κ=params.κ,
+        θ=params.θ,
+        σ_v=params.σ_v,
+        ρ=params.ρ,
+        τ=params.τ,
     )
     price_r_up = heston_cos_call(params_r_up, K; config=config)
     rho = (price_r_up - price) / ε_r * 0.01  # Per 1% rate
 
-    return (
-        delta = delta,
-        gamma = gamma,
-        vega = vega,
-        theta = theta,
-        rho = rho,
-        price = price
-    )
+    return (delta=delta, gamma=gamma, vega=vega, theta=theta, rho=rho, price=price)
 end
-
 
 """
     heston_smile_cos(params::HestonParams, strikes; config=COSConfig()) -> Vector{Float64}
@@ -404,9 +403,7 @@ Compute implied volatility smile from Heston COS prices.
 - `Vector{Float64}`: Implied volatilities for each strike
 """
 function heston_smile_cos(
-    params::HestonParams,
-    strikes::Vector{Float64};
-    config::COSConfig = COSConfig()
+    params::HestonParams, strikes::Vector{Float64}; config::COSConfig=COSConfig()
 )
     impl_vols = Float64[]
 
@@ -414,15 +411,12 @@ function heston_smile_cos(
         price = heston_cos_call(params, K; config=config)
 
         # Invert Black-Scholes to get implied vol
-        σ = _invert_bs_for_iv(
-            price, params.S₀, K, params.r, params.q, params.τ
-        )
+        σ = _invert_bs_for_iv(price, params.S₀, K, params.r, params.q, params.τ)
         push!(impl_vols, σ)
     end
 
     return impl_vols
 end
-
 
 """
 Invert Black-Scholes formula to get implied volatility.
@@ -449,7 +443,6 @@ function _invert_bs_for_iv(price, S, K, r, q, τ; max_iter=50, tol=1e-8)
     return σ
 end
 
-
 """
     benchmark_cos_vs_mc(params::HestonParams, K; n_mc_paths=100000) -> NamedTuple
 
@@ -459,10 +452,7 @@ Compare COS method vs Monte Carlo for validation.
 NamedTuple with: cos_price, mc_price, mc_std_error, abs_diff, rel_diff
 """
 function benchmark_cos_vs_mc(
-    params::HestonParams,
-    K::Float64;
-    n_mc_paths::Int = 100000,
-    config::COSConfig = COSConfig()
+    params::HestonParams, K::Float64; n_mc_paths::Int=100000, config::COSConfig=COSConfig()
 )
     cos_price = heston_cos_call(params, K; config=config)
     mc_result = heston_call_mc(params, K; n_paths=n_mc_paths)
@@ -471,10 +461,10 @@ function benchmark_cos_vs_mc(
     rel_diff = abs_diff / (mc_result.price + 1e-10)
 
     return (
-        cos_price = cos_price,
-        mc_price = mc_result.price,
-        mc_std_error = mc_result.std_error,
-        abs_diff = abs_diff,
-        rel_diff = rel_diff
+        cos_price=cos_price,
+        mc_price=mc_result.price,
+        mc_std_error=mc_result.std_error,
+        abs_diff=abs_diff,
+        rel_diff=rel_diff,
     )
 end

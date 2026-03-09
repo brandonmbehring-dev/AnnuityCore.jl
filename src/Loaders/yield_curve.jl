@@ -217,7 +217,7 @@ curve = flat_curve(0.04)
 par_rate(curve, 10.0)  # ≈ 0.04 for flat curve
 ```
 """
-function par_rate(curve::YieldCurve, maturity::Float64; frequency::Int = 2)::Float64
+function par_rate(curve::YieldCurve, maturity::Float64; frequency::Int=2)::Float64
     maturity <= 0 && error("Maturity must be positive, got $maturity")
     frequency > 0 || error("Frequency must be positive")
 
@@ -270,24 +270,26 @@ function from_nelson_siegel(
     beta1::Float64,
     beta2::Float64,
     tau::Float64;
-    as_of_date::String = "",
-    maturities::Union{Vector{Float64}, Nothing} = nothing
+    as_of_date::String="",
+    maturities::Union{Vector{Float64},Nothing}=nothing,
 )::YieldCurve
     tau > 0 || error("Tau must be positive, got $tau")
 
     params = NelsonSiegelParams(; beta0, beta1, beta2, tau)
 
-    maturities = isnothing(maturities) ?
-        [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 15.0, 20.0, 30.0] :
+    maturities = if isnothing(maturities)
+        [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 15.0, 20.0, 30.0]
+    else
         maturities
+    end
 
     rates = [nelson_siegel_rate(params, t) for t in maturities]
 
     YieldCurve(;
-        maturities = maturities,
-        rates = rates,
-        as_of_date = as_of_date,
-        curve_type = "nelson_siegel"
+        maturities=maturities,
+        rates=rates,
+        as_of_date=as_of_date,
+        curve_type="nelson_siegel",
     )
 end
 
@@ -315,16 +317,16 @@ get_rate(curve, 3.0)  # Interpolated
 function from_points(
     maturities::Vector{Float64},
     rates::Vector{Float64};
-    as_of_date::String = "",
-    curve_type::String = "custom",
-    interpolation::InterpolationMethod = LINEAR
+    as_of_date::String="",
+    curve_type::String="custom",
+    interpolation::InterpolationMethod=LINEAR,
 )::YieldCurve
     YieldCurve(;
-        maturities = maturities,
-        rates = rates,
-        as_of_date = as_of_date,
-        curve_type = curve_type,
-        interpolation = interpolation
+        maturities=maturities,
+        rates=rates,
+        as_of_date=as_of_date,
+        curve_type=curve_type,
+        interpolation=interpolation,
     )
 end
 
@@ -347,15 +349,12 @@ get_rate(curve, 10.0)  # 0.04
 discount_factor(curve, 5.0)  # e^(-0.04 * 5)
 ```
 """
-function flat_curve(rate::Float64; as_of_date::String = "")::YieldCurve
+function flat_curve(rate::Float64; as_of_date::String="")::YieldCurve
     maturities = [0.25, 1.0, 5.0, 10.0, 30.0]
     rates = fill(rate, length(maturities))
 
     YieldCurve(;
-        maturities = maturities,
-        rates = rates,
-        as_of_date = as_of_date,
-        curve_type = "flat"
+        maturities=maturities, rates=rates, as_of_date=as_of_date, curve_type="flat"
     )
 end
 
@@ -373,22 +372,19 @@ Create upward-sloping curve (normal yield curve).
 - `YieldCurve`: Upward-sloping curve
 """
 function upward_sloping_curve(
-    short_rate::Float64,
-    long_rate::Float64;
-    as_of_date::String = ""
+    short_rate::Float64, long_rate::Float64; as_of_date::String=""
 )::YieldCurve
     maturities = [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 20.0, 30.0]
     # Log-linear interpolation between short and long
     rates = [
-        short_rate + (long_rate - short_rate) * log(1 + t) / log(31)
-        for t in maturities
+        short_rate + (long_rate - short_rate) * log(1 + t) / log(31) for t in maturities
     ]
 
     YieldCurve(;
-        maturities = maturities,
-        rates = rates,
-        as_of_date = as_of_date,
-        curve_type = "upward_sloping"
+        maturities=maturities,
+        rates=rates,
+        as_of_date=as_of_date,
+        curve_type="upward_sloping",
     )
 end
 
@@ -406,9 +402,7 @@ Create inverted yield curve.
 - `YieldCurve`: Inverted curve
 """
 function inverted_curve(
-    short_rate::Float64,
-    long_rate::Float64;
-    as_of_date::String = ""
+    short_rate::Float64, long_rate::Float64; as_of_date::String=""
 )::YieldCurve
     short_rate > long_rate || @warn "Inverted curve expects short_rate > long_rate"
     upward_sloping_curve(short_rate, long_rate; as_of_date)
@@ -439,11 +433,11 @@ get_rate(shocked, 5.0)  # 0.05
 """
 function shift_curve(curve::YieldCurve, shift::Float64)::YieldCurve
     YieldCurve(;
-        maturities = copy(curve.maturities),
-        rates = curve.rates .+ shift,
-        as_of_date = curve.as_of_date,
-        curve_type = "$(curve.curve_type)_shifted",
-        interpolation = curve.interpolation
+        maturities=copy(curve.maturities),
+        rates=(curve.rates .+ shift),
+        as_of_date=curve.as_of_date,
+        curve_type="$(curve.curve_type)_shifted",
+        interpolation=curve.interpolation,
     )
 end
 
@@ -461,24 +455,22 @@ Apply non-parallel shift (steepening/flattening).
 - `YieldCurve`: Transformed curve
 """
 function steepen_curve(
-    curve::YieldCurve,
-    short_shift::Float64,
-    long_shift::Float64
+    curve::YieldCurve, short_shift::Float64, long_shift::Float64
 )::YieldCurve
     # Linear interpolation of shift across maturities
     min_t = curve.maturities[1]
     max_t = curve.maturities[end]
     shifts = [
-        short_shift + (long_shift - short_shift) * (t - min_t) / (max_t - min_t)
-        for t in curve.maturities
+        short_shift + (long_shift - short_shift) * (t - min_t) / (max_t - min_t) for
+        t in curve.maturities
     ]
 
     YieldCurve(;
-        maturities = copy(curve.maturities),
-        rates = curve.rates .+ shifts,
-        as_of_date = curve.as_of_date,
-        curve_type = "$(curve.curve_type)_steepened",
-        interpolation = curve.interpolation
+        maturities=copy(curve.maturities),
+        rates=(curve.rates .+ shifts),
+        as_of_date=curve.as_of_date,
+        curve_type="$(curve.curve_type)_steepened",
+        interpolation=curve.interpolation,
     )
 end
 
@@ -498,11 +490,11 @@ function scale_curve(curve::YieldCurve, factor::Float64)::YieldCurve
     factor > 0 || error("Factor must be positive")
 
     YieldCurve(;
-        maturities = copy(curve.maturities),
-        rates = curve.rates .* factor,
-        as_of_date = curve.as_of_date,
-        curve_type = "$(curve.curve_type)_scaled",
-        interpolation = curve.interpolation
+        maturities=copy(curve.maturities),
+        rates=(curve.rates .* factor),
+        as_of_date=curve.as_of_date,
+        curve_type="$(curve.curve_type)_scaled",
+        interpolation=curve.interpolation,
     )
 end
 
@@ -534,11 +526,10 @@ macaulay_duration(curve, cfs, times)  # ~4.45 years
 ```
 """
 function macaulay_duration(
-    curve::YieldCurve,
-    cash_flows::Vector{Float64},
-    times::Vector{Float64}
+    curve::YieldCurve, cash_flows::Vector{Float64}, times::Vector{Float64}
 )::Float64
-    length(cash_flows) == length(times) || error("Cash flows and times must have same length")
+    length(cash_flows) == length(times) ||
+        error("Cash flows and times must have same length")
 
     dfs = discount_factors(curve, times)
     pv_cfs = cash_flows .* dfs
@@ -565,9 +556,7 @@ Calculate modified duration.
 - `Float64`: Modified duration
 """
 function modified_duration(
-    curve::YieldCurve,
-    cash_flows::Vector{Float64},
-    times::Vector{Float64}
+    curve::YieldCurve, cash_flows::Vector{Float64}, times::Vector{Float64}
 )::Float64
     d_mac = macaulay_duration(curve, cash_flows, times)
     # Use average rate as yield approximation
@@ -591,9 +580,7 @@ Calculate DV01 (dollar value of 01 = 1 basis point).
 - `Float64`: DV01 (dollar change per basis point)
 """
 function dv01(
-    curve::YieldCurve,
-    cash_flows::Vector{Float64},
-    times::Vector{Float64}
+    curve::YieldCurve, cash_flows::Vector{Float64}, times::Vector{Float64}
 )::Float64
     dfs = discount_factors(curve, times)
     total_pv = sum(cash_flows .* dfs)
@@ -617,9 +604,7 @@ Calculate convexity.
 - `Float64`: Convexity
 """
 function convexity(
-    curve::YieldCurve,
-    cash_flows::Vector{Float64},
-    times::Vector{Float64}
+    curve::YieldCurve, cash_flows::Vector{Float64}, times::Vector{Float64}
 )::Float64
     dfs = discount_factors(curve, times)
     pv_cfs = cash_flows .* dfs
@@ -647,11 +632,10 @@ Calculate present value of cash flows.
 - `Float64`: Present value
 """
 function present_value(
-    curve::YieldCurve,
-    cash_flows::Vector{Float64},
-    times::Vector{Float64}
+    curve::YieldCurve, cash_flows::Vector{Float64}, times::Vector{Float64}
 )::Float64
-    length(cash_flows) == length(times) || error("Cash flows and times must have same length")
+    length(cash_flows) == length(times) ||
+        error("Cash flows and times must have same length")
     dfs = discount_factors(curve, times)
     sum(cash_flows .* dfs)
 end
@@ -671,10 +655,7 @@ Calculate PV of level annuity.
 - `Float64`: Present value
 """
 function annuity_pv(
-    curve::YieldCurve,
-    payment::Float64,
-    n_periods::Int,
-    frequency::Int
+    curve::YieldCurve, payment::Float64, n_periods::Int, frequency::Int
 )::Float64
     times = [i / frequency for i in 1:n_periods]
     cash_flows = fill(payment, n_periods)
@@ -722,10 +703,10 @@ function validate_yield_curve(curve::YieldCurve)
 
     # Summary
     (
-        valid = isempty(issues),
-        issues = issues,
-        rate_range = (minimum(curve.rates), maximum(curve.rates)),
-        df_range = (minimum(dfs), maximum(dfs))
+        valid=isempty(issues),
+        issues=issues,
+        rate_range=(minimum(curve.rates), maximum(curve.rates)),
+        df_range=(minimum(dfs), maximum(dfs)),
     )
 end
 
@@ -755,14 +736,14 @@ function curve_summary(curve::YieldCurve)
     end
 
     (
-        curve_type = curve.curve_type,
-        as_of_date = curve.as_of_date,
-        n_points = length(curve.maturities),
-        maturity_range = (minimum(curve.maturities), maximum(curve.maturities)),
-        rate_range = (minimum(curve.rates), maximum(curve.rates)),
-        short_rate = short_rate,
-        long_rate = long_rate,
-        spread_10y_2y = get_rate(curve, 10.0) - get_rate(curve, 2.0),
-        slope = slope
+        curve_type=curve.curve_type,
+        as_of_date=curve.as_of_date,
+        n_points=length(curve.maturities),
+        maturity_range=(minimum(curve.maturities), maximum(curve.maturities)),
+        rate_range=(minimum(curve.rates), maximum(curve.rates)),
+        short_rate=short_rate,
+        long_rate=long_rate,
+        spread_10y_2y=get_rate(curve, 10.0) - get_rate(curve, 2.0),
+        slope=slope,
     )
 end

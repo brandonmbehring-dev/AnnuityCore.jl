@@ -20,7 +20,6 @@ References:
 - Gatheral (2006), "The Volatility Surface", Chapter 2
 """
 
-
 """
     HestonParams
 
@@ -66,13 +65,13 @@ struct HestonParams
     function HestonParams(;
         S₀::Float64,
         r::Float64,
-        q::Float64 = 0.0,
+        q::Float64=0.0,
         V₀::Float64,
         κ::Float64,
         θ::Float64,
         σ_v::Float64,
         ρ::Float64,
-        τ::Float64
+        τ::Float64,
     )
         S₀ > 0 || throw(ArgumentError("S₀ must be positive"))
         V₀ >= 0 || throw(ArgumentError("V₀ must be non-negative"))
@@ -86,7 +85,6 @@ struct HestonParams
     end
 end
 
-
 """
     feller_condition(params::HestonParams) -> Bool
 
@@ -97,7 +95,6 @@ Check if the Feller condition is satisfied: 2κθ > σ_v².
 function feller_condition(params::HestonParams)
     return 2 * params.κ * params.θ > params.σ_v^2
 end
-
 
 """
     HestonPathResult
@@ -114,7 +111,6 @@ struct HestonPathResult
     variance_paths::Matrix{Float64}
     params::HestonParams
 end
-
 
 """
     generate_heston_paths(params, n_paths, n_steps; seed=nothing, scheme=:euler) -> HestonPathResult
@@ -141,8 +137,8 @@ function generate_heston_paths(
     params::HestonParams,
     n_paths::Int,
     n_steps::Int;
-    seed::Union{Int, Nothing} = nothing,
-    scheme::Symbol = :euler
+    seed::Union{Int,Nothing}=nothing,
+    scheme::Symbol=:euler,
 )
     rng = seed === nothing ? StableRNG(42) : StableRNG(seed)
 
@@ -165,7 +161,6 @@ function generate_heston_paths(
 
     return HestonPathResult(S, V, params)
 end
-
 
 """
 Euler-Maruyama discretization for Heston model.
@@ -192,16 +187,13 @@ function _simulate_euler!(S, V, params, n_paths, n_steps, dt, rng)
             sqrt_V = sqrt(V_curr)
 
             # Spot dynamics
-            S[i, t + 1] = S[i, t] * exp(
-                (r - q - 0.5 * V_curr) * dt + sqrt_V * dW_S[i]
-            )
+            S[i, t + 1] = S[i, t] * exp((r - q - 0.5 * V_curr) * dt + sqrt_V * dW_S[i])
 
             # Variance dynamics (CIR process)
             V[i, t + 1] = V_curr + κ * (θ - V_curr) * dt + σ_v * sqrt_V * dW_V[i]
         end
     end
 end
-
 
 """
 Quadratic Exponential (QE) scheme for Heston variance.
@@ -266,13 +258,10 @@ function _simulate_qe!(S, V, params, n_paths, n_steps, dt, rng)
             sqrt_V_avg = sqrt(V_avg)
             dW_S = Z_S[i] * sqrt_dt
 
-            S[i, t + 1] = S[i, t] * exp(
-                (r - q - 0.5 * V_avg) * dt + sqrt_V_avg * dW_S
-            )
+            S[i, t + 1] = S[i, t] * exp((r - q - 0.5 * V_avg) * dt + sqrt_V_avg * dW_S)
         end
     end
 end
-
 
 """
     heston_characteristic_function(u, params::HestonParams; type::Int=1) -> Complex
@@ -292,9 +281,7 @@ Used for Fourier-based pricing methods (COS, Carr-Madan).
 - `Complex{Float64}`: Characteristic function value
 """
 function heston_characteristic_function(
-    u::Union{Real, Complex},
-    params::HestonParams;
-    type::Int = 1
+    u::Union{Real,Complex}, params::HestonParams; type::Int=1
 )
     S₀, r, q, V₀ = params.S₀, params.r, params.q, params.V₀
     κ, θ, σ_v, ρ, τ = params.κ, params.θ, params.σ_v, params.ρ, params.τ
@@ -330,20 +317,21 @@ function heston_characteristic_function(
 
     # C and D functions
     if type == 1
-        C = (r - q) * iu * τ + (a / σ_v^2) * (
-            (b - ρ * σ_v * iu + d) * τ - 2 * log((1 - g * exp_d_tau) / (1 - g))
-        )
+        C =
+            (r - q) * iu * τ +
+            (a / σ_v^2) *
+            ((b - ρ * σ_v * iu + d) * τ - 2 * log((1 - g * exp_d_tau) / (1 - g)))
         D = ((b - ρ * σ_v * iu + d) / σ_v^2) * ((1 - exp_d_tau) / (1 - g * exp_d_tau))
     else
-        C = (r - q) * iu * τ + (a / σ_v^2) * (
-            (b - ρ * σ_v * iu - d) * τ - 2 * log((1 - g * exp_d_tau) / (1 - g))
-        )
+        C =
+            (r - q) * iu * τ +
+            (a / σ_v^2) *
+            ((b - ρ * σ_v * iu - d) * τ - 2 * log((1 - g * exp_d_tau) / (1 - g)))
         D = ((b - ρ * σ_v * iu - d) / σ_v^2) * ((1 - exp_d_tau) / (1 - g * exp_d_tau))
     end
 
     return exp(C + D * V₀ + iu * log(S₀))
 end
-
 
 """
     heston_call_mc(params::HestonParams, K; n_paths=100000, n_steps=252, seed=42, scheme=:qe)
@@ -364,10 +352,10 @@ Price a European call under Heston using Monte Carlo.
 function heston_call_mc(
     params::HestonParams,
     K::Float64;
-    n_paths::Int = 100000,
-    n_steps::Int = 252,
-    seed::Int = 42,
-    scheme::Symbol = :qe
+    n_paths::Int=100000,
+    n_steps::Int=252,
+    seed::Int=42,
+    scheme::Symbol=:qe,
 )
     result = generate_heston_paths(params, n_paths, n_steps; seed=seed, scheme=scheme)
 
@@ -380,9 +368,8 @@ function heston_call_mc(
     price = mean(payoffs)
     std_error = std(payoffs) / sqrt(n_paths)
 
-    return (price = price, std_error = std_error, paths_result = result)
+    return (price=price, std_error=std_error, paths_result=result)
 end
-
 
 """
     heston_put_mc(params::HestonParams, K; kwargs...)
@@ -392,10 +379,10 @@ Price a European put under Heston using Monte Carlo.
 function heston_put_mc(
     params::HestonParams,
     K::Float64;
-    n_paths::Int = 100000,
-    n_steps::Int = 252,
-    seed::Int = 42,
-    scheme::Symbol = :qe
+    n_paths::Int=100000,
+    n_steps::Int=252,
+    seed::Int=42,
+    scheme::Symbol=:qe,
 )
     result = generate_heston_paths(params, n_paths, n_steps; seed=seed, scheme=scheme)
 
@@ -405,9 +392,8 @@ function heston_put_mc(
     price = mean(payoffs)
     std_error = std(payoffs) / sqrt(n_paths)
 
-    return (price = price, std_error = std_error, paths_result = result)
+    return (price=price, std_error=std_error, paths_result=result)
 end
-
 
 """
     heston_implied_vol(params::HestonParams, K; method=:newton)
@@ -417,10 +403,7 @@ Compute Black-Scholes implied volatility from Heston price.
 [T1] Inverts BS formula to find σ such that BS(σ) = Heston price.
 """
 function heston_implied_vol(
-    params::HestonParams,
-    K::Float64;
-    method::Symbol = :newton,
-    n_paths::Int = 100000
+    params::HestonParams, K::Float64; method::Symbol=:newton, n_paths::Int=100000
 )
     # Get Heston price
     heston_result = heston_call_mc(params, K; n_paths=n_paths)

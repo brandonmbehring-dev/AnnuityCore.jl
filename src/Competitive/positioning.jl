@@ -43,7 +43,8 @@ calculate_percentile(0.05, rates)  # 75.0 (3 of 4 values <= 0.05)
 [T1] Count-based percentile is standard for competitive positioning.
 """
 function calculate_percentile(value::Float64, distribution::Vector{Float64})::Float64
-    isempty(distribution) && error("CRITICAL: Cannot calculate percentile of empty distribution")
+    isempty(distribution) &&
+        error("CRITICAL: Cannot calculate percentile of empty distribution")
     count(x -> x <= value, distribution) / length(distribution) * 100.0
 end
 
@@ -90,11 +91,18 @@ calculate_quartile(10.0)  # 4
 ```
 """
 function calculate_quartile(percentile::Float64)::Int
-    (0.0 <= percentile <= 100.0) || error("CRITICAL: percentile must be in [0,100], got $percentile")
+    (0.0 <= percentile <= 100.0) ||
+        error("CRITICAL: percentile must be in [0,100], got $percentile")
 
-    percentile >= 75.0 ? 1 :
-    percentile >= 50.0 ? 2 :
-    percentile >= 25.0 ? 3 : 4
+    if percentile >= 75.0
+        1
+    elseif percentile >= 50.0
+        2
+    elseif percentile >= 25.0
+        3
+    else
+        4
+    end
 end
 
 """
@@ -116,12 +124,20 @@ get_position_label(60.0)  # "Above Median"
 ```
 """
 function get_position_label(percentile::Float64)::String
-    (0.0 <= percentile <= 100.0) || error("CRITICAL: percentile must be in [0,100], got $percentile")
+    (0.0 <= percentile <= 100.0) ||
+        error("CRITICAL: percentile must be in [0,100], got $percentile")
 
-    percentile >= 90.0 ? "Top 10%" :
-    percentile >= 75.0 ? "Top Quartile" :
-    percentile >= 50.0 ? "Above Median" :
-    percentile >= 25.0 ? "Below Median" : "Bottom Quartile"
+    if percentile >= 90.0
+        "Top 10%"
+    elseif percentile >= 75.0
+        "Top Quartile"
+    elseif percentile >= 50.0
+        "Above Median"
+    elseif percentile >= 25.0
+        "Below Median"
+    else
+        "Bottom Quartile"
+    end
 end
 
 #=============================================================================
@@ -151,17 +167,20 @@ filtered = filter_products(data,
 """
 function filter_products(
     data::ProductData;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current,
-    exclude_company::Union{String, Nothing} = nothing
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
+    exclude_company::Union{String,Nothing}=nothing,
 )::ProductData
     filter(data) do p
         (isnothing(product_group) || p.product_group == product_group) &&
-        (isnothing(duration) || abs(p.duration - duration) <= duration_tolerance) &&
-        p.status == status &&
-        (isnothing(exclude_company) || lowercase(p.company) != lowercase(exclude_company))
+            (isnothing(duration) || abs(p.duration - duration) <= duration_tolerance) &&
+            p.status == status &&
+            (
+                isnothing(exclude_company) ||
+                lowercase(p.company) != lowercase(exclude_company)
+            )
     end
 end
 
@@ -199,20 +218,20 @@ println("Your rate is in the \$(result.position_label)")
 function analyze_position(
     rate::Float64,
     data::ProductData;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current,
-    exclude_company::Union{String, Nothing} = nothing
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
+    exclude_company::Union{String,Nothing}=nothing,
 )::PositionResult
     # Filter to comparison set
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status,
-        exclude_company = exclude_company
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
+        exclude_company=exclude_company,
     )
 
     isempty(filtered) && error("CRITICAL: No comparable products after filtering")
@@ -226,13 +245,13 @@ function analyze_position(
     quartile = calculate_quartile(percentile)
     label = get_position_label(percentile)
 
-    PositionResult(
-        rate = rate,
-        percentile = percentile,
-        rank = rank,
-        total_products = length(filtered),
-        quartile = quartile,
-        position_label = label
+    PositionResult(;
+        rate=rate,
+        percentile=percentile,
+        rank=rank,
+        total_products=length(filtered),
+        quartile=quartile,
+        position_label=label,
     )
 end
 
@@ -258,19 +277,19 @@ println("Market rates range from \$(stats.min) to \$(stats.max)")
 """
 function get_distribution_stats(
     data::ProductData;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current,
-    exclude_company::Union{String, Nothing} = nothing
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
+    exclude_company::Union{String,Nothing}=nothing,
 )::DistributionStats
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status,
-        exclude_company = exclude_company
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
+        exclude_company=exclude_company,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
@@ -301,25 +320,25 @@ println("75th percentile rate: \$(thresholds[75.0])")
 """
 function get_percentile_thresholds(
     data::ProductData;
-    percentiles::Vector{Float64} = [10.0, 25.0, 50.0, 75.0, 90.0],
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current,
-    exclude_company::Union{String, Nothing} = nothing
-)::Dict{Float64, Float64}
+    percentiles::Vector{Float64}=[10.0, 25.0, 50.0, 75.0, 90.0],
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
+    exclude_company::Union{String,Nothing}=nothing,
+)::Dict{Float64,Float64}
     # Validate percentiles
     for p in percentiles
         (0.0 <= p <= 100.0) || error("CRITICAL: percentile must be in [0,100], got $p")
     end
 
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status,
-        exclude_company = exclude_company
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
+        exclude_company=exclude_company,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
@@ -362,40 +381,40 @@ function compare_to_peers(
     rate::Float64,
     company::String,
     data::ProductData;
-    top_n::Int = 5,
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    top_n::Int=5,
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::NamedTuple
     # Get position (excluding own company)
     position = analyze_position(
         rate,
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status,
-        exclude_company = company
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
+        exclude_company=company,
     )
 
     # Get filtered peers
     peers = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status,
-        exclude_company = company
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
+        exclude_company=company,
     )
 
     # Sort by rate descending
-    sorted_peers = sort(peers, by = p -> p.rate, rev = true)
+    sorted_peers = sort(peers; by=p -> p.rate, rev=true)
 
     # Get top N
     top_competitors = [
-        (company = p.company, product = p.product, rate = p.rate)
-        for p in sorted_peers[1:min(top_n, length(sorted_peers))]
+        (company=p.company, product=p.product, rate=p.rate) for
+        p in sorted_peers[1:min(top_n, length(sorted_peers))]
     ]
 
     # Calculate gaps
@@ -404,10 +423,10 @@ function compare_to_peers(
     median_rate = median(peer_rates)
 
     (
-        position = position,
-        top_competitors = top_competitors,
-        gap_to_leader = leader_rate - rate,
-        gap_to_median = median_rate - rate
+        position=position,
+        top_competitors=top_competitors,
+        gap_to_leader=leader_rate - rate,
+        gap_to_median=median_rate - rate,
     )
 end
 
@@ -424,7 +443,7 @@ println(position_summary(result))
 ```
 """
 function position_summary(result::PositionResult)::String
-    rate_pct = round(result.rate * 100, digits = 2)
+    rate_pct = round(result.rate * 100; digits=2)
     "Rate $(rate_pct)% ranks #$(result.rank) of $(result.total_products) products " *
     "($(round(result.percentile, digits=1))th percentile, $(result.position_label))"
 end

@@ -61,7 +61,7 @@ julia> black_scholes_call(42.0, 40.0, 0.10, 0.0, 0.20, 0.5)
 4.759422... # Expected: 4.7594
 ```
 """
-function black_scholes_call(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
+function black_scholes_call(S::T, K::T, r::T, q::T, σ::T, τ::T) where {T<:Real}
     # Handle edge case: expired option
     if τ <= 0
         return max(S - K, zero(T))
@@ -87,7 +87,6 @@ function black_scholes_call(S, K, r, q, σ, τ)
     black_scholes_call(T(S), T(K), T(r), T(q), T(σ), T(τ))
 end
 
-
 """
     black_scholes_put(S, K, r, q, σ, τ) -> price
 
@@ -109,7 +108,7 @@ julia> black_scholes_put(42.0, 40.0, 0.10, 0.0, 0.20, 0.5)
 0.808600... # Expected: 0.8086
 ```
 """
-function black_scholes_put(S::T, K::T, r::T, q::T, σ::T, τ::T) where T<:Real
+function black_scholes_put(S::T, K::T, r::T, q::T, σ::T, τ::T) where {T<:Real}
     # Handle edge case: expired option
     if τ <= 0
         return max(K - S, zero(T))
@@ -134,7 +133,6 @@ function black_scholes_put(S, K, r, q, σ, τ)
     T = promote_type(typeof(S), typeof(K), typeof(r), typeof(q), typeof(σ), typeof(τ))
     black_scholes_put(T(S), T(K), T(r), T(q), T(σ), T(τ))
 end
-
 
 """
     black_scholes_greeks(S, K, r, q, σ, τ; is_call=true) -> BSGreeks
@@ -163,13 +161,16 @@ Calculate all Black-Scholes Greeks for a European option.
 - Rho is per 1% move in rate (multiply by 0.01 for 1pp move)
 - Theta is annualized (divide by 365 for daily decay)
 """
-function black_scholes_greeks(S::T, K::T, r::T, q::T, σ::T, τ::T; is_call::Bool=true) where T<:Real
+function black_scholes_greeks(
+    S::T, K::T, r::T, q::T, σ::T, τ::T; is_call::Bool=true
+) where {T<:Real}
     if τ <= 0 || σ <= 0
         # At expiry or zero vol, return limiting Greeks
         intrinsic = is_call ? max(S - K, zero(T)) : max(K - S, zero(T))
         in_the_money = intrinsic > 0
 
-        delta = is_call ? (in_the_money ? one(T) : zero(T)) : (in_the_money ? -one(T) : zero(T))
+        delta =
+            is_call ? (in_the_money ? one(T) : zero(T)) : (in_the_money ? -one(T) : zero(T))
         return BSGreeks(delta, zero(T), zero(T), zero(T), zero(T))
     end
 
@@ -193,18 +194,18 @@ function black_scholes_greeks(S::T, K::T, r::T, q::T, σ::T, τ::T; is_call::Boo
         Nd2 = cdf(N, d2)
 
         delta = exp_qt * Nd1
-        theta = -(S * σ * exp_qt * n_d1) / (2 * sqrt_τ) -
-                r * K * exp_rt * Nd2 +
-                q * S * exp_qt * Nd1
+        theta =
+            -(S * σ * exp_qt * n_d1) / (2 * sqrt_τ) - r * K * exp_rt * Nd2 +
+            q * S * exp_qt * Nd1
         rho = K * τ * exp_rt * Nd2 / 100  # Per 1% rate move
     else
         Nmd1 = cdf(N, -d1)
         Nmd2 = cdf(N, -d2)
 
         delta = exp_qt * (cdf(N, d1) - 1)
-        theta = -(S * σ * exp_qt * n_d1) / (2 * sqrt_τ) +
-                r * K * exp_rt * Nmd2 -
-                q * S * exp_qt * Nmd1
+        theta =
+            -(S * σ * exp_qt * n_d1) / (2 * sqrt_τ) + r * K * exp_rt * Nmd2 -
+            q * S * exp_qt * Nmd1
         rho = -K * τ * exp_rt * Nmd2 / 100  # Per 1% rate move
     end
 

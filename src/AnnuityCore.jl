@@ -195,7 +195,8 @@ export smile_from_heston, smile_from_sabr
 # Public API - GLWB
 export RollupType, SIMPLE, COMPOUND, NONE
 export GWBConfig, GWBState, StepResult, GLWBPricingResult
-export simple_rollup, compound_rollup, calculate_rollup, apply_ratchet, is_anniversary, rollup_comparison
+export simple_rollup,
+    compound_rollup, calculate_rollup, apply_ratchet, is_anniversary, rollup_comparison
 export step!, max_withdrawal, simulate_path!
 export is_ruined, benefit_moneyness, gwb_to_av_ratio
 export GLWBSimulator, glwb_price

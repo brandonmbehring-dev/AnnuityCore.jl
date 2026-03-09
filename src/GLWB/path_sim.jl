@@ -14,7 +14,6 @@ Reference:
 - Bauer, Kling & Russ (2008), "Universal Pricing of Guaranteed Minimum Benefits"
 """
 
-
 """
     GLWBSimulator
 
@@ -61,31 +60,41 @@ struct GLWBSimulator
     n_paths::Int
     steps_per_year::Int
     mortality::Function
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     # Behavioral configs (optional)
-    lapse_config::Union{LapseConfig, SOALapseConfig, Nothing}
-    withdrawal_config::Union{WithdrawalConfig, SOAWithdrawalConfig, Nothing}
-    expense_config::Union{ExpenseConfig, Nothing}
+    lapse_config::Union{LapseConfig,SOALapseConfig,Nothing}
+    withdrawal_config::Union{WithdrawalConfig,SOAWithdrawalConfig,Nothing}
+    expense_config::Union{ExpenseConfig,Nothing}
 
     function GLWBSimulator(;
-        config::GWBConfig = GWBConfig(),
-        r::Float64 = 0.04,
-        sigma::Float64 = 0.20,
-        n_paths::Int = 10000,
-        steps_per_year::Int = 1,
-        mortality::Function = default_mortality,
-        seed::Union{Int, Nothing} = nothing,
-        lapse_config::Union{LapseConfig, SOALapseConfig, Nothing} = nothing,
-        withdrawal_config::Union{WithdrawalConfig, SOAWithdrawalConfig, Nothing} = nothing,
-        expense_config::Union{ExpenseConfig, Nothing} = nothing
+        config::GWBConfig=GWBConfig(),
+        r::Float64=0.04,
+        sigma::Float64=0.20,
+        n_paths::Int=10000,
+        steps_per_year::Int=1,
+        mortality::Function=default_mortality,
+        seed::Union{Int,Nothing}=nothing,
+        lapse_config::Union{LapseConfig,SOALapseConfig,Nothing}=nothing,
+        withdrawal_config::Union{WithdrawalConfig,SOAWithdrawalConfig,Nothing}=nothing,
+        expense_config::Union{ExpenseConfig,Nothing}=nothing,
     )
         r >= 0 || throw(ArgumentError("r must be >= 0"))
         sigma > 0 || throw(ArgumentError("sigma must be > 0"))
         n_paths > 0 || throw(ArgumentError("n_paths must be > 0"))
         steps_per_year > 0 || throw(ArgumentError("steps_per_year must be > 0"))
 
-        new(config, r, sigma, n_paths, steps_per_year, mortality, seed,
-            lapse_config, withdrawal_config, expense_config)
+        new(
+            config,
+            r,
+            sigma,
+            n_paths,
+            steps_per_year,
+            mortality,
+            seed,
+            lapse_config,
+            withdrawal_config,
+            expense_config,
+        )
     end
 end
 
@@ -93,8 +102,9 @@ end
 has_lapse_model(sim::GLWBSimulator) = sim.lapse_config !== nothing
 has_withdrawal_model(sim::GLWBSimulator) = sim.withdrawal_config !== nothing
 has_expense_model(sim::GLWBSimulator) = sim.expense_config !== nothing
-has_behavioral_models(sim::GLWBSimulator) = has_lapse_model(sim) || has_withdrawal_model(sim) || has_expense_model(sim)
-
+function has_behavioral_models(sim::GLWBSimulator)
+    has_lapse_model(sim) || has_withdrawal_model(sim) || has_expense_model(sim)
+end
 
 """
     glwb_price(sim, premium, age; max_age=100, deferral_years=0) -> GLWBPricingResult
@@ -138,11 +148,7 @@ println("Avg utilization: \$(result.avg_utilization)")
 ```
 """
 function glwb_price(
-    sim::GLWBSimulator,
-    premium::Float64,
-    age::Int;
-    max_age::Int = 100,
-    deferral_years::Int = 0
+    sim::GLWBSimulator, premium::Float64, age::Int; max_age::Int=100, deferral_years::Int=0
 )
     rng = sim.seed === nothing ? StableRNG(42) : StableRNG(sim.seed)
 
@@ -201,8 +207,7 @@ function glwb_price(
             # Lapse check (after mortality, before state evolution)
             if has_lapse_model(sim) && !ruined
                 lapse_rate = _calculate_lapse_rate(
-                    sim.lapse_config, state.gwb, state.av,
-                    duration, sc_length, current_age
+                    sim.lapse_config, state.gwb, state.av, duration, sc_length, current_age
                 )
                 lapse_prob_step = 1.0 - (1.0 - lapse_rate)^dt
                 if rand(rng) < lapse_prob_step
@@ -226,8 +231,12 @@ function glwb_price(
                     # Use behavioral withdrawal model
                     moneyness = state.av > 0 ? (state.gwb / state.av) : 1.0
                     util_rate = _calculate_utilization_rate(
-                        sim.withdrawal_config, state.gwb, state.av,
-                        duration, current_age, moneyness
+                        sim.withdrawal_config,
+                        state.gwb,
+                        state.av,
+                        duration,
+                        current_age,
+                        moneyness,
                     )
                     max_withdrawal = state.gwb * sim.config.withdrawal_rate * dt
                     withdrawal = util_rate * max_withdrawal
@@ -314,10 +323,9 @@ function glwb_price(
         sim.n_paths,
         avg_utilization,
         total_expenses_pv,
-        lapse_histogram
+        lapse_histogram,
     )
 end
-
 
 # =============================================================================
 # Behavioral Model Helpers (internal)
@@ -329,12 +337,7 @@ end
 Calculate lapse rate using the configured lapse model.
 """
 function _calculate_lapse_rate(
-    config::LapseConfig,
-    gwb::Real,
-    av::Real,
-    duration::Int,
-    sc_length::Int,
-    age::Int
+    config::LapseConfig, gwb::Real, av::Real, duration::Int, sc_length::Int, age::Int
 )
     # Simple model: just needs surrender period status
     surrender_complete = duration > sc_length
@@ -343,12 +346,7 @@ function _calculate_lapse_rate(
 end
 
 function _calculate_lapse_rate(
-    config::SOALapseConfig,
-    gwb::Real,
-    av::Real,
-    duration::Int,
-    sc_length::Int,
-    age::Int
+    config::SOALapseConfig, gwb::Real, av::Real, duration::Int, sc_length::Int, age::Int
 )
     # SOA model: needs duration and years to SC end
     years_to_sc_end = config.surrender_charge_length - duration + 1
@@ -356,19 +354,13 @@ function _calculate_lapse_rate(
     return result.lapse_rate
 end
 
-
 """
     _calculate_utilization_rate(config, gwb, av, duration, age, moneyness) -> Float64
 
 Calculate withdrawal utilization rate using the configured model.
 """
 function _calculate_utilization_rate(
-    config::WithdrawalConfig,
-    gwb::Real,
-    av::Real,
-    duration::Int,
-    age::Int,
-    moneyness::Real
+    config::WithdrawalConfig, gwb::Real, av::Real, duration::Int, age::Int, moneyness::Real
 )
     # Simple model uses age-based adjustment
     result = calculate_withdrawal(config, gwb, av, 1.0, age)  # Use rate=1.0 to get pure utilization
@@ -381,13 +373,12 @@ function _calculate_utilization_rate(
     av::Real,
     duration::Int,
     age::Int,
-    moneyness::Real
+    moneyness::Real,
 )
     # SOA model uses duration, age, and ITM
     result = calculate_withdrawal(config, gwb, av, 1.0, duration, age; moneyness=moneyness)
     return result.utilization_rate
 end
-
 
 """
     calculate_fair_fee(sim, premium, age; kwargs...) -> Float64
@@ -411,10 +402,10 @@ function calculate_fair_fee(
     sim::GLWBSimulator,
     premium::Float64,
     age::Int;
-    target_cost::Float64 = 0.0,
-    tol::Float64 = 0.0001,
-    max_iter::Int = 50,
-    kwargs...
+    target_cost::Float64=0.0,
+    tol::Float64=0.0001,
+    max_iter::Int=50,
+    kwargs...,
 )
     fee_low = 0.001   # 0.1%
     fee_high = 0.03   # 3.0%
@@ -423,26 +414,26 @@ function calculate_fair_fee(
         fee_mid = (fee_low + fee_high) / 2
 
         # Create simulator with trial fee
-        config_trial = GWBConfig(
-            rollup_type = sim.config.rollup_type,
-            rollup_rate = sim.config.rollup_rate,
-            rollup_cap_years = sim.config.rollup_cap_years,
-            withdrawal_rate = sim.config.withdrawal_rate,
-            fee_rate = fee_mid,
-            ratchet_enabled = sim.config.ratchet_enabled,
-            fee_basis = sim.config.fee_basis
+        config_trial = GWBConfig(;
+            rollup_type=sim.config.rollup_type,
+            rollup_rate=sim.config.rollup_rate,
+            rollup_cap_years=sim.config.rollup_cap_years,
+            withdrawal_rate=sim.config.withdrawal_rate,
+            fee_rate=fee_mid,
+            ratchet_enabled=sim.config.ratchet_enabled,
+            fee_basis=sim.config.fee_basis,
         )
-        sim_trial = GLWBSimulator(
-            config = config_trial,
-            r = sim.r,
-            sigma = sim.sigma,
-            n_paths = sim.n_paths,
-            steps_per_year = sim.steps_per_year,
-            mortality = sim.mortality,
-            seed = sim.seed,
-            lapse_config = sim.lapse_config,
-            withdrawal_config = sim.withdrawal_config,
-            expense_config = sim.expense_config
+        sim_trial = GLWBSimulator(;
+            config=config_trial,
+            r=sim.r,
+            sigma=sim.sigma,
+            n_paths=sim.n_paths,
+            steps_per_year=sim.steps_per_year,
+            mortality=sim.mortality,
+            seed=sim.seed,
+            lapse_config=sim.lapse_config,
+            withdrawal_config=sim.withdrawal_config,
+            expense_config=sim.expense_config,
         )
 
         result = glwb_price(sim_trial, premium, age; kwargs...)
@@ -460,7 +451,6 @@ function calculate_fair_fee(
     return (fee_low + fee_high) / 2  # Return best estimate
 end
 
-
 """
     sensitivity_analysis(sim, premium, age; kwargs...) -> NamedTuple
 
@@ -472,38 +462,43 @@ NamedTuple with:
 - `rho::Float64`: Price sensitivity to interest rate (per 1%)
 - `age_sens::Float64`: Price sensitivity to age (per year)
 """
-function sensitivity_analysis(
-    sim::GLWBSimulator,
-    premium::Float64,
-    age::Int;
-    kwargs...
-)
+function sensitivity_analysis(sim::GLWBSimulator, premium::Float64, age::Int; kwargs...)
     # Base price
     base_result = glwb_price(sim, premium, age; kwargs...)
     base_price = base_result.price
 
     # Vega (volatility bump of 1%)
-    sim_vol_up = GLWBSimulator(
-        config = sim.config, r = sim.r, sigma = sim.sigma + 0.01,
-        n_paths = sim.n_paths, steps_per_year = sim.steps_per_year,
-        mortality = sim.mortality, seed = sim.seed,
-        lapse_config = sim.lapse_config, withdrawal_config = sim.withdrawal_config,
-        expense_config = sim.expense_config
+    sim_vol_up = GLWBSimulator(;
+        config=sim.config,
+        r=sim.r,
+        sigma=(sim.sigma + 0.01),
+        n_paths=sim.n_paths,
+        steps_per_year=sim.steps_per_year,
+        mortality=sim.mortality,
+        seed=sim.seed,
+        lapse_config=sim.lapse_config,
+        withdrawal_config=sim.withdrawal_config,
+        expense_config=sim.expense_config,
     )
     vega = glwb_price(sim_vol_up, premium, age; kwargs...).price - base_price
 
     # Rho (rate bump of 1%)
-    sim_rate_up = GLWBSimulator(
-        config = sim.config, r = sim.r + 0.01, sigma = sim.sigma,
-        n_paths = sim.n_paths, steps_per_year = sim.steps_per_year,
-        mortality = sim.mortality, seed = sim.seed,
-        lapse_config = sim.lapse_config, withdrawal_config = sim.withdrawal_config,
-        expense_config = sim.expense_config
+    sim_rate_up = GLWBSimulator(;
+        config=sim.config,
+        r=(sim.r + 0.01),
+        sigma=sim.sigma,
+        n_paths=sim.n_paths,
+        steps_per_year=sim.steps_per_year,
+        mortality=sim.mortality,
+        seed=sim.seed,
+        lapse_config=sim.lapse_config,
+        withdrawal_config=sim.withdrawal_config,
+        expense_config=sim.expense_config,
     )
     rho = glwb_price(sim_rate_up, premium, age; kwargs...).price - base_price
 
     # Age sensitivity (1 year older)
     age_sens = glwb_price(sim, premium, age + 1; kwargs...).price - base_price
 
-    return (vega = vega, rho = rho, age_sensitivity = age_sens)
+    return (vega=vega, rho=rho, age_sensitivity=age_sens)
 end

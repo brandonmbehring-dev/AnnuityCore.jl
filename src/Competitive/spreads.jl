@@ -23,7 +23,7 @@ using Statistics: mean, median, std, quantile
 """
 Treasury curve represented as Dict{Int, Float64} mapping duration (years) to rate.
 """
-const TreasuryCurve = Dict{Int, Float64}
+const TreasuryCurve = Dict{Int,Float64}
 
 #=============================================================================
 # Treasury Interpolation
@@ -93,7 +93,7 @@ curve = build_treasury_curve(fred_rates)
 # Dict(1 => 0.04, 5 => 0.045, 10 => 0.048)
 ```
 """
-function build_treasury_curve(rates::Dict{String, Float64})::TreasuryCurve
+function build_treasury_curve(rates::Dict{String,Float64})::TreasuryCurve
     result = TreasuryCurve()
     for (duration, series) in TREASURY_SERIES
         if haskey(rates, series)
@@ -108,7 +108,7 @@ end
 
 Build treasury curve from (duration, rate) tuples.
 """
-function build_treasury_curve(rates::Vector{Tuple{Int, Float64}})::TreasuryCurve
+function build_treasury_curve(rates::Vector{Tuple{Int,Float64}})::TreasuryCurve
     TreasuryCurve(d => r for (d, r) in rates)
 end
 
@@ -118,7 +118,8 @@ end
 Build treasury curve from parallel duration and rate vectors.
 """
 function build_treasury_curve(durations::Vector{Int}, rates::Vector{Float64})::TreasuryCurve
-    length(durations) == length(rates) || error("CRITICAL: durations and rates must have same length")
+    length(durations) == length(rates) ||
+        error("CRITICAL: durations and rates must have same length")
     TreasuryCurve(zip(durations, rates))
 end
 
@@ -147,21 +148,18 @@ println("Spread: \$(result.spread_bps) bps")  # 100 bps
 ```
 """
 function calculate_spread(
-    product_rate::Float64,
-    treasury_rate::Float64,
-    duration::Int;
-    as_of_date::Date = today()
+    product_rate::Float64, treasury_rate::Float64, duration::Int; as_of_date::Date=today()
 )::SpreadResult
     spread = product_rate - treasury_rate
     spread_bps = spread * 10000.0
 
-    SpreadResult(
-        product_rate = product_rate,
-        treasury_rate = treasury_rate,
-        spread_bps = spread_bps,
-        spread_pct = spread * 100.0,
-        duration = duration,
-        as_of_date = as_of_date
+    SpreadResult(;
+        product_rate=product_rate,
+        treasury_rate=treasury_rate,
+        spread_bps=spread_bps,
+        spread_pct=spread * 100.0,
+        duration=duration,
+        as_of_date=as_of_date,
     )
 end
 
@@ -179,12 +177,10 @@ Calculate spread for a single product.
 - SpreadResult
 """
 function calculate_product_spread(
-    product::WINKProduct,
-    curve::TreasuryCurve;
-    as_of_date::Date = today()
+    product::WINKProduct, curve::TreasuryCurve; as_of_date::Date=today()
 )::SpreadResult
     treasury_rate = interpolate_treasury(product.duration, curve)
-    calculate_spread(product.rate, treasury_rate, product.duration, as_of_date = as_of_date)
+    calculate_spread(product.rate, treasury_rate, product.duration; as_of_date=as_of_date)
 end
 
 #=============================================================================
@@ -229,29 +225,26 @@ end
 function calculate_market_spreads(
     data::ProductData,
     curve::TreasuryCurve;
-    as_of_date::Date = today(),
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    as_of_date::Date=today(),
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::Vector{ProductSpread}
     filtered = filter_products(
-        data,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        data;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
 
     [
         ProductSpread(
-            p.company,
-            p.product,
-            calculate_product_spread(p, curve, as_of_date = as_of_date)
-        )
-        for p in filtered
+            p.company, p.product, calculate_product_spread(p, curve; as_of_date=as_of_date)
+        ) for p in filtered
     ]
 end
 
@@ -279,18 +272,18 @@ println("Average spread: \$(dist.mean_bps) bps")
 function get_spread_distribution(
     data::ProductData,
     curve::TreasuryCurve;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::SpreadDistribution
     spreads = calculate_market_spreads(
         data,
-        curve,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        curve;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     spread_bps = [ps.spread.spread_bps for ps in spreads]
@@ -323,18 +316,18 @@ function analyze_spread_position(
     spread_bps::Float64,
     data::ProductData,
     curve::TreasuryCurve;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::PositionResult
     market_spreads = calculate_market_spreads(
         data,
-        curve,
-        product_group = product_group,
-        duration = duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        curve;
+        product_group=product_group,
+        duration=duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     all_spreads_bps = [ps.spread.spread_bps for ps in market_spreads]
@@ -345,13 +338,13 @@ function analyze_spread_position(
     quartile = calculate_quartile(percentile)
     label = get_position_label(percentile)
 
-    PositionResult(
-        rate = spread_bps / 10000.0,  # Store spread as "rate" for consistency
-        percentile = percentile,
-        rank = rank,
-        total_products = length(market_spreads),
-        quartile = quartile,
-        position_label = label
+    PositionResult(;
+        rate=spread_bps / 10000.0,  # Store spread as "rate" for consistency
+        percentile=percentile,
+        rank=rank,
+        total_products=length(market_spreads),
+        quartile=quartile,
+        position_label=label,
     )
 end
 
@@ -393,30 +386,23 @@ end
 function spread_by_duration(
     data::ProductData,
     curve::TreasuryCurve;
-    product_group::Union{String, Nothing} = nothing,
-    status::Symbol = :current
-)::Dict{Int, DurationSpreadSummary}
-    filtered = filter_products(
-        data,
-        product_group = product_group,
-        status = status
-    )
+    product_group::Union{String,Nothing}=nothing,
+    status::Symbol=:current,
+)::Dict{Int,DurationSpreadSummary}
+    filtered = filter_products(data; product_group=product_group, status=status)
 
     isempty(filtered) && error("CRITICAL: No products match filter criteria")
 
     # Group by duration
     by_duration = group_by_duration(filtered)
 
-    result = Dict{Int, DurationSpreadSummary}()
+    result = Dict{Int,DurationSpreadSummary}()
     for (dur, products) in by_duration
         treasury_rate = interpolate_treasury(dur, curve)
         spread_bps = [(p.rate - treasury_rate) * 10000.0 for p in products]
 
         result[dur] = DurationSpreadSummary(
-            dur,
-            length(products),
-            treasury_rate,
-            SpreadDistribution(spread_bps)
+            dur, length(products), treasury_rate, SpreadDistribution(spread_bps)
         )
     end
 
@@ -462,10 +448,10 @@ function compare_spread_to_market(
     product::WINKProduct,
     data::ProductData,
     curve::TreasuryCurve;
-    product_group::Union{String, Nothing} = nothing,
-    duration::Union{Int, Nothing} = nothing,
-    duration_tolerance::Int = 1,
-    status::Symbol = :current
+    product_group::Union{String,Nothing}=nothing,
+    duration::Union{Int,Nothing}=nothing,
+    duration_tolerance::Int=1,
+    status::Symbol=:current,
 )::SpreadComparison
     # Calculate product spread
     product_spread = calculate_product_spread(product, curve)
@@ -473,15 +459,17 @@ function compare_spread_to_market(
     # Get market spreads (excluding this product's company)
     market_spreads = calculate_market_spreads(
         data,
-        curve,
-        product_group = isnothing(product_group) ? product.product_group : product_group,
-        duration = isnothing(duration) ? product.duration : duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        curve;
+        product_group=isnothing(product_group) ? product.product_group : product_group,
+        duration=isnothing(duration) ? product.duration : duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     # Exclude own company from comparison
-    peer_spreads = filter(ps -> lowercase(ps.company) != lowercase(product.company), market_spreads)
+    peer_spreads = filter(
+        ps -> lowercase(ps.company) != lowercase(product.company), market_spreads
+    )
     isempty(peer_spreads) && error("CRITICAL: No peer products for comparison")
 
     all_spreads_bps = [ps.spread.spread_bps for ps in peer_spreads]
@@ -490,11 +478,11 @@ function compare_spread_to_market(
     position = analyze_spread_position(
         product_spread.spread_bps,
         filter(p -> lowercase(p.company) != lowercase(product.company), data),
-        curve,
-        product_group = isnothing(product_group) ? product.product_group : product_group,
-        duration = isnothing(duration) ? product.duration : duration,
-        duration_tolerance = duration_tolerance,
-        status = status
+        curve;
+        product_group=isnothing(product_group) ? product.product_group : product_group,
+        duration=isnothing(duration) ? product.duration : duration,
+        duration_tolerance=duration_tolerance,
+        status=status,
     )
 
     # Calculate gaps
@@ -505,7 +493,7 @@ function compare_spread_to_market(
         product_spread,
         position,
         best_spread - product_spread.spread_bps,
-        median_spread - product_spread.spread_bps
+        median_spread - product_spread.spread_bps,
     )
 end
 
@@ -518,7 +506,7 @@ end
 
 Print spread distribution in formatted output.
 """
-function print_spread_distribution(dist::SpreadDistribution; io::IO = stdout)
+function print_spread_distribution(dist::SpreadDistribution; io::IO=stdout)
     println(io, "Spread Distribution ($(dist.count) products)")
     println(io, "-" ^ 40)
     println(io, "Min:    $(round(dist.min_bps, digits=1)) bps")
@@ -535,25 +523,35 @@ end
 
 Print spread summary by duration.
 """
-function print_spread_by_duration(by_duration::Dict{Int, DurationSpreadSummary}; io::IO = stdout)
+function print_spread_by_duration(
+    by_duration::Dict{Int,DurationSpreadSummary}; io::IO=stdout
+)
     println(io, "Spreads by Duration")
     println(io, "-" ^ 60)
-    println(io, rpad("Duration", 10), rpad("Treasury", 12), rpad("Products", 10), rpad("Mean Spread", 15), "Range")
+    println(
+        io,
+        rpad("Duration", 10),
+        rpad("Treasury", 12),
+        rpad("Products", 10),
+        rpad("Mean Spread", 15),
+        "Range",
+    )
     println(io, "-" ^ 60)
 
     for dur in sort(collect(keys(by_duration)))
         s = by_duration[dur]
-        tsy_pct = round(s.treasury_rate * 100, digits = 2)
-        mean_bps = round(s.distribution.mean_bps, digits = 0)
-        min_bps = round(s.distribution.min_bps, digits = 0)
-        max_bps = round(s.distribution.max_bps, digits = 0)
+        tsy_pct = round(s.treasury_rate * 100; digits=2)
+        mean_bps = round(s.distribution.mean_bps; digits=0)
+        min_bps = round(s.distribution.min_bps; digits=0)
+        max_bps = round(s.distribution.max_bps; digits=0)
 
-        println(io,
+        println(
+            io,
             rpad("$(dur)Y", 10),
             rpad("$(tsy_pct)%", 12),
             rpad("$(s.product_count)", 10),
             rpad("$(mean_bps) bps", 15),
-            "[$(min_bps), $(max_bps)] bps"
+            "[$(min_bps), $(max_bps)] bps",
         )
     end
 end

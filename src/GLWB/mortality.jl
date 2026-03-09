@@ -9,7 +9,6 @@ Note: For production use, consider loading actual SOA tables via
 MortalityTables.jl or similar packages.
 """
 
-
 """
     default_mortality(age; gender=:male) -> Float64
 
@@ -31,7 +30,7 @@ qx_65 = default_mortality(65)        # ~0.0091 for male
 qx_80 = default_mortality(80)        # ~0.0446 for male
 ```
 """
-function default_mortality(age::Int; gender::Symbol = :male)
+function default_mortality(age::Int; gender::Symbol=:male)
     # Gompertz-Makeham: qx = A + B * exp(C * (age - x0))
     # Calibrated to approximate SOA 2012 IAM Basic
 
@@ -53,7 +52,6 @@ function default_mortality(age::Int; gender::Symbol = :male)
     return min(qx, 1.0)  # Cap at 1.0
 end
 
-
 """
     soa_2012_iam_qx(age; gender=:male) -> Float64
 
@@ -62,7 +60,6 @@ SOA 2012 IAM mortality approximation.
 Alias for `default_mortality` for clarity.
 """
 const soa_2012_iam_qx = default_mortality
-
 
 """
     constant_mortality(qx_annual) -> Function
@@ -85,7 +82,6 @@ function constant_mortality(qx_annual::Float64)
     return (age::Int) -> qx_annual
 end
 
-
 """
     zero_mortality() -> Function
 
@@ -96,7 +92,6 @@ Useful for isolating market risk from mortality risk.
 function zero_mortality()
     return (age::Int) -> 0.0
 end
-
 
 """
     convert_annual_to_step(qx_annual, dt) -> Float64
@@ -116,7 +111,6 @@ function convert_annual_to_step(qx_annual::Float64, dt::Float64)
     return 1.0 - (1.0 - qx_annual)^dt
 end
 
-
 """
     life_expectancy(age, mortality; max_age=120) -> Float64
 
@@ -132,7 +126,7 @@ Calculate curtate life expectancy from mortality table.
 # Returns
 - `Float64`: Expected remaining lifetime (years)
 """
-function life_expectancy(age::Int, mortality::Function; max_age::Int = 120)
+function life_expectancy(age::Int, mortality::Function; max_age::Int=120)
     ex = 0.0
     px_cum = 1.0  # Cumulative survival
 
@@ -144,7 +138,6 @@ function life_expectancy(age::Int, mortality::Function; max_age::Int = 120)
 
     return ex
 end
-
 
 """
     survival_probability(age, years, mortality) -> Float64
@@ -163,7 +156,7 @@ Calculate probability of surviving `years` from `age`.
 """
 function survival_probability(age::Int, years::Int, mortality::Function)
     px = 1.0
-    for k in 0:(years-1)
+    for k in 0:(years - 1)
         qx = mortality(age + k)
         px *= (1.0 - qx)
     end

@@ -13,7 +13,6 @@ The tracker maintains both the guarantee (GWB) and actual value (AV)
 through the contract lifetime.
 """
 
-
 """
     step!(state, config, market_return, withdrawal, dt) -> StepResult
 
@@ -51,7 +50,7 @@ function step!(
     config::GWBConfig,
     market_return::Float64,
     withdrawal::Float64,
-    dt::Float64
+    dt::Float64,
 )
     # 1. Apply market return to AV
     state.av *= (1.0 + market_return)
@@ -101,9 +100,10 @@ function step!(
     # 6. Update time
     state.years_since_issue += dt
 
-    return StepResult(fee, rollup_amount, ratchet_applied, actual_withdrawal, max_withdrawal)
+    return StepResult(
+        fee, rollup_amount, ratchet_applied, actual_withdrawal, max_withdrawal
+    )
 end
-
 
 """
     max_withdrawal(state, config, dt) -> Float64
@@ -121,7 +121,6 @@ Calculate maximum withdrawal allowed for a given period.
 function max_withdrawal(state::GWBState, config::GWBConfig, dt::Float64)
     return state.gwb * config.withdrawal_rate * dt
 end
-
 
 """
     simulate_path!(state, config, returns, withdrawals, dt) -> Vector{StepResult}
@@ -143,10 +142,11 @@ function simulate_path!(
     config::GWBConfig,
     returns::Vector{Float64},
     withdrawals::Vector{Float64},
-    dt::Float64
+    dt::Float64,
 )
     n_steps = length(returns)
-    length(withdrawals) == n_steps || throw(ArgumentError("returns and withdrawals must have same length"))
+    length(withdrawals) == n_steps ||
+        throw(ArgumentError("returns and withdrawals must have same length"))
 
     results = Vector{StepResult}(undef, n_steps)
 
@@ -156,7 +156,6 @@ function simulate_path!(
 
     return results
 end
-
 
 """
     is_ruined(state) -> Bool
@@ -169,7 +168,6 @@ guaranteed payments equal to max withdrawal for life.
 function is_ruined(state::GWBState)
     return state.av <= 0
 end
-
 
 """
     benefit_moneyness(state) -> Float64
@@ -187,7 +185,6 @@ function benefit_moneyness(state::GWBState)
     end
     return (state.gwb - state.av) / state.gwb
 end
-
 
 """
     gwb_to_av_ratio(state) -> Float64

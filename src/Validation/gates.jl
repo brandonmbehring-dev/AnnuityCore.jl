@@ -72,7 +72,6 @@ Status of a validation check.
 """
 @enum ValidationResult HALT PASS WARN
 
-
 """
     GateResult
 
@@ -89,15 +88,15 @@ struct GateResult
     status::ValidationResult
     gate_name::String
     message::String
-    value::Union{Any, Nothing}
-    threshold::Union{Any, Nothing}
+    value::Union{Any,Nothing}
+    threshold::Union{Any,Nothing}
 
     function GateResult(;
         status::ValidationResult,
         gate_name::String,
         message::String,
-        value::Union{Any, Nothing} = nothing,
-        threshold::Union{Any, Nothing} = nothing
+        value::Union{Any,Nothing}=nothing,
+        threshold::Union{Any,Nothing}=nothing,
     )
         new(status, gate_name, message, value, threshold)
     end
@@ -105,7 +104,6 @@ end
 
 """Check if gate passed (PASS or WARN, not HALT)."""
 passed(result::GateResult)::Bool = result.status != HALT
-
 
 """
     ValidationReport
@@ -130,12 +128,14 @@ end
 passed(report::ValidationReport)::Bool = overall_status(report) != HALT
 
 """Get all gates that halted."""
-halted_gates(report::ValidationReport)::Vector{GateResult} =
-    filter(r -> r.status == HALT, report.results)
+halted_gates(report::ValidationReport)::Vector{GateResult} = filter(
+    r -> r.status == HALT, report.results
+)
 
 """Get all gates that warned."""
-warned_gates(report::ValidationReport)::Vector{GateResult} =
-    filter(r -> r.status == WARN, report.results)
+warned_gates(report::ValidationReport)::Vector{GateResult} = filter(
+    r -> r.status == WARN, report.results
+)
 
 """Convert report to dictionary for logging."""
 function Base.Dict(report::ValidationReport)
@@ -150,13 +150,11 @@ function Base.Dict(report::ValidationReport)
                 :status => string(r.status),
                 :message => r.message,
                 :value => r.value,
-                :threshold => r.threshold
-            )
-            for r in report.results
-        ]
+                :threshold => r.threshold,
+            ) for r in report.results
+        ],
     )
 end
-
 
 #=============================================================================
 # Gate Interface
@@ -189,7 +187,6 @@ Check the pricing result against this gate.
 """
 function check end
 
-
 #=============================================================================
 # Gate Implementations
 =============================================================================#
@@ -209,48 +206,44 @@ struct PresentValueBoundsGate <: AbstractValidationGate
     min_pv::Float64
     max_pv_multiple::Float64
 
-    function PresentValueBoundsGate(;
-        min_pv::Float64 = 0.0,
-        max_pv_multiple::Float64 = 3.0
-    )
+    function PresentValueBoundsGate(; min_pv::Float64=0.0, max_pv_multiple::Float64=3.0)
         new(min_pv, max_pv_multiple)
     end
 end
 
 gate_name(::PresentValueBoundsGate) = "present_value_bounds"
 
-function check(gate::PresentValueBoundsGate, result; premium::Float64 = 100.0, kwargs...)
+function check(gate::PresentValueBoundsGate, result; premium::Float64=100.0, kwargs...)
     pv = result.present_value
     max_pv = premium * gate.max_pv_multiple
 
     if pv < gate.min_pv
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "PV $(round(pv, digits=4)) below minimum $(gate.min_pv)",
-            value = pv,
-            threshold = gate.min_pv
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="PV $(round(pv, digits=4)) below minimum $(gate.min_pv)",
+            value=pv,
+            threshold=gate.min_pv,
         )
     end
 
     if pv > max_pv
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "PV $(round(pv, digits=4)) exceeds $(gate.max_pv_multiple)x premium",
-            value = pv,
-            threshold = max_pv
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="PV $(round(pv, digits=4)) exceeds $(gate.max_pv_multiple)x premium",
+            value=pv,
+            threshold=max_pv,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "PV $(round(pv, digits=4)) within bounds",
-        value = pv
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="PV $(round(pv, digits=4)) within bounds",
+        value=pv,
     )
 end
-
 
 """
     DurationBoundsGate
@@ -265,7 +258,7 @@ Check that duration is within reasonable bounds.
 struct DurationBoundsGate <: AbstractValidationGate
     max_duration::Float64
 
-    DurationBoundsGate(; max_duration::Float64 = 30.0) = new(max_duration)
+    DurationBoundsGate(; max_duration::Float64=30.0) = new(max_duration)
 end
 
 gate_name(::DurationBoundsGate) = "duration_bounds"
@@ -273,43 +266,42 @@ gate_name(::DurationBoundsGate) = "duration_bounds"
 function check(gate::DurationBoundsGate, result; kwargs...)
     # Check if result has duration field
     if !hasproperty(result, :duration)
-        return GateResult(
-            status = PASS,
-            gate_name = gate_name(gate),
-            message = "Duration not available in result type"
+        return GateResult(;
+            status=PASS,
+            gate_name=gate_name(gate),
+            message="Duration not available in result type",
         )
     end
 
     dur = result.duration
 
     if dur < 0
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Duration $(round(dur, digits=4)) is negative",
-            value = dur,
-            threshold = 0.0
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Duration $(round(dur, digits=4)) is negative",
+            value=dur,
+            threshold=0.0,
         )
     end
 
     if dur > gate.max_duration
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Duration $(round(dur, digits=4)) exceeds maximum $(gate.max_duration)",
-            value = dur,
-            threshold = gate.max_duration
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Duration $(round(dur, digits=4)) exceeds maximum $(gate.max_duration)",
+            value=dur,
+            threshold=gate.max_duration,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Duration $(round(dur, digits=4)) within bounds",
-        value = dur
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Duration $(round(dur, digits=4)) within bounds",
+        value=dur,
     )
 end
-
 
 """
     FIAOptionBudgetGate
@@ -324,18 +316,18 @@ Check FIA embedded option value against option budget.
 struct FIAOptionBudgetGate <: AbstractValidationGate
     tolerance::Float64
 
-    FIAOptionBudgetGate(; tolerance::Float64 = 0.10) = new(tolerance)
+    FIAOptionBudgetGate(; tolerance::Float64=0.10) = new(tolerance)
 end
 
 gate_name(::FIAOptionBudgetGate) = "fia_option_budget"
 
 function check(gate::FIAOptionBudgetGate, result::FIAPricingResult; kwargs...)
     if result.option_budget <= 0
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Option budget is zero or negative",
-            value = result.option_budget
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Option budget is zero or negative",
+            value=result.option_budget,
         )
     end
 
@@ -343,33 +335,30 @@ function check(gate::FIAOptionBudgetGate, result::FIAPricingResult; kwargs...)
 
     if ratio > 1 + gate.tolerance
         excess_pct = (ratio - 1) * 100
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Embedded option value $(round(result.embedded_option_value, digits=4)) " *
-                      "exceeds budget $(round(result.option_budget, digits=4)) by $(round(excess_pct, digits=1))%",
-            value = ratio,
-            threshold = 1 + gate.tolerance
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Embedded option value $(round(result.embedded_option_value, digits=4)) " *
+                    "exceeds budget $(round(result.option_budget, digits=4)) by $(round(excess_pct, digits=1))%",
+            value=ratio,
+            threshold=1 + gate.tolerance,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Option value within budget (ratio: $(round(ratio, digits=2)))",
-        value = ratio
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Option value within budget (ratio: $(round(ratio, digits=2)))",
+        value=ratio,
     )
 end
 
 # Skip for non-FIA results
 function check(gate::FIAOptionBudgetGate, result; kwargs...)
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Not a FIA result, skipping"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="Not a FIA result, skipping"
     )
 end
-
 
 """
     FIAExpectedCreditGate
@@ -383,47 +372,46 @@ struct FIAExpectedCreditGate <: AbstractValidationGate end
 
 gate_name(::FIAExpectedCreditGate) = "fia_expected_credit"
 
-function check(gate::FIAExpectedCreditGate, result::FIAPricingResult; cap_rate = nothing, kwargs...)
+function check(
+    gate::FIAExpectedCreditGate, result::FIAPricingResult; cap_rate=nothing, kwargs...
+)
     if result.expected_credit < -0.001  # Small tolerance for numerical error
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Expected credit $(round(result.expected_credit, digits=4)) is negative " *
-                      "(violates 0% floor)",
-            value = result.expected_credit,
-            threshold = 0.0
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Expected credit $(round(result.expected_credit, digits=4)) is negative " *
+                    "(violates 0% floor)",
+            value=result.expected_credit,
+            threshold=0.0,
         )
     end
 
     # Check against cap if provided
     if cap_rate !== nothing && result.expected_credit > cap_rate + 0.02
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Expected credit $(round(result.expected_credit, digits=4)) exceeds " *
-                      "cap rate $(round(cap_rate, digits=4))",
-            value = result.expected_credit,
-            threshold = cap_rate
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Expected credit $(round(result.expected_credit, digits=4)) exceeds " *
+                    "cap rate $(round(cap_rate, digits=4))",
+            value=result.expected_credit,
+            threshold=cap_rate,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Expected credit $(round(result.expected_credit, digits=4)) within bounds",
-        value = result.expected_credit
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Expected credit $(round(result.expected_credit, digits=4)) within bounds",
+        value=result.expected_credit,
     )
 end
 
 # Skip for non-FIA results
 function check(gate::FIAExpectedCreditGate, result; kwargs...)
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Not a FIA result, skipping"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="Not a FIA result, skipping"
     )
 end
-
 
 """
     RILAMaxLossGate
@@ -437,24 +425,26 @@ struct RILAMaxLossGate <: AbstractValidationGate end
 
 gate_name(::RILAMaxLossGate) = "rila_max_loss"
 
-function check(gate::RILAMaxLossGate, result::RILAPricingResult; buffer_rate = nothing, kwargs...)
+function check(
+    gate::RILAMaxLossGate, result::RILAPricingResult; buffer_rate=nothing, kwargs...
+)
     if result.max_loss < 0
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Max loss $(round(result.max_loss, digits=4)) is negative",
-            value = result.max_loss,
-            threshold = 0.0
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Max loss $(round(result.max_loss, digits=4)) is negative",
+            value=result.max_loss,
+            threshold=0.0,
         )
     end
 
     if result.max_loss > 1.0
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Max loss $(round(result.max_loss, digits=4)) exceeds 100%",
-            value = result.max_loss,
-            threshold = 1.0
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Max loss $(round(result.max_loss, digits=4)) exceeds 100%",
+            value=result.max_loss,
+            threshold=1.0,
         )
     end
 
@@ -463,46 +453,43 @@ function check(gate::RILAMaxLossGate, result::RILAPricingResult; buffer_rate = n
         if result.protection_type == :buffer
             expected_max_loss = 1.0 - buffer_rate
             if abs(result.max_loss - expected_max_loss) > 0.01
-                return GateResult(
-                    status = WARN,
-                    gate_name = gate_name(gate),
-                    message = "Buffer max loss $(round(result.max_loss, digits=4)) doesn't match " *
-                              "expected $(round(expected_max_loss, digits=4))",
-                    value = result.max_loss,
-                    threshold = expected_max_loss
+                return GateResult(;
+                    status=WARN,
+                    gate_name=gate_name(gate),
+                    message="Buffer max loss $(round(result.max_loss, digits=4)) doesn't match " *
+                            "expected $(round(expected_max_loss, digits=4))",
+                    value=result.max_loss,
+                    threshold=expected_max_loss,
                 )
             end
         elseif result.protection_type == :floor
             if abs(result.max_loss - buffer_rate) > 0.01
-                return GateResult(
-                    status = WARN,
-                    gate_name = gate_name(gate),
-                    message = "Floor max loss $(round(result.max_loss, digits=4)) doesn't match " *
-                              "floor rate $(round(buffer_rate, digits=4))",
-                    value = result.max_loss,
-                    threshold = buffer_rate
+                return GateResult(;
+                    status=WARN,
+                    gate_name=gate_name(gate),
+                    message="Floor max loss $(round(result.max_loss, digits=4)) doesn't match " *
+                            "floor rate $(round(buffer_rate, digits=4))",
+                    value=result.max_loss,
+                    threshold=buffer_rate,
                 )
             end
         end
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Max loss $(round(result.max_loss, digits=4)) is valid",
-        value = result.max_loss
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Max loss $(round(result.max_loss, digits=4)) is valid",
+        value=result.max_loss,
     )
 end
 
 # Skip for non-RILA results
 function check(gate::RILAMaxLossGate, result; kwargs...)
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Not a RILA result, skipping"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="Not a RILA result, skipping"
     )
 end
-
 
 """
     RILAProtectionValueGate
@@ -518,52 +505,54 @@ Check RILA protection value is positive and bounded.
 struct RILAProtectionValueGate <: AbstractValidationGate
     max_protection_pct::Float64
 
-    RILAProtectionValueGate(; max_protection_pct::Float64 = 0.50) = new(max_protection_pct)
+    RILAProtectionValueGate(; max_protection_pct::Float64=0.50) = new(max_protection_pct)
 end
 
 gate_name(::RILAProtectionValueGate) = "rila_protection_value"
 
-function check(gate::RILAProtectionValueGate, result::RILAPricingResult; premium::Float64 = 100.0, kwargs...)
+function check(
+    gate::RILAProtectionValueGate,
+    result::RILAPricingResult;
+    premium::Float64=100.0,
+    kwargs...,
+)
     if result.protection_value < 0
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Protection value $(round(result.protection_value, digits=4)) is negative",
-            value = result.protection_value,
-            threshold = 0.0
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Protection value $(round(result.protection_value, digits=4)) is negative",
+            value=result.protection_value,
+            threshold=0.0,
         )
     end
 
     max_protection = premium * gate.max_protection_pct
 
     if result.protection_value > max_protection
-        return GateResult(
-            status = WARN,
-            gate_name = gate_name(gate),
-            message = "Protection value $(round(result.protection_value, digits=4)) exceeds " *
-                      "$(round(gate.max_protection_pct * 100, digits=0))% of premium",
-            value = result.protection_value,
-            threshold = max_protection
+        return GateResult(;
+            status=WARN,
+            gate_name=gate_name(gate),
+            message="Protection value $(round(result.protection_value, digits=4)) exceeds " *
+                    "$(round(gate.max_protection_pct * 100, digits=0))% of premium",
+            value=result.protection_value,
+            threshold=max_protection,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Protection value $(round(result.protection_value, digits=4)) is valid",
-        value = result.protection_value
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Protection value $(round(result.protection_value, digits=4)) is valid",
+        value=result.protection_value,
     )
 end
 
 # Skip for non-RILA results
 function check(gate::RILAProtectionValueGate, result; kwargs...)
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Not a RILA result, skipping"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="Not a RILA result, skipping"
     )
 end
-
 
 """
     ArbitrageBoundsGate
@@ -577,56 +566,53 @@ struct ArbitrageBoundsGate <: AbstractValidationGate end
 
 gate_name(::ArbitrageBoundsGate) = "arbitrage_bounds"
 
-function check(gate::ArbitrageBoundsGate, result::FIAPricingResult; premium::Float64 = 100.0, kwargs...)
+function check(
+    gate::ArbitrageBoundsGate, result::FIAPricingResult; premium::Float64=100.0, kwargs...
+)
     # Check option value doesn't exceed premium
     if result.embedded_option_value > premium
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Option value $(round(result.embedded_option_value, digits=4)) exceeds " *
-                      "premium $(round(premium, digits=4)) (arbitrage violation)",
-            value = result.embedded_option_value,
-            threshold = premium
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Option value $(round(result.embedded_option_value, digits=4)) exceeds " *
+                    "premium $(round(premium, digits=4)) (arbitrage violation)",
+            value=result.embedded_option_value,
+            threshold=premium,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "No arbitrage violations detected"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="No arbitrage violations detected"
     )
 end
 
-function check(gate::ArbitrageBoundsGate, result::RILAPricingResult; premium::Float64 = 100.0, kwargs...)
+function check(
+    gate::ArbitrageBoundsGate, result::RILAPricingResult; premium::Float64=100.0, kwargs...
+)
     # Check protection value doesn't exceed max potential loss
     max_loss_value = premium * result.max_loss
     if result.protection_value > max_loss_value
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Protection value $(round(result.protection_value, digits=4)) exceeds " *
-                      "max loss value $(round(max_loss_value, digits=4))",
-            value = result.protection_value,
-            threshold = max_loss_value
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Protection value $(round(result.protection_value, digits=4)) exceeds " *
+                    "max loss value $(round(max_loss_value, digits=4))",
+            value=result.protection_value,
+            threshold=max_loss_value,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "No arbitrage violations detected"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="No arbitrage violations detected"
     )
 end
 
 # Default for other result types
 function check(gate::ArbitrageBoundsGate, result; kwargs...)
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "No arbitrage violations detected"
+    GateResult(;
+        status=PASS, gate_name=gate_name(gate), message="No arbitrage violations detected"
     )
 end
-
 
 """
     ProductParameterSanityGate
@@ -654,13 +640,15 @@ const MAX_SPREAD_RATE = 0.10
 
 gate_name(::ProductParameterSanityGate) = "product_parameter_sanity"
 
-function check(gate::ProductParameterSanityGate, result;
-               cap_rate = nothing,
-               participation_rate = nothing,
-               buffer_rate = nothing,
-               spread_rate = nothing,
-               kwargs...)
-
+function check(
+    gate::ProductParameterSanityGate,
+    result;
+    cap_rate=nothing,
+    participation_rate=nothing,
+    buffer_rate=nothing,
+    spread_rate=nothing,
+    kwargs...,
+)
     issues = String[]
 
     # Check cap rate
@@ -668,16 +656,25 @@ function check(gate::ProductParameterSanityGate, result;
         if cap_rate < 0
             push!(issues, "cap_rate $(round(cap_rate, digits=4)) is negative")
         elseif cap_rate > MAX_CAP_RATE
-            push!(issues, "cap_rate $(round(cap_rate, digits=4)) exceeds maximum $(round(MAX_CAP_RATE * 100, digits=0))%")
+            push!(
+                issues,
+                "cap_rate $(round(cap_rate, digits=4)) exceeds maximum $(round(MAX_CAP_RATE * 100, digits=0))%",
+            )
         end
     end
 
     # Check participation rate
     if participation_rate !== nothing
         if participation_rate <= 0
-            push!(issues, "participation_rate $(round(participation_rate, digits=4)) must be > 0")
+            push!(
+                issues,
+                "participation_rate $(round(participation_rate, digits=4)) must be > 0",
+            )
         elseif participation_rate > MAX_PARTICIPATION_RATE
-            push!(issues, "participation_rate $(round(participation_rate, digits=4)) exceeds maximum $(round(MAX_PARTICIPATION_RATE * 100, digits=0))%")
+            push!(
+                issues,
+                "participation_rate $(round(participation_rate, digits=4)) exceeds maximum $(round(MAX_PARTICIPATION_RATE * 100, digits=0))%",
+            )
         end
     end
 
@@ -686,7 +683,10 @@ function check(gate::ProductParameterSanityGate, result;
         if buffer_rate < 0
             push!(issues, "buffer_rate $(round(buffer_rate, digits=4)) is negative")
         elseif buffer_rate > MAX_BUFFER_RATE
-            push!(issues, "buffer_rate $(round(buffer_rate, digits=4)) exceeds maximum $(round(MAX_BUFFER_RATE * 100, digits=0))%")
+            push!(
+                issues,
+                "buffer_rate $(round(buffer_rate, digits=4)) exceeds maximum $(round(MAX_BUFFER_RATE * 100, digits=0))%",
+            )
         end
     end
 
@@ -695,26 +695,28 @@ function check(gate::ProductParameterSanityGate, result;
         if spread_rate < 0
             push!(issues, "spread_rate $(round(spread_rate, digits=4)) is negative")
         elseif spread_rate > MAX_SPREAD_RATE
-            push!(issues, "spread_rate $(round(spread_rate, digits=4)) exceeds maximum $(round(MAX_SPREAD_RATE * 100, digits=0))%")
+            push!(
+                issues,
+                "spread_rate $(round(spread_rate, digits=4)) exceeds maximum $(round(MAX_SPREAD_RATE * 100, digits=0))%",
+            )
         end
     end
 
     if !isempty(issues)
-        return GateResult(
-            status = HALT,
-            gate_name = gate_name(gate),
-            message = "Parameter sanity check failed: $(join(issues, "; "))",
-            value = issues
+        return GateResult(;
+            status=HALT,
+            gate_name=gate_name(gate),
+            message="Parameter sanity check failed: $(join(issues, "; "))",
+            value=issues,
         )
     end
 
-    GateResult(
-        status = PASS,
-        gate_name = gate_name(gate),
-        message = "Product parameters within sanity bounds"
+    GateResult(;
+        status=PASS,
+        gate_name=gate_name(gate),
+        message="Product parameters within sanity bounds",
     )
 end
-
 
 #=============================================================================
 # Standalone Validation Functions (Original API)
@@ -738,14 +740,14 @@ Similarly, a put cannot exceed K (ignoring discounting).
 - `HALT` if option_value > underlying_price + tolerance
 - `PASS` otherwise
 """
-function validate_no_arbitrage(option_value::Real, underlying_price::Real;
-                               tolerance::Real = 1e-10)
+function validate_no_arbitrage(
+    option_value::Real, underlying_price::Real; tolerance::Real=1e-10
+)
     if option_value > underlying_price + tolerance
         return HALT
     end
     return PASS
 end
-
 
 """
     validate_put_call_parity(call, put, S, K, r, q, τ; tolerance=0.01) -> ValidationResult
@@ -773,8 +775,9 @@ for any consistent pricing model.
 - `WARN` if 0.001 < |violation| <= tolerance
 - `PASS` otherwise
 """
-function validate_put_call_parity(call::Real, put::Real, S::Real, K::Real,
-                                  r::Real, q::Real, τ::Real; tolerance::Real = 0.01)
+function validate_put_call_parity(
+    call::Real, put::Real, S::Real, K::Real, r::Real, q::Real, τ::Real; tolerance::Real=0.01
+)
     # Put-call parity: C - P = S·e^(-qτ) - K·e^(-rτ)
     lhs = call - put
     rhs = S * exp(-q * τ) - K * exp(-r * τ)
@@ -787,7 +790,6 @@ function validate_put_call_parity(call::Real, put::Real, S::Real, K::Real,
     end
     return PASS
 end
-
 
 #=============================================================================
 # Validation Engine
@@ -819,7 +821,7 @@ end
 struct ValidationEngine
     gates::Vector{AbstractValidationGate}
 
-    function ValidationEngine(gates::Vector{<:AbstractValidationGate} = default_gates())
+    function ValidationEngine(gates::Vector{<:AbstractValidationGate}=default_gates())
         new(Vector{AbstractValidationGate}(gates))
     end
 end
@@ -834,7 +836,7 @@ function default_gates()::Vector{AbstractValidationGate}
         RILAMaxLossGate(),
         RILAProtectionValueGate(),
         ArbitrageBoundsGate(),
-        ProductParameterSanityGate()
+        ProductParameterSanityGate(),
     ]
 end
 
@@ -883,13 +885,12 @@ function validate_and_raise(engine::ValidationEngine, result; kwargs...)
         halt_messages = [g.message for g in halted_gates(report)]
         error(
             "CRITICAL: Validation failed. HALTs:\n" *
-            join(["  - $m" for m in halt_messages], "\n")
+            join(["  - $m" for m in halt_messages], "\n"),
         )
     end
 
     result
 end
-
 
 #=============================================================================
 # Convenience Functions
@@ -920,7 +921,6 @@ function validate_pricing_result(result; kwargs...)
     validate(engine, result; kwargs...)
 end
 
-
 """
     ensure_valid(result; context...) -> result
 
@@ -945,7 +945,6 @@ function ensure_valid(result; kwargs...)
     engine = ValidationEngine()
     validate_and_raise(engine, result; kwargs...)
 end
-
 
 #=============================================================================
 # Display Functions
@@ -975,7 +974,7 @@ end
 
 Print detailed validation report.
 """
-function print_validation_report(report::ValidationReport; io::IO = stdout)
+function print_validation_report(report::ValidationReport; io::IO=stdout)
     status = overall_status(report)
     status_str = status == PASS ? "PASSED ✓" : (status == WARN ? "WARNED ⚠" : "HALTED ✗")
 

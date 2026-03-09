@@ -18,7 +18,6 @@ References:
 - SOA 2018 VA GLB Utilization Study (Tables 1-17, 1-18, Figure 1-44)
 """
 
-
 # =============================================================================
 # Simple Withdrawal Model
 # =============================================================================
@@ -48,16 +47,13 @@ result.withdrawal_amount  # Actual withdrawal taken
 ```
 """
 function calculate_withdrawal(
-    config::WithdrawalConfig,
-    gwb::Real,
-    av::Real,
-    withdrawal_rate::Real,
-    age::Int
+    config::WithdrawalConfig, gwb::Real, av::Real, withdrawal_rate::Real, age::Int
 )
     # Validate inputs
     gwb >= 0 || throw(ArgumentError("GWB cannot be negative, got $gwb"))
     av >= 0 || throw(ArgumentError("AV cannot be negative, got $av"))
-    withdrawal_rate >= 0 || throw(ArgumentError("withdrawal_rate must be >= 0, got $withdrawal_rate"))
+    withdrawal_rate >= 0 ||
+        throw(ArgumentError("withdrawal_rate must be >= 0, got $withdrawal_rate"))
 
     # Maximum allowed withdrawal
     max_allowed = gwb * withdrawal_rate
@@ -68,7 +64,9 @@ function calculate_withdrawal(
     utilization_rate = config.base_utilization + age_adjustment
 
     # Apply bounds
-    utilization_rate = clamp(utilization_rate, config.min_utilization, config.max_utilization)
+    utilization_rate = clamp(
+        utilization_rate, config.min_utilization, config.max_utilization
+    )
 
     # Calculate withdrawal
     withdrawal_amount = utilization_rate * max_allowed
@@ -82,10 +80,9 @@ function calculate_withdrawal(
         max_allowed,
         1.0,  # No duration factor in simple model
         1.0 + age_adjustment / config.base_utilization,  # Relative age factor
-        1.0   # No ITM factor in simple model
+        1.0,   # No ITM factor in simple model
     )
 end
-
 
 # =============================================================================
 # SOA-Calibrated Withdrawal Model
@@ -128,12 +125,13 @@ function calculate_withdrawal(
     withdrawal_rate::Real,
     duration::Int,
     age::Int;
-    moneyness::Union{Real, Nothing} = nothing
+    moneyness::Union{Real,Nothing}=nothing,
 )
     # Validate inputs
     gwb >= 0 || throw(ArgumentError("GWB cannot be negative, got $gwb"))
     av >= 0 || throw(ArgumentError("AV cannot be negative, got $av"))
-    withdrawal_rate >= 0 || throw(ArgumentError("withdrawal_rate must be >= 0, got $withdrawal_rate"))
+    withdrawal_rate >= 0 ||
+        throw(ArgumentError("withdrawal_rate must be >= 0, got $withdrawal_rate"))
     duration > 0 || throw(ArgumentError("Duration must be positive, got $duration"))
 
     # Maximum allowed withdrawal
@@ -167,14 +165,13 @@ function calculate_withdrawal(
 
     # Combine factors
     utilization_rate = _combine_utilization_factors(
-        duration_factor,
-        age_factor,
-        itm_factor,
-        config.combination_method
+        duration_factor, age_factor, itm_factor, config.combination_method
     )
 
     # Apply bounds
-    utilization_rate = clamp(utilization_rate, config.min_utilization, config.max_utilization)
+    utilization_rate = clamp(
+        utilization_rate, config.min_utilization, config.max_utilization
+    )
 
     # Calculate withdrawal
     withdrawal_amount = utilization_rate * max_allowed
@@ -188,10 +185,9 @@ function calculate_withdrawal(
         max_allowed,
         duration_factor,
         age_factor,
-        itm_factor
+        itm_factor,
     )
 end
-
 
 """
     _combine_utilization_factors(duration_factor, age_factor, itm_factor, method) -> Float64
@@ -203,10 +199,7 @@ Combine utilization factors using specified method.
 - :additive: Simple average of duration and age, scaled by ITM
 """
 function _combine_utilization_factors(
-    duration_factor::Real,
-    age_factor::Real,
-    itm_factor::Real,
-    method::Symbol
+    duration_factor::Real, age_factor::Real, itm_factor::Real, method::Symbol
 )
     if method == :multiplicative
         # Use duration as base, adjust for age deviation from reference age (67)
@@ -229,7 +222,6 @@ function _combine_utilization_factors(
         throw(ArgumentError("method must be :multiplicative or :additive, got $method"))
     end
 end
-
 
 # =============================================================================
 # Path-Based Calculations
@@ -258,25 +250,23 @@ function calculate_path_withdrawals(
     gwb_path::Vector{<:Real},
     av_path::Vector{<:Real},
     withdrawal_rate::Real,
-    ages::Vector{Int}
+    ages::Vector{Int},
 )
     n = length(gwb_path)
-    length(av_path) == n || throw(ArgumentError(
-        "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
-    ))
-    length(ages) == n || throw(ArgumentError(
-        "Ages length must match path length: ages=$(length(ages)), path=$n"
-    ))
+    length(av_path) == n || throw(
+        ArgumentError(
+            "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
+        ),
+    )
+    length(ages) == n || throw(
+        ArgumentError("Ages length must match path length: ages=$(length(ages)), path=$n"),
+    )
 
     results = Vector{WithdrawalResult}(undef, n)
 
     for t in 1:n
         results[t] = calculate_withdrawal(
-            config,
-            gwb_path[t],
-            av_path[t],
-            withdrawal_rate,
-            ages[t]
+            config, gwb_path[t], av_path[t], withdrawal_rate, ages[t]
         )
     end
 
@@ -289,19 +279,23 @@ function calculate_path_withdrawals(
     av_path::Vector{<:Real},
     withdrawal_rate::Real,
     ages::Vector{Int};
-    moneyness_path::Union{Vector{<:Real}, Nothing} = nothing
+    moneyness_path::Union{Vector{<:Real},Nothing}=nothing,
 )
     n = length(gwb_path)
-    length(av_path) == n || throw(ArgumentError(
-        "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
-    ))
-    length(ages) == n || throw(ArgumentError(
-        "Ages length must match path length: ages=$(length(ages)), path=$n"
-    ))
+    length(av_path) == n || throw(
+        ArgumentError(
+            "Path lengths must match: gwb=$(length(gwb_path)), av=$(length(av_path))"
+        ),
+    )
+    length(ages) == n || throw(
+        ArgumentError("Ages length must match path length: ages=$(length(ages)), path=$n"),
+    )
     if moneyness_path !== nothing
-        length(moneyness_path) == n || throw(ArgumentError(
-            "Moneyness path length must match: moneyness=$(length(moneyness_path)), path=$n"
-        ))
+        length(moneyness_path) == n || throw(
+            ArgumentError(
+                "Moneyness path length must match: moneyness=$(length(moneyness_path)), path=$n",
+            ),
+        )
     end
 
     results = Vector{WithdrawalResult}(undef, n)
@@ -315,13 +309,12 @@ function calculate_path_withdrawals(
             withdrawal_rate,
             t,  # duration = time step (1-indexed)
             ages[t];
-            moneyness=m
+            moneyness=m,
         )
     end
 
     return results
 end
-
 
 # =============================================================================
 # Utility Functions
@@ -336,7 +329,6 @@ function total_withdrawals(results::Vector{WithdrawalResult})
     return sum(r.withdrawal_amount for r in results)
 end
 
-
 """
     average_utilization(results::Vector{WithdrawalResult}) -> Float64
 
@@ -347,7 +339,6 @@ function average_utilization(results::Vector{WithdrawalResult})
     return sum(r.utilization_rate for r in results) / length(results)
 end
 
-
 """
     withdrawal_amounts(results::Vector{WithdrawalResult}) -> Vector{Float64}
 
@@ -357,7 +348,6 @@ function withdrawal_amounts(results::Vector{WithdrawalResult})
     return [r.withdrawal_amount for r in results]
 end
 
-
 """
     utilization_rates(results::Vector{WithdrawalResult}) -> Vector{Float64}
 
@@ -366,7 +356,6 @@ Extract utilization rates from results.
 function utilization_rates(results::Vector{WithdrawalResult})
     return [r.utilization_rate for r in results]
 end
-
 
 # =============================================================================
 # Withdrawal Efficiency Metrics
@@ -391,7 +380,6 @@ function withdrawal_efficiency(withdrawn::Real, max_allowed::Real)
     return withdrawn / max_allowed
 end
 
-
 """
     path_withdrawal_efficiency(results::Vector{WithdrawalResult}) -> Float64
 
@@ -399,10 +387,11 @@ Calculate average withdrawal efficiency across a path.
 """
 function path_withdrawal_efficiency(results::Vector{WithdrawalResult})
     isempty(results) && return 0.0
-    efficiencies = [withdrawal_efficiency(r.withdrawal_amount, r.max_allowed) for r in results]
+    efficiencies = [
+        withdrawal_efficiency(r.withdrawal_amount, r.max_allowed) for r in results
+    ]
     return sum(efficiencies) / length(efficiencies)
 end
-
 
 # =============================================================================
 # Diagnostic Functions
@@ -422,9 +411,9 @@ Generate utilization surface across duration and age dimensions.
 - `Matrix{Float64}`: Utilization rates (rows=duration, cols=age)
 """
 function get_utilization_surface(;
-    duration_range::AbstractRange{Int} = 1:15,
-    age_range::AbstractRange{Int} = 55:85,
-    moneyness::Real = 1.0
+    duration_range::AbstractRange{Int}=1:15,
+    age_range::AbstractRange{Int}=55:85,
+    moneyness::Real=1.0,
 )
     n_dur = length(duration_range)
     n_age = length(age_range)
@@ -438,7 +427,6 @@ function get_utilization_surface(;
 
     return surface
 end
-
 
 """
     utilization_by_itm(; moneyness_range=0.8:0.05:2.0, age=70, duration=5) -> Dict{Float64, Float64}
@@ -454,12 +442,9 @@ Calculate utilization across different ITM levels.
 - `Dict{Float64, Float64}`: Mapping of moneyness to utilization rate
 """
 function utilization_by_itm(;
-    moneyness_range::AbstractRange = 0.8:0.05:2.0,
-    age::Int = 70,
-    duration::Int = 5
+    moneyness_range::AbstractRange=0.8:0.05:2.0, age::Int=70, duration::Int=5
 )
     return Dict(
-        m => combined_utilization(duration, age; moneyness=m)
-        for m in moneyness_range
+        m => combined_utilization(duration, age; moneyness=m) for m in moneyness_range
     )
 end

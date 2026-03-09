@@ -13,7 +13,6 @@ Prices RILA products with partial downside protection:
 using StableRNGs
 using Statistics: mean
 
-
 """
     price_rila(product, market, premium; kwargs...) -> RILAPricingResult
 
@@ -43,10 +42,10 @@ result = price_rila(product, market)
 function price_rila(
     product::RILAProduct{T},
     market::MarketParams{T},
-    premium::Real = T(100);
-    n_paths::Int = 10000,
-    seed::Union{Int, Nothing} = nothing
-) where T<:Real
+    premium::Real=T(100);
+    n_paths::Int=10000,
+    seed::Union{Int,Nothing}=nothing,
+) where {T<:Real}
     term = T(product.term_years)
     premium_t = T(premium)
 
@@ -82,7 +81,7 @@ function price_rila(
 
     protection_type = product.is_buffer ? :buffer : :floor
 
-    details = Dict{Symbol, Any}(
+    details = Dict{Symbol,Any}(
         :term_years => term,
         :premium => premium_t,
         :discount_factor => discount_factor,
@@ -97,10 +96,9 @@ function price_rila(
         expected_return,
         max_loss,
         breakeven,
-        details
+        details,
     )
 end
-
 
 """
     _price_protection(product, market, term, premium) -> Float64
@@ -111,11 +109,8 @@ Price the downside protection component.
 [T1] Floor = Long OTM put
 """
 function _price_protection(
-    product::RILAProduct{T},
-    market::MarketParams{T},
-    term::T,
-    premium::T
-) where T<:Real
+    product::RILAProduct{T}, market::MarketParams{T}, term::T, premium::T
+) where {T<:Real}
     S = market.spot
     r = market.risk_free_rate
     q = market.dividend_yield
@@ -146,18 +141,14 @@ function _price_protection(
     return (protection / S) * premium
 end
 
-
 """
     _price_upside(cap_rate, market, term, premium) -> Float64
 
 Price the capped upside component.
 """
 function _price_upside(
-    cap_rate::Union{T, Nothing},
-    market::MarketParams{T},
-    term::T,
-    premium::T
-) where T<:Real
+    cap_rate::Union{T,Nothing}, market::MarketParams{T}, term::T, premium::T
+) where {T<:Real}
     S = market.spot
     r = market.risk_free_rate
     q = market.dividend_yield
@@ -179,7 +170,6 @@ function _price_upside(
     return (upside / S) * premium
 end
 
-
 """
     _calculate_rila_expected_return(product, market, term, n_paths, seed) -> Float64
 
@@ -190,8 +180,8 @@ function _calculate_rila_expected_return(
     market::MarketParams{T},
     term::T,
     n_paths::Int,
-    seed::Union{Int, Nothing}
-) where T<:Real
+    seed::Union{Int,Nothing},
+) where {T<:Real}
     rng = seed === nothing ? StableRNG(42) : StableRNG(seed)
 
     S = market.spot
@@ -221,20 +211,18 @@ function _calculate_rila_expected_return(
     mean(returns)
 end
 
-
 """
     _create_rila_payoff(product) -> AbstractPayoff
 
 Create the appropriate RILA payoff object.
 """
-function _create_rila_payoff(product::RILAProduct{T}) where T<:Real
+function _create_rila_payoff(product::RILAProduct{T}) where {T<:Real}
     if product.is_buffer
         BufferPayoff(product.buffer_rate, product.cap_rate)
     else
         FloorPayoff(product.floor_rate, product.cap_rate)
     end
 end
-
 
 """
     rila_greeks(product, market; term_years) -> NamedTuple
@@ -257,8 +245,8 @@ Returns the combined position Greeks.
 function rila_greeks(
     product::RILAProduct{T},
     market::MarketParams{T};
-    term_years::Union{Real, Nothing} = nothing
-) where T<:Real
+    term_years::Union{Real,Nothing}=nothing,
+) where {T<:Real}
     term = term_years === nothing ? T(product.term_years) : T(term_years)
 
     S = market.spot
@@ -274,12 +262,12 @@ function rila_greeks(
             atm_greeks = black_scholes_greeks(S, S, r, q, σ, term)
 
             return (
-                delta = -atm_greeks.delta,  # Put delta is negative
-                gamma = atm_greeks.gamma,
-                vega = atm_greeks.vega,
-                theta = -atm_greeks.theta,  # Time decay sign adjustment
-                rho = -atm_greeks.rho,
-                protection_type = :buffer
+                delta=(-atm_greeks.delta),  # Put delta is negative
+                gamma=atm_greeks.gamma,
+                vega=atm_greeks.vega,
+                theta=(-atm_greeks.theta),  # Time decay sign adjustment
+                rho=(-atm_greeks.rho),
+                protection_type=:buffer,
             )
         else
             # Buffer = Long ATM put - Short OTM put
@@ -298,12 +286,12 @@ function rila_greeks(
             put_delta_otm = _cdf_normal(d1_otm) - 1
 
             return (
-                delta = put_delta_atm - put_delta_otm,
-                gamma = atm_greeks.gamma - otm_greeks.gamma,
-                vega = atm_greeks.vega - otm_greeks.vega,
-                theta = atm_greeks.theta - otm_greeks.theta,
-                rho = atm_greeks.rho - otm_greeks.rho,
-                protection_type = :buffer
+                delta=put_delta_atm - put_delta_otm,
+                gamma=(atm_greeks.gamma - otm_greeks.gamma),
+                vega=(atm_greeks.vega - otm_greeks.vega),
+                theta=(atm_greeks.theta - otm_greeks.theta),
+                rho=(atm_greeks.rho - otm_greeks.rho),
+                protection_type=:buffer,
             )
         end
     else
@@ -317,16 +305,15 @@ function rila_greeks(
         put_delta_otm = _cdf_normal(d1_otm) - 1
 
         return (
-            delta = put_delta_otm,
-            gamma = otm_greeks.gamma,
-            vega = otm_greeks.vega,
-            theta = otm_greeks.theta,
-            rho = otm_greeks.rho,
-            protection_type = :floor
+            delta=put_delta_otm,
+            gamma=otm_greeks.gamma,
+            vega=otm_greeks.vega,
+            theta=otm_greeks.theta,
+            rho=otm_greeks.rho,
+            protection_type=:floor,
         )
     end
 end
-
 
 """
     compare_buffer_vs_floor(market, buffer_rate, floor_rate, cap_rate, term_years; kwargs...) -> NamedTuple
@@ -349,9 +336,9 @@ function compare_buffer_vs_floor(
     floor_rate::Real,
     cap_rate::Real,
     term_years::Int;
-    n_paths::Int = 10000,
-    seed::Union{Int, Nothing} = nothing
-) where T<:Real
+    n_paths::Int=10000,
+    seed::Union{Int,Nothing}=nothing,
+) where {T<:Real}
     buffer_product = RILAProduct{T}(
         T(buffer_rate), nothing, T(cap_rate), true, term_years, "", "Buffer"
     )
@@ -364,19 +351,19 @@ function compare_buffer_vs_floor(
     floor_result = price_rila(floor_product, market; n_paths=n_paths, seed=seed)
 
     (
-        buffer = (
-            protection_value = buffer_result.protection_value,
-            upside_value = buffer_result.upside_value,
-            expected_return = buffer_result.expected_return,
-            max_loss = buffer_result.max_loss,
-            present_value = buffer_result.present_value,
+        buffer=(
+            protection_value=buffer_result.protection_value,
+            upside_value=buffer_result.upside_value,
+            expected_return=buffer_result.expected_return,
+            max_loss=buffer_result.max_loss,
+            present_value=buffer_result.present_value,
         ),
-        floor = (
-            protection_value = floor_result.protection_value,
-            upside_value = floor_result.upside_value,
-            expected_return = floor_result.expected_return,
-            max_loss = floor_result.max_loss,
-            present_value = floor_result.present_value,
-        )
+        floor=(
+            protection_value=floor_result.protection_value,
+            upside_value=floor_result.upside_value,
+            expected_return=floor_result.expected_return,
+            max_loss=floor_result.max_loss,
+            present_value=floor_result.present_value,
+        ),
     )
 end

@@ -67,24 +67,25 @@ result.reserve > 0  # true
 mutable struct VM22Calculator
     n_scenarios::Int
     projection_years::Int
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     scenario_generator::ScenarioGenerator
 
-    function VM22Calculator(n_scenarios::Int, projection_years::Int, seed::Union{Int, Nothing})
-        sg = ScenarioGenerator(n_scenarios=n_scenarios, projection_years=projection_years, seed=seed)
+    function VM22Calculator(
+        n_scenarios::Int, projection_years::Int, seed::Union{Int,Nothing}
+    )
+        sg = ScenarioGenerator(;
+            n_scenarios=n_scenarios, projection_years=projection_years, seed=seed
+        )
         new(n_scenarios, projection_years, seed, sg)
     end
 end
 
 # Keyword constructor
 function VM22Calculator(;
-    n_scenarios::Int = 1000,
-    projection_years::Int = 30,
-    seed::Union{Int, Nothing} = nothing
+    n_scenarios::Int=1000, projection_years::Int=30, seed::Union{Int,Nothing}=nothing
 )
     VM22Calculator(n_scenarios, projection_years, seed)
 end
-
 
 #=============================================================================
 # Core Calculations
@@ -120,9 +121,9 @@ result.reserve >= 0  # true
 function calculate_reserve(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy;
-    market_rate::Union{Float64, Nothing} = nothing,
-    yield_curve::Union{YieldCurve, Nothing} = nothing,
-    lapse_rate::Float64 = 0.05
+    market_rate::Union{Float64,Nothing}=nothing,
+    yield_curve::Union{YieldCurve,Nothing}=nothing,
+    lapse_rate::Float64=0.05,
 )::VM22Result
     # Default to flat 4% yield curve if neither provided
     if yield_curve === nothing && market_rate === nothing
@@ -151,32 +152,31 @@ function calculate_reserve(
         # Use Deterministic Reserve
         dr = calculate_deterministic_reserve(calc, policy, market_rate, lapse_rate)
         reserve = max(npr, dr)
-        return VM22Result(
-            reserve = reserve,
-            net_premium_reserve = npr,
-            deterministic_reserve = dr,
-            stochastic_reserve = nothing,
-            reserve_type = DETERMINISTIC,
-            set_passed = set_result.passed,
-            sst_passed = sst_passed
+        return VM22Result(;
+            reserve=reserve,
+            net_premium_reserve=npr,
+            deterministic_reserve=dr,
+            stochastic_reserve=nothing,
+            reserve_type=DETERMINISTIC,
+            set_passed=set_result.passed,
+            sst_passed=sst_passed,
         )
     else
         # Use Stochastic Reserve
         dr = calculate_deterministic_reserve(calc, policy, market_rate, lapse_rate)
         sr = calculate_stochastic_reserve(calc, policy, market_rate, lapse_rate)
         reserve = max(npr, dr, sr)
-        return VM22Result(
-            reserve = reserve,
-            net_premium_reserve = npr,
-            deterministic_reserve = dr,
-            stochastic_reserve = sr,
-            reserve_type = STOCHASTIC,
-            set_passed = set_result.passed,
-            sst_passed = sst_passed
+        return VM22Result(;
+            reserve=reserve,
+            net_premium_reserve=npr,
+            deterministic_reserve=dr,
+            stochastic_reserve=sr,
+            reserve_type=STOCHASTIC,
+            set_passed=set_result.passed,
+            sst_passed=sst_passed,
         )
     end
 end
-
 
 """
     calculate_net_premium_reserve(calc, policy, market_rate)
@@ -194,9 +194,7 @@ Calculate Net Premium Reserve (NPR).
 - `Float64`: Net Premium Reserve
 """
 function calculate_net_premium_reserve(
-    calc::VM22Calculator,
-    policy::FixedAnnuityPolicy,
-    market_rate::Float64
+    calc::VM22Calculator, policy::FixedAnnuityPolicy, market_rate::Float64
 )::Float64
     # NPR = PV of guaranteed maturity value
     remaining_years = policy.term_years - policy.current_year
@@ -210,7 +208,6 @@ function calculate_net_premium_reserve(
 
     npr
 end
-
 
 """
     calculate_deterministic_reserve(calc, policy, market_rate, lapse_rate)
@@ -232,11 +229,10 @@ function calculate_deterministic_reserve(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy,
     market_rate::Float64,
-    lapse_rate::Float64
+    lapse_rate::Float64,
 )::Float64
-    scenarios = generate_deterministic_scenarios(
-        n_years = calc.projection_years,
-        base_rate = market_rate
+    scenarios = generate_deterministic_scenarios(;
+        n_years=calc.projection_years, base_rate=market_rate
     )
 
     # Run each scenario
@@ -249,7 +245,6 @@ function calculate_deterministic_reserve(
     # DR = max of deterministic scenarios
     maximum(pvs)
 end
-
 
 """
     calculate_stochastic_reserve(calc, policy, market_rate, lapse_rate)
@@ -271,9 +266,9 @@ function calculate_stochastic_reserve(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy,
     market_rate::Float64,
-    lapse_rate::Float64
+    lapse_rate::Float64,
 )::Float64
-    ag43 = generate_ag43_scenarios(calc.scenario_generator, initial_rate=market_rate)
+    ag43 = generate_ag43_scenarios(calc.scenario_generator; initial_rate=market_rate)
 
     # Run each scenario
     pvs = Float64[]
@@ -283,11 +278,10 @@ function calculate_stochastic_reserve(
     end
 
     # CTE70 = average of worst 30%
-    sorted_pvs = sort(pvs, rev=true)
+    sorted_pvs = sort(pvs; rev=true)
     n_tail = max(1, Int(floor(length(sorted_pvs) * 0.30)))
     mean(sorted_pvs[1:n_tail])
 end
-
 
 """
     stochastic_exclusion_test(calc, policy, market_rate; threshold)
@@ -312,7 +306,7 @@ function stochastic_exclusion_test(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy,
     market_rate::Float64;
-    threshold::Float64 = 1.10
+    threshold::Float64=1.10,
 )::StochasticExclusionResult
     remaining_years = policy.term_years - policy.current_year
     av = get_av(policy)
@@ -331,7 +325,6 @@ function stochastic_exclusion_test(
 
     StochasticExclusionResult(passed, ratio, threshold)
 end
-
 
 """
     single_scenario_test(calc, policy, market_rate, lapse_rate)
@@ -354,7 +347,7 @@ function single_scenario_test(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy,
     market_rate::Float64,
-    lapse_rate::Float64
+    lapse_rate::Float64,
 )::Bool
     # Stress scenario: rates drop 2%
     stressed_rate = max(0.0, market_rate - 0.02)
@@ -372,7 +365,6 @@ function single_scenario_test(
     increase < 0.20
 end
 
-
 #=============================================================================
 # Internal Helper Functions
 =============================================================================#
@@ -386,7 +378,7 @@ function _run_fixed_scenario(
     calc::VM22Calculator,
     policy::FixedAnnuityPolicy,
     rate_path::Vector{Float64},
-    lapse_rate::Float64
+    lapse_rate::Float64,
 )::Float64
     remaining_years = policy.term_years - policy.current_year
     n_years = min(remaining_years, length(rate_path))
@@ -423,7 +415,6 @@ function _run_fixed_scenario(
     pv_liability
 end
 
-
 #=============================================================================
 # Convenience Functions
 =============================================================================#
@@ -454,29 +445,28 @@ haskey(comparison, "npr")  # true
 """
 function compare_reserve_methods(
     policy::FixedAnnuityPolicy;
-    market_rate::Float64 = 0.04,
-    lapse_rate::Float64 = 0.05,
-    n_scenarios::Int = 1000,
-    seed::Union{Int, Nothing} = nothing
-)::Dict{String, Any}
-    calc = VM22Calculator(n_scenarios=n_scenarios, seed=seed)
+    market_rate::Float64=0.04,
+    lapse_rate::Float64=0.05,
+    n_scenarios::Int=1000,
+    seed::Union{Int,Nothing}=nothing,
+)::Dict{String,Any}
+    calc = VM22Calculator(; n_scenarios=n_scenarios, seed=seed)
 
     npr = calculate_net_premium_reserve(calc, policy, market_rate)
     dr = calculate_deterministic_reserve(calc, policy, market_rate, lapse_rate)
     sr = calculate_stochastic_reserve(calc, policy, market_rate, lapse_rate)
     set_result = stochastic_exclusion_test(calc, policy, market_rate)
 
-    Dict{String, Any}(
+    Dict{String,Any}(
         "npr" => npr,
         "deterministic_reserve" => dr,
         "stochastic_reserve" => sr,
         "final_reserve" => max(npr, dr),
         "set_passed" => set_result.passed,
         "set_ratio" => set_result.ratio,
-        "sr_vs_dr" => dr > 0 ? (sr - dr) / dr : 0.0
+        "sr_vs_dr" => dr > 0 ? (sr - dr) / dr : 0.0,
     )
 end
-
 
 """
     vm22_sensitivity(policy; market_rate, lapse_rate, seed)
@@ -503,37 +493,45 @@ haskey(sens, "base_reserve")  # true
 """
 function vm22_sensitivity(
     policy::FixedAnnuityPolicy;
-    market_rate::Float64 = 0.04,
-    lapse_rate::Float64 = 0.05,
-    seed::Union{Int, Nothing} = nothing
-)::Dict{String, Any}
-    calc = VM22Calculator(n_scenarios=500, seed=seed)
+    market_rate::Float64=0.04,
+    lapse_rate::Float64=0.05,
+    seed::Union{Int,Nothing}=nothing,
+)::Dict{String,Any}
+    calc = VM22Calculator(; n_scenarios=500, seed=seed)
 
     # Base case
-    base = calculate_reserve(calc, policy, market_rate=market_rate, lapse_rate=lapse_rate)
+    base = calculate_reserve(calc, policy; market_rate=market_rate, lapse_rate=lapse_rate)
 
     # Rate up +1%
-    rate_up = calculate_reserve(calc, policy, market_rate=market_rate + 0.01, lapse_rate=lapse_rate)
+    rate_up = calculate_reserve(
+        calc, policy; market_rate=market_rate + 0.01, lapse_rate=lapse_rate
+    )
 
     # Rate down -1%
-    rate_down = calculate_reserve(calc, policy, market_rate=max(0.0, market_rate - 0.01), lapse_rate=lapse_rate)
+    rate_down = calculate_reserve(
+        calc, policy; market_rate=max(0.0, market_rate - 0.01), lapse_rate=lapse_rate
+    )
 
     # Lapse up 2x
-    lapse_up = calculate_reserve(calc, policy, market_rate=market_rate, lapse_rate=lapse_rate * 2)
+    lapse_up = calculate_reserve(
+        calc, policy; market_rate=market_rate, lapse_rate=lapse_rate * 2
+    )
 
     # Lapse down 0.5x
-    lapse_down = calculate_reserve(calc, policy, market_rate=market_rate, lapse_rate=lapse_rate * 0.5)
+    lapse_down = calculate_reserve(
+        calc, policy; market_rate=market_rate, lapse_rate=lapse_rate * 0.5
+    )
 
-    Dict{String, Any}(
+    Dict{String,Any}(
         "base_reserve" => base.reserve,
         "base_type" => string(base.reserve_type),
         "rate_up_1pct" => rate_up.reserve,
-        "rate_sensitivity" => base.reserve > 0 ?
-            (rate_up.reserve - base.reserve) / base.reserve : 0.0,
+        "rate_sensitivity" =>
+            base.reserve > 0 ? (rate_up.reserve - base.reserve) / base.reserve : 0.0,
         "rate_down_1pct" => rate_down.reserve,
         "lapse_up_2x" => lapse_up.reserve,
-        "lapse_sensitivity" => base.reserve > 0 ?
-            (lapse_up.reserve - base.reserve) / base.reserve : 0.0,
-        "lapse_down_05x" => lapse_down.reserve
+        "lapse_sensitivity" =>
+            base.reserve > 0 ? (lapse_up.reserve - base.reserve) / base.reserve : 0.0,
+        "lapse_down_05x" => lapse_down.reserve,
     )
 end

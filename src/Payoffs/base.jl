@@ -36,7 +36,6 @@ downside protection through buffers or floors.
 """
 abstract type RILAPayoff <: AbstractPayoff end
 
-
 """
     PayoffResult{T}
 
@@ -56,13 +55,14 @@ struct PayoffResult{T<:Real}
 end
 
 # Convenience constructor
-function PayoffResult(credited_return::T;
-                      cap_applied::Bool=false,
-                      floor_applied::Bool=false,
-                      buffer_applied::Bool=false) where T<:Real
+function PayoffResult(
+    credited_return::T;
+    cap_applied::Bool=false,
+    floor_applied::Bool=false,
+    buffer_applied::Bool=false,
+) where {T<:Real}
     PayoffResult(credited_return, cap_applied, floor_applied, buffer_applied)
 end
-
 
 """
     calculate(payoff::AbstractPayoff, index_return::Real) -> PayoffResult

@@ -7,7 +7,6 @@ Defines product specifications and pricing result structures for:
 - RILA (Registered Index-Linked Annuity)
 """
 
-
 # =============================================================================
 # Pricing Results
 # =============================================================================
@@ -26,20 +25,20 @@ Standard pricing result for annuity products.
 struct PricingResult{T<:Real}
     present_value::T
     duration::T
-    convexity::Union{T, Nothing}
-    details::Dict{Symbol, Any}
+    convexity::Union{T,Nothing}
+    details::Dict{Symbol,Any}
 
     function PricingResult(
         present_value::T,
         duration::T,
-        convexity::Union{T, Nothing},
-        details::Dict{Symbol, Any}
-    ) where T<:Real
-        present_value >= 0 || throw(ArgumentError("present_value must be >= 0, got $present_value"))
+        convexity::Union{T,Nothing},
+        details::Dict{Symbol,Any},
+    ) where {T<:Real}
+        present_value >= 0 ||
+            throw(ArgumentError("present_value must be >= 0, got $present_value"))
         new{T}(present_value, duration, convexity, details)
     end
 end
-
 
 """
     FIAPricingResult{T<:Real}
@@ -62,9 +61,8 @@ struct FIAPricingResult{T<:Real}
     fair_cap::T
     fair_participation::T
     expected_credit::T
-    details::Dict{Symbol, Any}
+    details::Dict{Symbol,Any}
 end
-
 
 """
     RILAPricingResult{T<:Real}
@@ -89,9 +87,8 @@ struct RILAPricingResult{T<:Real}
     expected_return::T
     max_loss::T
     breakeven_return::T
-    details::Dict{Symbol, Any}
+    details::Dict{Symbol,Any}
 end
-
 
 # =============================================================================
 # Market Parameters
@@ -120,7 +117,9 @@ struct MarketParams{T<:Real}
     dividend_yield::T
     volatility::T
 
-    function MarketParams(spot::T, risk_free_rate::T, dividend_yield::T, volatility::T) where T<:Real
+    function MarketParams(
+        spot::T, risk_free_rate::T, dividend_yield::T, volatility::T
+    ) where {T<:Real}
         spot > 0 || throw(ArgumentError("spot must be > 0, got $spot"))
         volatility >= 0 || throw(ArgumentError("volatility must be >= 0, got $volatility"))
         new{T}(spot, risk_free_rate, dividend_yield, volatility)
@@ -129,15 +128,13 @@ end
 
 # Convenience constructor with keywords (defaults to Float64)
 function MarketParams(;
-    spot::Real,
-    risk_free_rate::Real,
-    dividend_yield::Real = 0.0,
-    volatility::Real
+    spot::Real, risk_free_rate::Real, dividend_yield::Real=0.0, volatility::Real
 )
-    T = promote_type(typeof(spot), typeof(risk_free_rate), typeof(dividend_yield), typeof(volatility))
+    T = promote_type(
+        typeof(spot), typeof(risk_free_rate), typeof(dividend_yield), typeof(volatility)
+    )
     MarketParams(T(spot), T(risk_free_rate), T(dividend_yield), T(volatility))
 end
-
 
 # =============================================================================
 # Product Specifications
@@ -166,11 +163,8 @@ struct MYGAProduct{T<:Real}
     product_name::String
 
     function MYGAProduct(
-        fixed_rate::T,
-        guarantee_duration::Int,
-        company_name::String,
-        product_name::String
-    ) where T<:Real
+        fixed_rate::T, guarantee_duration::Int, company_name::String, product_name::String
+    ) where {T<:Real}
         fixed_rate >= 0 || throw(ArgumentError("fixed_rate must be >= 0"))
         guarantee_duration > 0 || throw(ArgumentError("guarantee_duration must be > 0"))
         new{T}(fixed_rate, guarantee_duration, company_name, product_name)
@@ -179,14 +173,10 @@ end
 
 # Keyword constructor
 function MYGAProduct(;
-    fixed_rate::T,
-    guarantee_duration::Int,
-    company_name::String = "",
-    product_name::String = ""
-) where T<:Real
+    fixed_rate::T, guarantee_duration::Int, company_name::String="", product_name::String=""
+) where {T<:Real}
     MYGAProduct(fixed_rate, guarantee_duration, company_name, product_name)
 end
-
 
 """
     FIAProduct{T<:Real}
@@ -214,47 +204,58 @@ product = FIAProduct(participation_rate=0.80, term_years=1)
 ```
 """
 struct FIAProduct{T<:Real}
-    cap_rate::Union{T, Nothing}
-    participation_rate::Union{T, Nothing}
-    spread_rate::Union{T, Nothing}
-    trigger_rate::Union{T, Nothing}
+    cap_rate::Union{T,Nothing}
+    participation_rate::Union{T,Nothing}
+    spread_rate::Union{T,Nothing}
+    trigger_rate::Union{T,Nothing}
     term_years::Int
     company_name::String
     product_name::String
 
     function FIAProduct{T}(
-        cap_rate::Union{T, Nothing},
-        participation_rate::Union{T, Nothing},
-        spread_rate::Union{T, Nothing},
-        trigger_rate::Union{T, Nothing},
+        cap_rate::Union{T,Nothing},
+        participation_rate::Union{T,Nothing},
+        spread_rate::Union{T,Nothing},
+        trigger_rate::Union{T,Nothing},
         term_years::Int,
         company_name::String,
-        product_name::String
-    ) where T<:Real
+        product_name::String,
+    ) where {T<:Real}
         term_years > 0 || throw(ArgumentError("term_years must be > 0"))
 
         # At least one crediting method required
-        has_method = cap_rate !== nothing ||
-                     participation_rate !== nothing ||
-                     spread_rate !== nothing ||
-                     trigger_rate !== nothing
-        has_method || throw(ArgumentError(
-            "FIA must have at least one crediting method (cap_rate, participation_rate, spread_rate, or trigger_rate)"
-        ))
+        has_method =
+            cap_rate !== nothing ||
+            participation_rate !== nothing ||
+            spread_rate !== nothing ||
+            trigger_rate !== nothing
+        has_method || throw(
+            ArgumentError(
+                "FIA must have at least one crediting method (cap_rate, participation_rate, spread_rate, or trigger_rate)",
+            ),
+        )
 
-        new{T}(cap_rate, participation_rate, spread_rate, trigger_rate, term_years, company_name, product_name)
+        new{T}(
+            cap_rate,
+            participation_rate,
+            spread_rate,
+            trigger_rate,
+            term_years,
+            company_name,
+            product_name,
+        )
     end
 end
 
 # Keyword constructor (defaults to Float64)
 function FIAProduct(;
-    cap_rate::Union{Real, Nothing} = nothing,
-    participation_rate::Union{Real, Nothing} = nothing,
-    spread_rate::Union{Real, Nothing} = nothing,
-    trigger_rate::Union{Real, Nothing} = nothing,
-    term_years::Int = 1,
-    company_name::String = "",
-    product_name::String = ""
+    cap_rate::Union{Real,Nothing}=nothing,
+    participation_rate::Union{Real,Nothing}=nothing,
+    spread_rate::Union{Real,Nothing}=nothing,
+    trigger_rate::Union{Real,Nothing}=nothing,
+    term_years::Int=1,
+    company_name::String="",
+    product_name::String="",
 )
     # Convert to Float64
     cap = cap_rate === nothing ? nothing : Float64(cap_rate)
@@ -263,7 +264,6 @@ function FIAProduct(;
     trg = trigger_rate === nothing ? nothing : Float64(trigger_rate)
     FIAProduct{Float64}(cap, par, spr, trg, term_years, company_name, product_name)
 end
-
 
 """
     RILAProduct{T<:Real}
@@ -291,47 +291,58 @@ product = RILAProduct(floor_rate=-0.10, cap_rate=0.25, is_buffer=false, term_yea
 ```
 """
 struct RILAProduct{T<:Real}
-    buffer_rate::Union{T, Nothing}
-    floor_rate::Union{T, Nothing}
-    cap_rate::Union{T, Nothing}
+    buffer_rate::Union{T,Nothing}
+    floor_rate::Union{T,Nothing}
+    cap_rate::Union{T,Nothing}
     is_buffer::Bool
     term_years::Int
     company_name::String
     product_name::String
 
     function RILAProduct{T}(
-        buffer_rate::Union{T, Nothing},
-        floor_rate::Union{T, Nothing},
-        cap_rate::Union{T, Nothing},
+        buffer_rate::Union{T,Nothing},
+        floor_rate::Union{T,Nothing},
+        cap_rate::Union{T,Nothing},
         is_buffer::Bool,
         term_years::Int,
         company_name::String,
-        product_name::String
-    ) where T<:Real
+        product_name::String,
+    ) where {T<:Real}
         term_years > 0 || throw(ArgumentError("term_years must be > 0"))
 
         # Validate protection specified
         if is_buffer
-            buffer_rate !== nothing || throw(ArgumentError("buffer_rate required for buffer protection"))
+            buffer_rate !== nothing ||
+                throw(ArgumentError("buffer_rate required for buffer protection"))
             buffer_rate >= 0 || throw(ArgumentError("buffer_rate must be >= 0"))
         else
-            floor_rate !== nothing || throw(ArgumentError("floor_rate required for floor protection"))
-            floor_rate <= 0 || throw(ArgumentError("floor_rate must be <= 0 (e.g., -0.10 for -10% floor)"))
+            floor_rate !== nothing ||
+                throw(ArgumentError("floor_rate required for floor protection"))
+            floor_rate <= 0 ||
+                throw(ArgumentError("floor_rate must be <= 0 (e.g., -0.10 for -10% floor)"))
         end
 
-        new{T}(buffer_rate, floor_rate, cap_rate, is_buffer, term_years, company_name, product_name)
+        new{T}(
+            buffer_rate,
+            floor_rate,
+            cap_rate,
+            is_buffer,
+            term_years,
+            company_name,
+            product_name,
+        )
     end
 end
 
 # Keyword constructor (defaults to Float64)
 function RILAProduct(;
-    buffer_rate::Union{Real, Nothing} = nothing,
-    floor_rate::Union{Real, Nothing} = nothing,
-    cap_rate::Union{Real, Nothing} = nothing,
-    is_buffer::Bool = true,
-    term_years::Int = 1,
-    company_name::String = "",
-    product_name::String = ""
+    buffer_rate::Union{Real,Nothing}=nothing,
+    floor_rate::Union{Real,Nothing}=nothing,
+    cap_rate::Union{Real,Nothing}=nothing,
+    is_buffer::Bool=true,
+    term_years::Int=1,
+    company_name::String="",
+    product_name::String="",
 )
     # Convert to Float64
     buf = buffer_rate === nothing ? nothing : Float64(buffer_rate)

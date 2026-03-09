@@ -32,17 +32,28 @@ struct GBMParams{T<:Real}
     volatility::T
     time_to_expiry::T
 
-    function GBMParams(spot::T, rate::T, dividend::T, volatility::T, time_to_expiry::T) where T<:Real
+    function GBMParams(
+        spot::T, rate::T, dividend::T, volatility::T, time_to_expiry::T
+    ) where {T<:Real}
         spot > 0 || throw(ArgumentError("CRITICAL: spot must be > 0, got $spot"))
-        volatility >= 0 || throw(ArgumentError("CRITICAL: volatility must be >= 0, got $volatility"))
-        time_to_expiry > 0 || throw(ArgumentError("CRITICAL: time_to_expiry must be > 0, got $time_to_expiry"))
+        volatility >= 0 ||
+            throw(ArgumentError("CRITICAL: volatility must be >= 0, got $volatility"))
+        time_to_expiry > 0 || throw(
+            ArgumentError("CRITICAL: time_to_expiry must be > 0, got $time_to_expiry")
+        )
         new{T}(spot, rate, dividend, volatility, time_to_expiry)
     end
 end
 
 # Convenience constructor for mixed types
 function GBMParams(spot, rate, dividend, volatility, time_to_expiry)
-    T = promote_type(typeof(spot), typeof(rate), typeof(dividend), typeof(volatility), typeof(time_to_expiry))
+    T = promote_type(
+        typeof(spot),
+        typeof(rate),
+        typeof(dividend),
+        typeof(volatility),
+        typeof(time_to_expiry),
+    )
     GBMParams(T(spot), T(rate), T(dividend), T(volatility), T(time_to_expiry))
 end
 
@@ -51,7 +62,7 @@ end
 
 Risk-neutral drift: r - q - σ²/2
 """
-function drift(params::GBMParams{T}) where T
+function drift(params::GBMParams{T}) where {T}
     return params.rate - params.dividend - params.volatility^2 / 2
 end
 
@@ -60,10 +71,9 @@ end
 
 Forward price: S × exp((r-q)×T)
 """
-function forward(params::GBMParams{T}) where T
+function forward(params::GBMParams{T}) where {T}
     return params.spot * exp((params.rate - params.dividend) * params.time_to_expiry)
 end
-
 
 """
     PathResult{T}
@@ -81,7 +91,7 @@ struct PathResult{T<:Real}
     paths::Matrix{T}
     times::Vector{T}
     params::GBMParams{T}
-    seed::Union{Int, Nothing}
+    seed::Union{Int,Nothing}
     antithetic::Bool
 end
 
@@ -95,10 +105,9 @@ n_steps(result::PathResult) = size(result.paths, 2) - 1
 terminal_values(result::PathResult) = result.paths[:, end]
 
 """Total returns for all paths: (S(T) - S(0)) / S(0)."""
-function total_returns(result::PathResult{T}) where T
+function total_returns(result::PathResult{T}) where {T}
     return (result.paths[:, end] .- result.paths[:, 1]) ./ result.paths[:, 1]
 end
-
 
 """
     generate_gbm_paths(params, n_paths, n_steps; seed=nothing, antithetic=false, rng=nothing) -> PathResult
@@ -135,14 +144,16 @@ function generate_gbm_paths(
     params::GBMParams{T},
     n_paths::Int,
     n_steps::Int;
-    seed::Union{Int, Nothing}=nothing,
+    seed::Union{Int,Nothing}=nothing,
     antithetic::Bool=false,
-    rng::Union{AbstractRNG, Nothing}=nothing
-) where T
+    rng::Union{AbstractRNG,Nothing}=nothing,
+) where {T}
     n_paths > 0 || throw(ArgumentError("CRITICAL: n_paths must be > 0, got $n_paths"))
     n_steps > 0 || throw(ArgumentError("CRITICAL: n_steps must be > 0, got $n_steps"))
     if antithetic
-        n_paths % 2 == 0 || throw(ArgumentError("CRITICAL: n_paths must be even for antithetic, got $n_paths"))
+        n_paths % 2 == 0 || throw(
+            ArgumentError("CRITICAL: n_paths must be even for antithetic, got $n_paths")
+        )
     end
 
     # Initialize RNG
@@ -187,7 +198,6 @@ function generate_gbm_paths(
     return PathResult(paths, times, params, seed, antithetic)
 end
 
-
 """
     generate_terminal_values(params, n_paths; seed=nothing, antithetic=false, rng=nothing) -> Vector
 
@@ -212,13 +222,15 @@ value is needed (e.g., European option pricing).
 function generate_terminal_values(
     params::GBMParams{T},
     n_paths::Int;
-    seed::Union{Int, Nothing}=nothing,
+    seed::Union{Int,Nothing}=nothing,
     antithetic::Bool=false,
-    rng::Union{AbstractRNG, Nothing}=nothing
-) where T
+    rng::Union{AbstractRNG,Nothing}=nothing,
+) where {T}
     n_paths > 0 || throw(ArgumentError("CRITICAL: n_paths must be > 0, got $n_paths"))
     if antithetic
-        n_paths % 2 == 0 || throw(ArgumentError("CRITICAL: n_paths must be even for antithetic, got $n_paths"))
+        n_paths % 2 == 0 || throw(
+            ArgumentError("CRITICAL: n_paths must be even for antithetic, got $n_paths")
+        )
     end
 
     # Initialize RNG
@@ -245,7 +257,6 @@ function generate_terminal_values(
     return terminal_values
 end
 
-
 """
     generate_paths_with_monthly_observations(params, n_paths; n_months=12, seed=nothing, antithetic=false) -> PathResult
 
@@ -267,9 +278,9 @@ function generate_paths_with_monthly_observations(
     params::GBMParams{T},
     n_paths::Int;
     n_months::Int=12,
-    seed::Union{Int, Nothing}=nothing,
-    antithetic::Bool=false
-) where T
+    seed::Union{Int,Nothing}=nothing,
+    antithetic::Bool=false,
+) where {T}
     # Calculate steps needed for monthly observations
     # Assuming ~21 trading days per month
     steps_per_month = 21
@@ -284,7 +295,6 @@ function generate_paths_with_monthly_observations(
 
     return PathResult(monthly_paths, monthly_times, params, seed, antithetic)
 end
-
 
 """
     validate_gbm_simulation(params; n_paths=100000, seed=42) -> NamedTuple
@@ -304,10 +314,8 @@ Validate GBM simulation against theoretical moments.
 - `NamedTuple`: Validation results with theoretical vs simulated values
 """
 function validate_gbm_simulation(
-    params::GBMParams{T};
-    n_paths::Int=100000,
-    seed::Int=42
-) where T
+    params::GBMParams{T}; n_paths::Int=100000, seed::Int=42
+) where {T}
     terminal = generate_terminal_values(params, n_paths; seed=seed, antithetic=true)
 
     # Theoretical values
@@ -323,16 +331,17 @@ function validate_gbm_simulation(
     se_mean = std(terminal) / sqrt(n_paths)
 
     return (
-        n_paths = n_paths,
-        theoretical_mean = expected_mean,
-        simulated_mean = simulated_mean,
-        mean_error = abs(simulated_mean - expected_mean),
-        mean_error_pct = abs(simulated_mean - expected_mean) / expected_mean * 100,
-        mean_se = se_mean,
-        mean_z_score = (simulated_mean - expected_mean) / se_mean,
-        theoretical_log_variance = expected_log_var,
-        simulated_log_variance = simulated_log_var,
-        variance_error_pct = abs(simulated_log_var - expected_log_var) / expected_log_var * 100,
-        validation_passed = abs(simulated_mean - expected_mean) / expected_mean < 0.01,
+        n_paths=n_paths,
+        theoretical_mean=expected_mean,
+        simulated_mean=simulated_mean,
+        mean_error=abs(simulated_mean - expected_mean),
+        mean_error_pct=abs(simulated_mean - expected_mean) / expected_mean * 100,
+        mean_se=se_mean,
+        mean_z_score=(simulated_mean - expected_mean) / se_mean,
+        theoretical_log_variance=expected_log_var,
+        simulated_log_variance=simulated_log_var,
+        variance_error_pct=abs(simulated_log_var - expected_log_var) / expected_log_var *
+                           100,
+        validation_passed=abs(simulated_mean - expected_mean) / expected_mean < 0.01,
     )
 end

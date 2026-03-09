@@ -38,10 +38,7 @@ Named tuple with:
 - `total_impact::Float64`: Total percentage impact
 - `components::Dict{String, Float64}`: Individual impact components
 """
-function calculate_reserve_impact(
-    scenario::StressScenario,
-    base_reserve::Float64
-)
+function calculate_reserve_impact(scenario::StressScenario, base_reserve::Float64)
     # Impact coefficients [T3 - calibrated to typical VA sensitivities]
     # These represent approximate reserve sensitivities:
     # - 80% equity beta (reserves ~80% sensitive to equity)
@@ -56,20 +53,21 @@ function calculate_reserve_impact(
     lapse_impact = -(scenario.lapse_multiplier - 1.0) * 0.10
     withdrawal_impact = (scenario.withdrawal_multiplier - 1.0) * 0.16
 
-    total_impact = equity_impact + rate_impact + vol_impact + lapse_impact + withdrawal_impact
+    total_impact =
+        equity_impact + rate_impact + vol_impact + lapse_impact + withdrawal_impact
 
     stressed_reserve = base_reserve * (1.0 + total_impact)
 
     (
-        stressed_reserve = max(0.0, stressed_reserve),  # Floor at zero
-        total_impact = total_impact,
-        components = Dict(
+        stressed_reserve=max(0.0, stressed_reserve),  # Floor at zero
+        total_impact=total_impact,
+        components=Dict(
             "equity" => equity_impact,
             "rate" => rate_impact,
             "vol" => vol_impact,
             "lapse" => lapse_impact,
-            "withdrawal" => withdrawal_impact
-        )
+            "withdrawal" => withdrawal_impact,
+        ),
     )
 end
 
@@ -87,9 +85,7 @@ Calculate RBC ratio under stress.
 - `Float64`: RBC ratio (reserve / required_capital)
 """
 function calculate_rbc_ratio(
-    scenario::StressScenario,
-    base_reserve::Float64,
-    required_capital::Float64
+    scenario::StressScenario, base_reserve::Float64, required_capital::Float64
 )
     required_capital <= 0.0 && error("required_capital must be positive")
 
@@ -114,12 +110,12 @@ Orchestrates stress testing workflow.
 struct StressTestRunner
     config::StressTestConfig
     scenarios::Vector{StressScenario}
-    impact_fn::Union{Function, Nothing}
+    impact_fn::Union{Function,Nothing}
 
     function StressTestRunner(;
         config::StressTestConfig,
-        scenarios::Vector{StressScenario} = StressScenario[],
-        impact_fn::Union{Function, Nothing} = nothing
+        scenarios::Vector{StressScenario}=StressScenario[],
+        impact_fn::Union{Function,Nothing}=nothing,
     )
         new(config, scenarios, impact_fn)
     end
@@ -129,20 +125,14 @@ end
 Create runner with ORSA scenarios.
 """
 function orsa_runner(config::StressTestConfig)
-    StressTestRunner(;
-        config,
-        scenarios = ORSA_SCENARIOS
-    )
+    StressTestRunner(; config, scenarios=ORSA_SCENARIOS)
 end
 
 """
 Create runner with historical scenarios.
 """
 function historical_runner(config::StressTestConfig)
-    StressTestRunner(;
-        config,
-        scenarios = historical_scenarios()
-    )
+    StressTestRunner(; config, scenarios=historical_scenarios())
 end
 
 """
@@ -150,10 +140,7 @@ Create runner with all standard scenarios (ORSA + historical).
 """
 function standard_runner(config::StressTestConfig)
     all_scenarios = vcat(ORSA_SCENARIOS, historical_scenarios())
-    StressTestRunner(;
-        config,
-        scenarios = all_scenarios
-    )
+    StressTestRunner(; config, scenarios=all_scenarios)
 end
 
 # ============================================================================
@@ -168,10 +155,7 @@ Run a single stress scenario.
 # Returns
 - `StressTestResult`: Result for this scenario
 """
-function run_scenario(
-    runner::StressTestRunner,
-    scenario::StressScenario
-)::StressTestResult
+function run_scenario(runner::StressTestRunner, scenario::StressScenario)::StressTestResult
     base_reserve = runner.config.base_reserve
 
     # Use custom impact function if provided, otherwise default
@@ -210,7 +194,7 @@ function run_scenario(
         reserve_impact,
         reserve_impact_pct,
         rbc_ratio,
-        passed
+        passed,
     )
 end
 
@@ -263,7 +247,7 @@ function run_stress_test(runner::StressTestRunner)::StressTestSummary
         sensitivity,
         reverse_report,
         worst_result,
-        all_passed
+        all_passed,
     )
 end
 
@@ -278,7 +262,7 @@ function run_runner_sensitivity(runner::StressTestRunner)::TornadoData
     base = runner.config.base_reserve
 
     # Build scenario from parameter name and value
-    scenario_builder = function(param_name, value)
+    scenario_builder = function (param_name, value)
         if param_name == "equity_shock"
             create_equity_shock(value)
         elseif param_name == "rate_shock"
@@ -295,7 +279,7 @@ function run_runner_sensitivity(runner::StressTestRunner)::TornadoData
     end
 
     # Metric function
-    metric_fn = function(scenario)
+    metric_fn = function (scenario)
         result = calculate_reserve_impact(scenario, base)
         result.stressed_reserve
     end
@@ -305,7 +289,7 @@ function run_runner_sensitivity(runner::StressTestRunner)::TornadoData
         DEFAULT_SENSITIVITY_PARAMS,
         scenario_builder,
         metric_fn;
-        n_points = runner.config.n_sensitivity_points
+        n_points=runner.config.n_sensitivity_points,
     )
 
     sort_tornado(build_tornado_data(results))
@@ -325,7 +309,7 @@ function run_runner_reverse(runner::StressTestRunner)::ReverseStressReport
     target = RESERVE_RATIO_50
 
     # Scenario builder
-    scenario_builder = function(param_name, value)
+    scenario_builder = function (param_name, value)
         if param_name == "equity_shock"
             create_equity_shock(value)
         elseif param_name == "rate_shock"
@@ -342,16 +326,13 @@ function run_runner_reverse(runner::StressTestRunner)::ReverseStressReport
     end
 
     # Metric function (reserve ratio)
-    metric_fn = function(scenario)
+    metric_fn = function (scenario)
         result = calculate_reserve_impact(scenario, base)
         result.stressed_reserve / base
     end
 
     tester = ReverseStressTester(
-        target,
-        DEFAULT_SENSITIVITY_PARAMS,
-        metric_fn,
-        scenario_builder
+        target, DEFAULT_SENSITIVITY_PARAMS, metric_fn, scenario_builder
     )
 
     run_reverse_test(tester)
@@ -374,7 +355,9 @@ function print_stress_summary(summary::StressTestSummary)
 
     println("Configuration:")
     println("  Base Reserve: \$$(round(Int, summary.config.base_reserve))")
-    println("  Min Reserve Ratio: $(round(summary.config.minimum_reserve_ratio * 100, digits=1))%")
+    println(
+        "  Min Reserve Ratio: $(round(summary.config.minimum_reserve_ratio * 100, digits=1))%",
+    )
     println("  RBC Threshold: $(round(summary.config.rbc_threshold * 100, digits=0))%")
     println()
 
@@ -402,7 +385,9 @@ function print_stress_summary(summary::StressTestSummary)
         worst = summary.worst_case
         println("Worst Case Scenario:")
         println("  $(worst.scenario.display_name)")
-        println("  Reserve: \$$(round(Int, worst.base_reserve)) -> \$$(round(Int, worst.stressed_reserve))")
+        println(
+            "  Reserve: \$$(round(Int, worst.base_reserve)) -> \$$(round(Int, worst.stressed_reserve))",
+        )
         println("  Impact: $(round(worst.reserve_impact_pct * 100, digits=1))%")
         println()
     end
@@ -420,7 +405,8 @@ function print_stress_summary(summary::StressTestSummary)
     end
 
     # Reverse stress summary
-    if !isnothing(summary.reverse_report) && !isnothing(summary.reverse_report.most_vulnerable)
+    if !isnothing(summary.reverse_report) &&
+        !isnothing(summary.reverse_report.most_vulnerable)
         println("Most Vulnerable Parameter: $(summary.reverse_report.most_vulnerable)")
         println()
     end
@@ -440,13 +426,13 @@ Export stress test results in various formats.
 # Returns
 Formatted results (Dict or Array depending on format)
 """
-function export_results(summary::StressTestSummary; format::Symbol = :dict)
+function export_results(summary::StressTestSummary; format::Symbol=:dict)
     if format == :dict
         return Dict(
             "config" => Dict(
                 "base_reserve" => summary.config.base_reserve,
                 "minimum_reserve_ratio" => summary.config.minimum_reserve_ratio,
-                "rbc_threshold" => summary.config.rbc_threshold
+                "rbc_threshold" => summary.config.rbc_threshold,
             ),
             "all_passed" => summary.all_passed,
             "n_scenarios" => length(summary.scenario_results),
@@ -457,14 +443,17 @@ function export_results(summary::StressTestSummary; format::Symbol = :dict)
                     "base_reserve" => r.base_reserve,
                     "stressed_reserve" => r.stressed_reserve,
                     "impact_pct" => r.reserve_impact_pct,
-                    "passed" => r.passed
-                )
-                for r in summary.scenario_results
+                    "passed" => r.passed,
+                ) for r in summary.scenario_results
             ],
-            "worst_case" => isnothing(summary.worst_case) ? nothing : Dict(
+            "worst_case" => if isnothing(summary.worst_case)
+                nothing
+            else
+                Dict(
                 "name" => summary.worst_case.scenario.name,
-                "impact_pct" => summary.worst_case.reserve_impact_pct
+                "impact_pct" => summary.worst_case.reserve_impact_pct,
             )
+            end,
         )
     elseif format == :array
         # Return array of result tuples
@@ -474,9 +463,8 @@ function export_results(summary::StressTestSummary; format::Symbol = :dict)
                 r.scenario.display_name,
                 r.stressed_reserve,
                 r.reserve_impact_pct,
-                r.passed
-            )
-            for r in summary.scenario_results
+                r.passed,
+            ) for r in summary.scenario_results
         ]
     else
         error("Unknown format: $format. Use :dict or :array")
@@ -506,14 +494,9 @@ print_stress_summary(summary)
 ```
 """
 function quick_stress_test(
-    base_reserve::Float64;
-    scenarios::Symbol = :orsa
+    base_reserve::Float64; scenarios::Symbol=:orsa
 )::StressTestSummary
-    config = StressTestConfig(;
-        base_reserve,
-        run_sensitivity = true,
-        run_reverse = true
-    )
+    config = StressTestConfig(; base_reserve, run_sensitivity=true, run_reverse=true)
 
     runner = if scenarios == :orsa
         orsa_runner(config)
@@ -536,31 +519,31 @@ Compare multiple scenarios side-by-side.
 # Returns
 Named tuple with comparison data.
 """
-function compare_scenarios(
-    base_reserve::Float64,
-    scenarios::Vector{StressScenario}
-)
+function compare_scenarios(base_reserve::Float64, scenarios::Vector{StressScenario})
     results = []
 
     for scenario in scenarios
         impact = calculate_reserve_impact(scenario, base_reserve)
-        push!(results, (
-            scenario = scenario,
-            stressed = impact.stressed_reserve,
-            impact_pct = impact.total_impact,
-            components = impact.components
-        ))
+        push!(
+            results,
+            (
+                scenario=scenario,
+                stressed=impact.stressed_reserve,
+                impact_pct=impact.total_impact,
+                components=impact.components,
+            ),
+        )
     end
 
     # Sort by impact (worst first)
-    sort!(results, by=r -> r.impact_pct, rev=true)
+    sort!(results; by=r -> r.impact_pct, rev=true)
 
     (
-        results = results,
-        worst = first(results),
-        best = last(results),
-        avg_impact = mean(r.impact_pct for r in results),
-        std_impact = std(r.impact_pct for r in results)
+        results=results,
+        worst=first(results),
+        best=last(results),
+        avg_impact=mean(r.impact_pct for r in results),
+        std_impact=std(r.impact_pct for r in results),
     )
 end
 
@@ -578,9 +561,7 @@ Run stress tests over a 2D grid of equity and rate shocks.
 Matrix of (stressed_reserve, impact_pct) tuples
 """
 function stress_test_grid(
-    base_reserve::Float64,
-    equity_range::Vector{Float64},
-    rate_range::Vector{Float64}
+    base_reserve::Float64, equity_range::Vector{Float64}, rate_range::Vector{Float64}
 )
     n_eq = length(equity_range)
     n_rt = length(rate_range)
@@ -589,18 +570,15 @@ function stress_test_grid(
 
     for (i, eq) in enumerate(equity_range)
         for (j, rt) in enumerate(rate_range)
-            scenario = create_combined_scenario(
-                name = "grid",
-                display_name = "Grid",
-                equity_shock = eq,
-                rate_shock = rt / 10000.0
+            scenario = create_combined_scenario(;
+                name="grid", display_name="Grid", equity_shock=eq, rate_shock=rt / 10000.0
             )
             impact = calculate_reserve_impact(scenario, base_reserve)
             results[i, j] = (
-                equity = eq,
-                rate = rt,
-                stressed = impact.stressed_reserve,
-                impact_pct = impact.total_impact
+                equity=eq,
+                rate=rt,
+                stressed=impact.stressed_reserve,
+                impact_pct=impact.total_impact,
             )
         end
     end

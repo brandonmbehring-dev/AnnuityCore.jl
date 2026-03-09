@@ -10,7 +10,6 @@ This module provides functions to:
 4. Calculate ITM sensitivity factors
 """
 
-
 # =============================================================================
 # Generic Interpolation Utilities
 # =============================================================================
@@ -60,7 +59,6 @@ function linear_interpolate(x::Real, points::Dict{Int,Float64}; extrapolate::Boo
     # Fallback (should not reach)
     return points[keys_sorted[end]]
 end
-
 
 # =============================================================================
 # Surrender Rate Functions (SOA 2006)
@@ -117,12 +115,10 @@ function interpolate_surrender_by_duration(duration::Int; sc_length::Int=7)
         # Map to year 8+ in 7-year data
         equivalent_duration = 7 + years_post_sc
         return linear_interpolate(
-            min(equivalent_duration, 11),
-            SOA_2006_SURRENDER_BY_DURATION_7YR_SC
+            min(equivalent_duration, 11), SOA_2006_SURRENDER_BY_DURATION_7YR_SC
         )
     end
 end
-
 
 """
     get_sc_cliff_multiplier(years_to_sc_end) -> Float64
@@ -167,7 +163,6 @@ function get_sc_cliff_multiplier(years_to_sc_end::Int)
     end
 end
 
-
 """
     get_post_sc_decay_factor(years_after_sc) -> Float64
 
@@ -200,7 +195,6 @@ function get_post_sc_decay_factor(years_after_sc::Int)
     end
 end
 
-
 """
     interpolate_surrender_by_age(age; surrender_type=:full) -> Float64
 
@@ -227,10 +221,11 @@ function interpolate_surrender_by_age(age::Int; surrender_type::Symbol=:full)
     elseif surrender_type == :partial
         return linear_interpolate(age, SOA_2006_PARTIAL_WITHDRAWAL_BY_AGE)
     else
-        throw(ArgumentError("surrender_type must be :full or :partial, got $surrender_type"))
+        throw(
+            ArgumentError("surrender_type must be :full or :partial, got $surrender_type")
+        )
     end
 end
-
 
 # =============================================================================
 # GLWB Utilization Functions (SOA 2018)
@@ -270,7 +265,6 @@ function interpolate_utilization_by_duration(duration::Int)
     return linear_interpolate(duration, SOA_2018_GLWB_UTILIZATION_BY_DURATION)
 end
 
-
 """
     interpolate_utilization_by_age(age) -> Float64
 
@@ -293,7 +287,6 @@ interpolate_utilization_by_age(72)  # → 0.59
 function interpolate_utilization_by_age(age::Int)
     return linear_interpolate(age, SOA_2018_GLWB_UTILIZATION_BY_AGE)
 end
-
 
 """
     get_itm_sensitivity_factor(moneyness; continuous=false) -> Float64
@@ -359,7 +352,6 @@ function _get_itm_sensitivity_continuous(moneyness::Real)
     return SOA_2018_ITM_BREAKPOINTS[end][2]
 end
 
-
 # =============================================================================
 # Combined Utilization Calculation
 # =============================================================================
@@ -392,10 +384,7 @@ The multiplicative method assumes factors are independent:
 This prevents double-counting the base utilization effect.
 """
 function combined_utilization(
-    duration::Int,
-    age::Int;
-    moneyness::Real = 1.0,
-    method::Symbol = :multiplicative
+    duration::Int, age::Int; moneyness::Real=1.0, method::Symbol=:multiplicative
 )
     # Get base components
     util_duration = interpolate_utilization_by_duration(duration)
@@ -425,7 +414,6 @@ function combined_utilization(
     return min(combined, 1.0)
 end
 
-
 # =============================================================================
 # Diagnostic Functions
 # =============================================================================
@@ -444,11 +432,10 @@ Generate full surrender rate curve for given SC length.
 """
 function get_surrender_curve(; sc_length::Int=7, max_duration::Int=15)
     return Dict(
-        d => interpolate_surrender_by_duration(d; sc_length=sc_length)
-        for d in 1:max_duration
+        d => interpolate_surrender_by_duration(d; sc_length=sc_length) for
+        d in 1:max_duration
     )
 end
-
 
 """
     get_utilization_curve(; age=70, max_duration=15) -> Dict{Int,Float64}
@@ -463,8 +450,5 @@ Generate GLWB utilization curve by duration for fixed age.
 - `Dict{Int,Float64}`: Mapping of duration to utilization rate
 """
 function get_utilization_curve(; age::Int=70, max_duration::Int=15)
-    return Dict(
-        d => combined_utilization(d, age; moneyness=1.0)
-        for d in 1:max_duration
-    )
+    return Dict(d => combined_utilization(d, age; moneyness=1.0) for d in 1:max_duration)
 end
